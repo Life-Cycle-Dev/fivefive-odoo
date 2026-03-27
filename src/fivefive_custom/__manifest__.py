@@ -1,0 +1,17 @@
+{
+    "name": "FiveFive Custom Module",
+    "version": "1.0.0",
+    "summary": "User for FiveFive company",
+    "author": "FiveFive Developer",
+    "depends": ["base", "mail"],
+    "data": [
+        "security/ir.model.access.csv",
+        "views/supplier/table_view.xml",
+        "views/supplier/form_view.xml",
+        "views/logistic/table_view.xml",
+        "views/logistic/form_view.xml",
+        "views/menu_view.xml",
+    ],
+    "installable": True,
+    "auto_install": False,
+}

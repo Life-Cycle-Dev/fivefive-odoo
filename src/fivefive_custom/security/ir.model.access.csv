@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_five_five_supplier_user,access.five.five.supplier.user,model_five_five_supplier,,1,1,1,1
+access_five_five_logistic_user,access.five.five.logistic.user,model_five_five_logistic,,1,1,1,1

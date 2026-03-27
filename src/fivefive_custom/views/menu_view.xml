@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_five_five_root" name="Purchase Order"/>
+
+    <menuitem
+        id="menu_five_five_supplier_model"
+        name="Supplier"
+        parent="menu_five_five_root"
+        action="action_five_five_supplier_model"
+    />
+
+    <menuitem
+        id="menu_five_five_logistic_model"
+        name="Logistic"
+        parent="menu_five_five_root"
+        action="action_five_five_logistic_model"
+    />
+</odoo>
