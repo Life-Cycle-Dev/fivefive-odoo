@@ -3,6 +3,13 @@
     <menuitem id="menu_five_five_root" name="Purchase Order"/>
 
     <menuitem
+        id="menu_five_five_purchase_order_model"
+        name="Purchase Orders"
+        parent="menu_five_five_root"
+        action="action_five_five_purchase_order_model"
+    />
+
+    <menuitem
         id="menu_five_five_supplier_model"
         name="Supplier"
         parent="menu_five_five_root"

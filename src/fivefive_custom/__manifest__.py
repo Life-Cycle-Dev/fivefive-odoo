@@ -6,6 +6,8 @@
     "depends": ["base", "mail"],
     "data": [
         "security/ir.model.access.csv",
+        "views/purchase_order/table_view.xml",
+        "views/purchase_order/form_view.xml",
         "views/supplier/table_view.xml",
         "views/supplier/form_view.xml",
         "views/logistic/table_view.xml",

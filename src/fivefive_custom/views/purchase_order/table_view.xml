@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+	<record id="view_five_five_purchase_order_model_list" model="ir.ui.view">
+		<field name="name">five.five.purchase.order.list</field>
+		<field name="model">five.five.purchase.order</field>
+		<field name="arch" type="xml">
+			<list>
+				<field name="supplier"/>
+				<field name="total_amount"/>
+				<field name="amount_paid"/>
+				<field name="balance_amount"/>
+			</list>
+		</field>
+	</record>
+</odoo>

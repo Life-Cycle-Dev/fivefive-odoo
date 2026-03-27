@@ -8,4 +8,9 @@ class Store(models.Model):
     name = fields.Char(string="Name", required=True, tracking=True)
     address = fields.Char(string="Address", tracking=True)
     phone = fields.Char(string="Phone", tracking=True)
+    
     active = fields.Boolean(string="Active", default=True, tracking=True)
+
+    def toggle_active(self):
+        for record in self:
+            record.active = not record.active
