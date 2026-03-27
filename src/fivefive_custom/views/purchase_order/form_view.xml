@@ -8,7 +8,7 @@
 				<sheet>
 					<group>
 						<group>
-							<field name="supplier"/>
+							<field name="supplier_id"/>
 						</group>
 						<group>
 							<field name="total_amount" readonly="1"/>

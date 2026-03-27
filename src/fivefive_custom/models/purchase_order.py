@@ -5,7 +5,13 @@ class PurchaseOrder(models.Model):
     _description = "Purchase Order (PO)"
     _inherit = ["mail.thread", "mail.activity.mixin"]
 
-    supplier = fields.Char(string="Supplier", required=True, tracking=True)
+    supplier_id = fields.Many2one(
+        "five.five.supplier",
+        string="Supplier",
+        required=True,
+        tracking=True,
+        domain=[("active", "=", True)],
+    )
     commercial_invoice_line_ids = fields.One2many(
         "five.five.commercial.invoice.line",
         "purchase_order_id",

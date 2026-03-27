@@ -5,7 +5,7 @@
 		<field name="model">five.five.purchase.order</field>
 		<field name="arch" type="xml">
 			<list>
-				<field name="supplier"/>
+				<field name="supplier_id"/>
 				<field name="total_amount"/>
 				<field name="amount_paid"/>
 				<field name="balance_amount"/>
