@@ -1,0 +1,11 @@
+from odoo import models, fields
+
+class Store(models.Model):
+    _name = 'five.five.store'
+    _description = 'Store'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+
+    name = fields.Char(string="Name", required=True, tracking=True)
+    address = fields.Char(string="Address", tracking=True)
+    phone = fields.Char(string="Phone", tracking=True)
+    active = fields.Boolean(string="Active", default=True, tracking=True)

@@ -49,4 +49,11 @@
         parent="menu_five_five_product_model"
         action="action_five_five_product_grade_model"
     />
+
+     <menuitem
+        id="menu_five_five_store_model"
+        name="Store"
+        parent="menu_five_five_root"
+        action="action_five_five_store_model"
+    />
 </odoo>
