@@ -30,10 +30,10 @@
     />
 
     <menuitem
-        id="menu_five_five_product_variance_model"
-        name="Product Variance"
+        id="menu_five_five_product_variant_model"
+        name="Product Variant"
         parent="menu_five_five_product_model"
-        action="action_five_five_product_variance_model"
+        action="action_five_five_product_variant_model"
     />
 
     <menuitem

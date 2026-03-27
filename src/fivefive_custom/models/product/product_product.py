@@ -12,10 +12,10 @@ class ProductProduct(models.Model):
         string="Unit",
         tracking=True,
     )
-    variance_ids = fields.One2many(
-        "five.five.product.variance",
+    variant_ids = fields.One2many(
+        "five.five.product.variant",
         "product_id",
-        string="Product Variances",
+        string="Product Variant",
         context={"active_test": False},
         tracking=True,
     )

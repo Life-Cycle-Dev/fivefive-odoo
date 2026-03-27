@@ -13,9 +13,9 @@
         </field>
     </record>
 
-    <record id="view_five_five_product_variance_model_list" model="ir.ui.view">
-        <field name="name">five.five.product.variance.list</field>
-        <field name="model">five.five.product.variance</field>
+    <record id="view_five_five_product_variant_model_list" model="ir.ui.view">
+        <field name="name">five.five.product.variant.list</field>
+        <field name="model">five.five.product.variant</field>
         <field name="arch" type="xml">
             <list>
                 <field name="sku"/>
