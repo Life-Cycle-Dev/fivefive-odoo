@@ -1,4 +1,6 @@
-from odoo import models, fields
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
+
 
 class Supplier(models.Model):
     _name = "five.five.supplier"
@@ -19,6 +21,19 @@ class Supplier(models.Model):
 
     active = fields.Boolean(string="Active", default=True, tracking=True)
 
-    def toggle_active(self):
+    @api.constrains("tax_id")
+    def _check_tax_id_unique(self):
         for record in self:
-            record.active = not record.active
+            if not record.tax_id:
+                continue
+            duplicate = self.search_count(
+                [
+                    ("tax_id", "=", record.tax_id),
+                    ("id", "!=", record.id),
+                ]
+            )
+            if duplicate:
+                raise ValidationError(
+                    _("Tax ID must be unique. The value \"%s\" is already used.")
+                    % record.tax_id
+                )
