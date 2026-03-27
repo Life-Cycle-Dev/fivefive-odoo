@@ -1,3 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_five_five_supplier_user,access.five.five.supplier.user,model_five_five_supplier,,1,1,1,1
 access_five_five_logistic_user,access.five.five.logistic.user,model_five_five_logistic,,1,1,1,1
+access_five_five_product_user,access.five.five.product.user,model_five_five_product_product,,1,1,1,1
+access_five_five_product_variance_user,access.five.five.product.variance.user,model_five_five_product_variance,,1,1,1,1
+access_five_five_product_unit_user,access.five.five.product.unit.user,model_five_five_product_unit,,1,1,1,1
+access_five_five_product_grade_user,access.five.five.product.grade.user,model_five_five_product_grade,,1,1,1,1

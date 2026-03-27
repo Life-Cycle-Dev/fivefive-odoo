@@ -15,4 +15,38 @@
         parent="menu_five_five_root"
         action="action_five_five_logistic_model"
     />
+
+    <menuitem
+        id="menu_five_five_product_model"
+        name="Product"
+        parent="menu_five_five_root"
+    />
+
+    <menuitem
+        id="menu_five_five_product_product_model"
+        name="Product"
+        parent="menu_five_five_product_model"
+        action="action_five_five_product_model"
+    />
+
+    <menuitem
+        id="menu_five_five_product_variance_model"
+        name="Product Variance"
+        parent="menu_five_five_product_model"
+        action="action_five_five_product_variance_model"
+    />
+
+    <menuitem
+        id="menu_five_five_product_unit_model"
+        name="Product Unit"
+        parent="menu_five_five_product_model"
+        action="action_five_five_product_unit_model"
+    />
+
+    <menuitem
+        id="menu_five_five_product_grade_model"
+        name="Product Grade"
+        parent="menu_five_five_product_model"
+        action="action_five_five_product_grade_model"
+    />
 </odoo>

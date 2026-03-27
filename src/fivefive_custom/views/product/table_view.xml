@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_five_five_product_model_list" model="ir.ui.view">
+        <field name="name">five.five.product.product.list</field>
+        <field name="model">five.five.product.product</field>
+        <field name="arch" type="xml">
+            <list>
+                <field nolabel="1" name="image" width="50" widget="image" options="{'size': [30, 30]}"/>
+                <field name="name"/>
+                <field name="unit_id" width="120"/>
+                <field name="active" width="80"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_five_five_product_variance_model_list" model="ir.ui.view">
+        <field name="name">five.five.product.variance.list</field>
+        <field name="model">five.five.product.variance</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sku"/>
+                <field name="grade_id"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_five_five_product_unit_model_list" model="ir.ui.view">
+        <field name="name">five.five.product.unit.list</field>
+        <field name="model">five.five.product.unit</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_five_five_product_grade_model_list" model="ir.ui.view">
+        <field name="name">five.five.product.grade.list</field>
+        <field name="model">five.five.product.grade</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+</odoo>

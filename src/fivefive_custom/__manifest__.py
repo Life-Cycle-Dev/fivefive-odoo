@@ -10,6 +10,8 @@
         "views/supplier/form_view.xml",
         "views/logistic/table_view.xml",
         "views/logistic/form_view.xml",
+        "views/product/table_view.xml",
+        "views/product/form_view.xml",
         "views/menu_view.xml",
     ],
     "installable": True,
