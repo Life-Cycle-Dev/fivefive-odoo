@@ -1,0 +1,32 @@
+permissions:
+  contents: read
+  packages: write
+
+name: Build Workflow
+
+on: [push]
+
+jobs:
+
+  Build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: |
+          docker build -t ghcr.io/Life-Cycle-Dev/fivefive-odoo:${{ github.sha }} .
+
+      - name: Login to GHCR
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Push image
+        run: |
+          docker push ghcr.io/Life-Cycle-Dev/fivefive-odoo:${{ github.sha }}
+
+      - name: Tag latest
+        run: |
+          docker tag ghcr.io/Life-Cycle-Dev/fivefive-odoo:${{ github.sha }} ghcr.io/Life-Cycle-Dev/fivefive-odoo:latest
+          docker push ghcr.io/Life-Cycle-Dev/fivefive-odoo:latest
