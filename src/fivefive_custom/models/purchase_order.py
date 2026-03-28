@@ -1,5 +1,6 @@
 from odoo import models, fields
 
+
 class PurchaseOrder(models.Model):
     _name = "five.five.purchase.order"
 

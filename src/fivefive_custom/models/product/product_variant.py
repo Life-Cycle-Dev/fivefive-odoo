@@ -1,5 +1,6 @@
 from odoo import models, fields
 
+
 class Productvariant(models.Model):
     _name = "five.five.product.variant"
     _description = "Product variant"
@@ -23,6 +24,7 @@ class Productvariant(models.Model):
         string="Grade",
         tracking=True,
     )
+    image = fields.Image(string="Image", max_width=1920, max_height=1920, tracking=True)
 
     active = fields.Boolean(string="Active", default=True, tracking=True)
 

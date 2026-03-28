@@ -20,6 +20,7 @@
                     <group string="Product variant">
                         <field name="variant_ids" nolabel="1" context="{'active_test': False}">
                             <list editable="bottom">
+                                <field name="image" width="130"/>
                                 <field name="sku"/>
                                 <field name="size"/>
                                 <field name="grade_id"/>
@@ -45,6 +46,22 @@
             <form>
                 <sheet>
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <group>
+                        <group>
+                            <div class="oe_title">
+                                <div class="text-muted" invisible="sku == '' or not sku">Product Variant</div>
+                                <h1 invisible="not active or sku == '' or not sku">
+                                    <field name="sku" readonly="1"/>
+                                </h1>
+                                <h1 class="text-decoration-line-through text-muted" invisible="active or sku == '' or not sku">
+                                    <field name="sku" readonly="1"/>
+                                </h1>
+                            </div>
+                        </group>   
+                        <group>
+                            <field nolabel="1" name="image" widget="image" class="oe_avatar" options="{'size': [128, 128]}"/>
+                        </group>
+                    </group>   
                     <group>
                         <field name="product_id"/>
                         <field name="sku"/>

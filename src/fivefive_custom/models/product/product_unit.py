@@ -1,5 +1,6 @@
 from odoo import models, fields
 
+
 class ProductUnit(models.Model):
     _name = "five.five.product.unit"
     _description = "Product Unit"

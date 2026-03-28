@@ -1,5 +1,6 @@
 from odoo import models, fields
 
+
 class ProductGrade(models.Model):
     _name = "five.five.product.grade"
     _description = "Product Grade"

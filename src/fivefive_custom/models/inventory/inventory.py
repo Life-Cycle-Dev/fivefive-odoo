@@ -1,0 +1,26 @@
+from odoo import models, fields
+
+
+class Inventory(models.Model):
+    _name = "five.five.inventory"
+    _description = "Inventory"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+
+    product_id = fields.Many2one(
+        "five.five.product.product",
+        string="Product",
+        required=True,
+        ondelete="cascade",
+        tracking=True,
+    )
+    warehouse_id = fields.Many2one(
+        "five.five.warehouse",
+        string="Warehouse",
+        required=True,
+        ondelete="cascade",
+        tracking=True,
+    )
+    lot_number = fields.Char(string="Lot Number", tracking=True)
+    quantity = fields.Float(string="Quantity", tracking=True)
+    quality_note = fields.Char(string="Quality Note", tracking=True)
+    barcode = fields.Char(string="Barcode", tracking=True)
