@@ -1,7 +1,7 @@
 from odoo import api, models, fields
 
 
-class Productvariant(models.Model):
+class ProductVariant(models.Model):
     _name = "five.five.product.variant"
     _description = "Product variant"
     _rec_name = "sku"

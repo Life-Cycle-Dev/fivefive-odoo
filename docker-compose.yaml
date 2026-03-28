@@ -32,21 +32,7 @@ services:
       - ./config/odoo.conf.template:/etc/odoo/odoo.conf.template
       - ./src:/mnt/extra-addons
       - odoo-data:/var/lib/odoo
-
-    command: >
-      bash -c "
-        envsubst < /etc/odoo/odoo.conf.template > /etc/odoo/odoo.conf
-
-        if [ \"$SERVICE\" = \"migrator\" ]; then
-          echo 'Running migration...'
-          /usr/bin/odoo -c /etc/odoo/odoo.conf -d odoo -u fivefive_custom --without-demo=all --stop-after-init
-        else
-          echo 'Skipping migration'
-        fi
-
-        echo 'Starting Odoo...'
-        /usr/bin/odoo -c /etc/odoo/odoo.conf -d odoo --without-demo=all
-      "
+    entrypoint: ["/entrypoint.sh"]
 
 volumes:
   odoo-data:
