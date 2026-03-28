@@ -6,9 +6,9 @@ class Inventory(models.Model):
     _description = "Inventory"
     _inherit = ["mail.thread", "mail.activity.mixin"]
 
-    product_id = fields.Many2one(
-        "five.five.product.product",
-        string="Product",
+    product_variant_id = fields.Many2one(
+        "five.five.product.variant",
+        string="Product Variant",
         required=True,
         ondelete="cascade",
         tracking=True,

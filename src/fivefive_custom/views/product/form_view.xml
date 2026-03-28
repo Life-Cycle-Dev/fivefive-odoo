@@ -21,6 +21,7 @@
                         <field name="variant_ids" nolabel="1" context="{'active_test': False}">
                             <list editable="bottom">
                                 <field name="image" width="130"/>
+                                <field name="name"/>
                                 <field name="sku"/>
                                 <field name="size"/>
                                 <field name="grade_id"/>
@@ -49,12 +50,12 @@
                     <group>
                         <group>
                             <div class="oe_title">
-                                <div class="text-muted" invisible="sku == '' or not sku">Product Variant</div>
-                                <h1 invisible="not active or sku == '' or not sku">
-                                    <field name="sku" readonly="1"/>
+                                <div class="text-muted" invisible="name == '' or not sku">Product Variant</div>
+                                <h1 invisible="not active or name == '' or not name">
+                                    <field name="name" readonly="1"/>
                                 </h1>
-                                <h1 class="text-decoration-line-through text-muted" invisible="active or sku == '' or not sku">
-                                    <field name="sku" readonly="1"/>
+                                <h1 class="text-decoration-line-through text-muted" invisible="active or name == '' or not name">
+                                    <field name="name" readonly="1"/>
                                 </h1>
                             </div>
                         </group>   
@@ -63,7 +64,8 @@
                         </group>
                     </group>   
                     <group>
-                        <field name="product_id"/>
+                        <field name="name"/>
+                        <field name="product_id" readonly="1"/>
                         <field name="sku"/>
                         <field name="size"/>
                         <field name="grade_id"/>
