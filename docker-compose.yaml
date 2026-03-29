@@ -21,7 +21,6 @@ services:
         condition: service_healthy
     ports:
       - "8069:8069"
-      - "5678:5678"
       - "8072:8072"
     tty: true
     env_file:

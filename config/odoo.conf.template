@@ -11,7 +11,7 @@ limit_time_cpu = 600
 gevent_port = 8072
 longpolling_port = 8072
 
-workers = 4
+workers = 0
 
 addons_path = /mnt/extra-addons
 data_dir = /var/lib/odoo
