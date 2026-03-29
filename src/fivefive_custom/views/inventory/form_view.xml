@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_five_five_inventory_model_form" model="ir.ui.view">
+        <field name="name">five.five.inventory.form</field>
+        <field name="model">five.five.inventory</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <div class="text-muted" invisible="lot_number == '' or not lot_number">Inventory</div>
+                        <h1 invisible="lot_number == '' or not lot_number">
+                            <field name="lot_number" readonly="1"/>
+                        </h1>
+                        <h1 class="text-decoration-line-through text-muted" invisible="lot_number == '' or not lot_number">
+                            <field name="lot_number" readonly="1"/>
+                        </h1>
+                    </div>
+                </sheet>
+                <chatter>
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids" options="{'post_refresh': 'recipients'}"/>
+                </chatter>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_five_five_inventory_model" model="ir.actions.act_window">
+        <field name="name">Inventory</field>
+        <field name="res_model">five.five.inventory</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_five_five_inventory_model_list" model="ir.ui.view">
+        <field name="name">five.five.inventory.list</field>
+        <field name="model">five.five.inventory</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="lot_number"/>
+                <field name="product_variant_id"/>
+                <field name="warehouse_id"/>
+                <field name="quantity"/>
+            </list>
+        </field>
+    </record>
+</odoo>

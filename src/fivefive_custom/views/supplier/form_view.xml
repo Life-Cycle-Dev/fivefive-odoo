@@ -10,7 +10,7 @@
                     <group>
                         <group>
                             <div class="oe_title">
-                                <div class="text-muted" invisible="name == '' or not name">Supplier Name</div>
+                                <div class="text-muted" invisible="name == '' or not name">Supplier</div>
                                 <h1 invisible="not active or name == '' or not name">
                                     <field name="name" readonly="1"/>
                                 </h1>
