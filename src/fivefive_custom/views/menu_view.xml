@@ -7,26 +7,45 @@
         name="Purchase Orders"
         parent="menu_five_five_root"
         action="action_five_five_purchase_order_model"
+        sequence="1"
     />
 
     <menuitem
         id="menu_five_five_supplier_model"
         name="Supplier"
         parent="menu_five_five_root"
+        sequence="2"
+    />
+
+    <menuitem
+        id="menu_five_five_supplier_sub_menu"
+        name="Supplier"
+        parent="menu_five_five_supplier_model"
         action="action_five_five_supplier_model"
+        sequence="1"
     />
 
     <menuitem
         id="menu_five_five_logistic_model"
         name="Logistic"
-        parent="menu_five_five_root"
+        parent="menu_five_five_supplier_model"
         action="action_five_five_logistic_model"
+        sequence="2"
+    />
+
+    <menuitem
+        id="menu_five_five_store_model"
+        name="Store"
+        parent="menu_five_five_supplier_model"
+        action="action_five_five_store_model"
+        sequence="3"
     />
 
     <menuitem
         id="menu_five_five_product_model"
         name="Product"
         parent="menu_five_five_root"
+        sequence="3"
     />
 
     <menuitem
@@ -34,6 +53,7 @@
         name="Product"
         parent="menu_five_five_product_model"
         action="action_five_five_product_model"
+        sequence="1"
     />
 
     <menuitem
@@ -41,6 +61,7 @@
         name="Product Variant"
         parent="menu_five_five_product_model"
         action="action_five_five_product_variant_model"
+        sequence="2"
     />
 
     <menuitem
@@ -48,6 +69,7 @@
         name="Product Unit"
         parent="menu_five_five_product_model"
         action="action_five_five_product_unit_model"
+        sequence="3"
     />
 
     <menuitem
@@ -55,12 +77,6 @@
         name="Product Grade"
         parent="menu_five_five_product_model"
         action="action_five_five_product_grade_model"
-    />
-
-     <menuitem
-        id="menu_five_five_store_model"
-        name="Store"
-        parent="menu_five_five_root"
-        action="action_five_five_store_model"
+        sequence="4"
     />
 </odoo>
