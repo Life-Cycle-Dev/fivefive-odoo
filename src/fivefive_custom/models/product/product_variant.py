@@ -4,7 +4,7 @@ from odoo import api, models, fields
 class ProductVariant(models.Model):
     _name = "five.five.product.variant"
     _description = "Product variant"
-    _rec_name = "sku"
+    _rec_name = "name"
     _inherit = ["mail.thread", "mail.activity.mixin"]
     _sql_constraints = [
         ("five_five_product_variant_sku_uniq", "unique(sku)", "SKU must be unique."),
