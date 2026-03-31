@@ -10,3 +10,4 @@ access_five_five_purchase_order_user,access.five.five.purchase.order.user,model_
 access_five_five_commercial_invoice_line_user,access.five.five.commercial.invoice.line.user,model_five_five_commercial_invoice_line,,1,1,1,1
 access_five_five_inventory_user,access.five.five.inventory.user,model_five_five_inventory,,1,1,1,1
 access_five_five_warehouse_user,access.five.five.warehouse.user,model_five_five_warehouse,,1,1,1,1
+access_five_five_invent_moment_user,access.five.five.invent.moment.user,model_five_five_invent_moment,,1,1,1,1

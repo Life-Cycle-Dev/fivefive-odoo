@@ -20,6 +20,8 @@
         "views/inventory/form_view.xml",
         "views/warehouse/table_view.xml",
         "views/warehouse/form_view.xml",
+        "views/inventory_movement/table_view.xml",
+        "views/inventory_movement/form_view.xml",
         "views/menu_view.xml",
     ],
     "installable": True,

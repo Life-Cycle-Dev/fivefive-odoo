@@ -12,7 +12,7 @@ class Warehouse(models.Model):
     image = fields.Image(string="Image", max_width=1920, max_height=1920, tracking=True)
     name = fields.Char(string="Name", required=True, tracking=True)
     code = fields.Char(string="Code", required=True, tracking=True)
-    address = fields.Char(string="Name", tracking=True)
+    address = fields.Char(string="Address", tracking=True)
     phone = fields.Char(string="Phone", tracking=True)
     inventory_ids = fields.One2many(
         "five.five.inventory",

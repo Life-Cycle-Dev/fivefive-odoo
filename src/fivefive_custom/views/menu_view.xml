@@ -109,5 +109,13 @@
         action="action_five_five_warehouse_model"
         sequence="2"
     />
+
+    <menuitem
+        id="menu_five_five_inven_movement_sub_menu"
+        name="Inventory movement"
+        parent="menu_five_five_inventory_model"
+        action="action_five_five_invent_moment"
+        sequence="3"
+    />
     <!--  end inventory submenu -->
 </odoo>
