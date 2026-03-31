@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_five_five_invent_moment_list" model="ir.ui.view">
+        <field name="name">five.five.invent.moment.list</field>
+        <field name="model">five.five.invent.moment</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="product"/>
+                <field name="warehouse"/>
+                <field name="lot_number"/>
+                <field name="qty"/>
+                <field name="status"/>
+            </list>
+        </field>
+    </record>
+</odoo>
