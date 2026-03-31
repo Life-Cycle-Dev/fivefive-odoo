@@ -15,6 +15,15 @@
                             <field name="lot_number" readonly="1"/>
                         </h1>
                     </div>
+
+                    <group string="General Information">
+                        <field name="warehouse_id"/>
+                        <field name="product_variant_id"/>
+                        <field name="lot_number"/>
+                        <field name="quantity"/>
+                        <field name="barcode"/>
+                        <field name="quality_note"/>
+                    </group>
                 </sheet>
                 <chatter>
                     <field name="message_follower_ids"/>

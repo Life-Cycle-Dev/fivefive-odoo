@@ -10,7 +10,7 @@
                     <group>
                         <group>
                             <div class="oe_title">
-                                <div class="text-muted" invisible="name == '' or not name">Store</div>
+                                <div class="text-muted" invisible="name == '' or not name">Warehouse</div>
                                 <h1 invisible="not active or name == '' or not name">
                                     <field name="name" readonly="1"/>
                                 </h1>
@@ -24,6 +24,25 @@
                         </group>
                     </group>
 
+                    <group string="General Information">
+                        <field name="name"/>
+                        <field name="code"/>
+                        <field name="phone"/>
+                        <field name="address"/>
+                        <field name="active"/>
+                    </group>
+
+                    <group string="Inventory">
+                        <field name="inventory_ids" nolabel="1" context="{'active_test': False}">
+                            <list editable="bottom">
+                                <field name="product_variant_id"/>
+                                <field name="lot_number"/>
+                                <field name="quantity"/>
+                                <field name="barcode"/>
+                                <field name="quality_note"/>
+                            </list>
+                        </field>
+                    </group>
                 </sheet>
                 <chatter>
                     <field name="message_follower_ids"/>
