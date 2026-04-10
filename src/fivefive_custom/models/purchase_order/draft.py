@@ -1,4 +1,5 @@
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 _SUPPLIER_SNAPSHOT_FIELDS = (
     "supplier_name",
@@ -17,6 +18,7 @@ class PurchaseOrder(models.Model):
     _name = "five.five.purchase.order"
     _description = "Purchase Order (PO)"
     _inherit = ["mail.thread", "mail.activity.mixin"]
+    _rec_name = "number"
 
     supplier_id = fields.Many2one(
         "five.five.supplier",
@@ -44,10 +46,32 @@ class PurchaseOrder(models.Model):
     supplier_account_bank_address = fields.Char(string="Supplier Bank Address")
     supplier_account_bank_swift_code = fields.Char(string="Supplier Bank Swift Code")
 
+    number = fields.Char(
+        string="Number",
+        required=True,
+        readonly=True,
+        copy=False,
+        default="draft",
+        tracking=True,
+    )
+    state = fields.Selection(
+        [
+            ("draft", "Draft"),
+            ("po_issued", "PO Issued"),
+            ("documents_completed", "Documents Completed"),
+            ("clearing", "Clearing"),
+            ("closed", "Closed"),
+            ("cancelled", "Cancelled"),
+        ],
+        string="Status",
+        default="draft",
+        tracking=True,
+    )
+
     @api.model
     def _prepare_supplier_snapshot_values_for_supplier(self, supplier):
         if not supplier:
-            return {name: False for name in _SUPPLIER_SNAPSHOT_FIELDS}
+            return {name: "-" for name in _SUPPLIER_SNAPSHOT_FIELDS}
         return {
             "supplier_name": supplier.name or "-",
             "supplier_tax_id": supplier.tax_id or "-",
@@ -67,6 +91,12 @@ class PurchaseOrder(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            if not vals.get("number") or vals.get("number") == "draft":
+                vals["number"] = self.env["ir.sequence"].next_by_code("five.five.purchase.order")
+                if not vals["number"]:
+                    raise UserError(
+                        _("No sequence found for purchase orders (code: five.five.purchase.order). Update the module.")
+                    )
             supplier_id = vals.get("supplier_id")
             if supplier_id:
                 supplier = self.env["five.five.supplier"].browse(supplier_id)
@@ -97,3 +127,18 @@ class PurchaseOrder(models.Model):
     def _compute_balance_amount(self):
         for record in self:
             record.balance_amount = record.total_amount - record.amount_paid
+
+    def action_po_issue(self):
+        for record in self:
+            if record.state != "draft":
+                raise UserError(_("Only draft purchase orders can be issued."))
+            record.state = "po_issued"
+
+            if record.state == "draft":
+                number = self.env["ir.sequence"].next_by_code("five.five.purchase.order")
+                if not number:
+                    raise UserError(_("No sequence found for purchase orders (code: five.five.purchase.order). Update the module."))
+
+                record.number = number
+
+        return True
