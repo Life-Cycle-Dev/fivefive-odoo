@@ -4,6 +4,9 @@
     "summary": "User for FiveFive company",
     "author": "FiveFive Developer",
     "depends": ["base", "mail"],
+    "external_dependencies": {
+        "python": ["Pillow", "python-barcode"],
+    },
     "data": [
         "security/ir.model.access.csv",
         "views/purchase_order/table_view.xml",

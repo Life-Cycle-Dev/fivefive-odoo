@@ -7,7 +7,7 @@ class ProductProduct(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin"]
 
     name = fields.Char(string="Name", required=True, tracking=True)
-    image = fields.Image(string="Image", max_width=1920, max_height=1920, tracking=True)
+    image = fields.Image(string="Image", max_width=1920, max_height=1920)
     unit_id = fields.Many2one(
         "five.five.product.unit",
         string="Unit",

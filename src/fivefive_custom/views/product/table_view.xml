@@ -18,8 +18,9 @@
         <field name="model">five.five.product.variant</field>
         <field name="arch" type="xml">
             <list>
+                <field name="name"/>
                 <field name="sku"/>
-                <field name="grade_id"/>
+                <field name="product_name"/>
                 <field name="active"/>
             </list>
         </field>
@@ -39,6 +40,17 @@
     <record id="view_five_five_product_grade_model_list" model="ir.ui.view">
         <field name="name">five.five.product.grade.list</field>
         <field name="model">five.five.product.grade</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_five_five_product_size_model_list" model="ir.ui.view">
+        <field name="name">five.five.product.size.list</field>
+        <field name="model">five.five.product.size</field>
         <field name="arch" type="xml">
             <list>
                 <field name="name"/>

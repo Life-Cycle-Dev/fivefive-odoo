@@ -9,7 +9,6 @@
                 <field name="product_variant_id"/>
                 <field name="lot_number"/>
                 <field name="quantity"/>
-                <field name="barcode"/>
                 <field name="quality_note"/>
             </list>
         </field>

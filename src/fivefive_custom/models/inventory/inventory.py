@@ -23,4 +23,3 @@ class Inventory(models.Model):
     lot_number = fields.Char(string="Lot Number", tracking=True)
     quantity = fields.Float(string="Quantity", tracking=True)
     quality_note = fields.Char(string="Quality Note", tracking=True)
-    barcode = fields.Char(string="Barcode", tracking=True)

@@ -9,7 +9,7 @@ class Warehouse(models.Model):
         ("five_five_warehouse_code_uniq", "unique(code)", "Warehouse code must be unique."),
     ]
 
-    image = fields.Image(string="Image", max_width=1920, max_height=1920, tracking=True)
+    image = fields.Image(string="Image", max_width=1920, max_height=1920)
     name = fields.Char(string="Name", required=True, tracking=True)
     code = fields.Char(string="Code", required=True, tracking=True)
     address = fields.Char(string="Name", tracking=True)

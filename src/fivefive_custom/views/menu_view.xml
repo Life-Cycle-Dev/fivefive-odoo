@@ -91,6 +91,14 @@
         action="action_five_five_product_grade_model"
         sequence="4"
     />
+
+    <menuitem
+        id="menu_five_five_product_size_model"
+        name="Product Size"
+        parent="menu_five_five_product_model"
+        action="action_five_five_product_size_model"
+        sequence="4"
+    />
     <!--  end product submenu  -->
 
     <!--  start inventory submenu  -->

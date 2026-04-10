@@ -9,6 +9,6 @@ class Logistic(models.Model):
     name = fields.Char(string="Name", required=True, tracking=True)
     contact = fields.Char(string="Contact", tracking=True)
     phone = fields.Char(string="Phone", tracking=True)
-    image = fields.Image(string="Image", max_width=1920, max_height=1920, tracking=True)
+    image = fields.Image(string="Image", max_width=1920, max_height=1920)
 
     active = fields.Boolean(string="Active", default=True, tracking=True)

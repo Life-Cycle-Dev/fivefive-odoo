@@ -10,7 +10,7 @@ class Supplier(models.Model):
     name = fields.Char(string="Name", required=True, tracking=True)
     contact = fields.Char(string="Contact", required=True, tracking=True)
     tax_id = fields.Char(string="Tax ID", tracking=True)
-    image = fields.Image(string="Image", max_width=1920, max_height=1920, tracking=True)
+    image = fields.Image(string="Image", max_width=1920, max_height=1920)
 
     phone = fields.Char(string="Phone", tracking=True)
 
