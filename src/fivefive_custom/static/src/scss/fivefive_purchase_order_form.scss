@@ -1,0 +1,22 @@
+.o_form_view .ff_po_supplier_block {
+    padding-bottom: 1rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color, #dee2e6);
+}
+
+.o_form_view .ff_po_supplier_details {
+    margin-bottom: 1rem;
+}
+
+.o_form_view .ff_po_totals {
+    .o_inner_group {
+        td.o_td_label {
+            width: 1%;
+            padding-right: 0.25rem !important;
+            white-space: nowrap;
+        }
+        td.o_td_label + td {
+            padding-left: 0.5rem !important;
+        }
+    }
+}

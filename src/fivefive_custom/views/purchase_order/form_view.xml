@@ -8,12 +8,23 @@
 				<sheet>
 					<group>
 						<group>
-							<field name="supplier_id"/>
+							<field name="supplier_id" placeholder="Select a supplier..."/>
 						</group>
-						<group>
-							<field name="total_amount" readonly="1"/>
-							<field name="amount_paid"/>
-							<field name="balance_amount" readonly="1"/>
+					</group>
+
+					<group>
+						<group string="Contact">
+							<field name="supplier_name" string="Name"/>
+							<field name="supplier_tax_id" string="Tax ID"/>
+							<field name="supplier_contact" string="Contact"/>
+							<field name="supplier_phone" string="Phone"/>
+						</group>
+						<group string="Bank account">
+							<field name="supplier_account_name" string="Account name"/>
+							<field name="supplier_account_number" string="Account number"/>
+							<field name="supplier_account_bank_name" string="Bank name"/>
+							<field name="supplier_account_bank_address" string="Bank address"/>
+							<field name="supplier_account_bank_swift_code" string="SWIFT code"/>
 						</group>
 					</group>
 
@@ -21,10 +32,10 @@
 						<page string="Commercial Invoice Lines">
 							<field name="commercial_invoice_line_ids">
 								<list editable="bottom">
-									<field name="name"/>
-									<field name="unit"/>
-									<field name="size"/>
-									<field name="grade"/>
+									<field name="name" width="200px"/>
+									<field name="unit_id" width="100px"/>
+									<field name="size_id" width="100px"/>
+									<field name="grade_id" width="100px"/>
 									<field name="unit_price"/>
 									<field name="quantity"/>
 									<field name="total_price" readonly="1"/>
@@ -32,6 +43,17 @@
 							</field>
 						</page>
 					</notebook>
+
+					<group class="mt-4">
+						<group class="ms-auto">
+
+						</group>
+						<group class="ms-auto ff_po_totals">
+							<field name="total_amount" readonly="1" class="text-end"/>
+							<field name="amount_paid" readonly="1" class="text-end"/>
+							<field name="balance_amount" readonly="1" class="text-end"/>
+						</group>
+					</group>
 				</sheet>
 				<chatter>
 					<field name="message_follower_ids"/>

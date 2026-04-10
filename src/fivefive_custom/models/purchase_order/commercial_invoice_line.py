@@ -13,9 +13,21 @@ class CommercialInvoiceLine(models.Model):
     )
 
     name = fields.Char(string="Name", required=True)
-    unit = fields.Char(string="Unit", required=True)
-    size = fields.Char(string="Size", required=True)
-    grade = fields.Char(string="Grade", required=True)
+    unit_id = fields.Many2one(
+        "five.five.product.unit",
+        string="Unit",
+        required=True,
+    )
+    size_id = fields.Many2one(
+        "five.five.product.size",
+        required=True,
+        string="Size",
+    )
+    grade_id = fields.Many2one(
+        "five.five.product.grade",
+        string="Grade",
+        required=True,
+    )
     unit_price = fields.Float(string="Unit Price", required=True)
     quantity = fields.Float(string="Quantity", required=True)
     total_price = fields.Float(string="Total Price", compute="_compute_total_price", store=True)

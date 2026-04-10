@@ -7,6 +7,11 @@
     "external_dependencies": {
         "python": ["Pillow", "python-barcode"],
     },
+    "assets": {
+        "web.assets_backend": [
+            "fivefive_custom/static/src/scss/fivefive_purchase_order_form.scss",
+        ],
+    },
     "data": [
         "security/ir.model.access.csv",
         "views/purchase_order/table_view.xml",
@@ -27,4 +32,5 @@
     ],
     "installable": True,
     "auto_install": False,
+    "post_init_hook": "hooks.post_init_hook",
 }
