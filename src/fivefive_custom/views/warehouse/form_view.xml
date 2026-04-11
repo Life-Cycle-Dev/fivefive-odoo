@@ -34,7 +34,7 @@
 
                     <group string="Inventory">
                         <field name="inventory_ids" nolabel="1" context="{'active_test': False}">
-                            <list editable="bottom">
+                            <list editable="bottom" class="ff_confirm_list_delete">
                                 <field name="product_variant_id"/>
                                 <field name="lot_number"/>
                                 <field name="quantity"/>

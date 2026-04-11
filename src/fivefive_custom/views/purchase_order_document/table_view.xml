@@ -4,9 +4,25 @@
 		<field name="name">five.five.purchase.order.document.list</field>
 		<field name="model">five.five.purchase.order.document</field>
 		<field name="arch" type="xml">
-			<list create="false">
+			<list create="false" class="ff_confirm_list_delete">
 				<field name="purchase_order_id" width="180px"/>
 				<field name="type"/>
+				<field name="attachment_name" string="File name"/>
+				<button
+					name="action_open_upload_wizard"
+					type="object"
+					string="Upload"
+					class="btn-link"
+					icon="fa-upload"
+				/>
+				<button
+					name="action_download_document_file"
+					type="object"
+					string="Download"
+					class="btn-link"
+					icon="fa-download"
+					invisible="not attachment_file"
+				/>
 			</list>
 		</field>
 	</record>

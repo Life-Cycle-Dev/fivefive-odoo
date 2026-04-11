@@ -31,7 +31,7 @@
 
                     <group string="Product variant">
                         <field name="variant_ids" nolabel="1" context="{'active_test': False}">
-                            <list editable="bottom">
+                            <list editable="bottom" class="ff_confirm_list_delete">
                                 <field name="image" width="96" widget="image" options="{'size': [96, 96]}"/>
                                 <field name="size_id"/>
                                 <field name="grade_id"/>

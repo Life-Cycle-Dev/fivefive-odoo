@@ -9,6 +9,25 @@
 					<group>
 						<field name="purchase_order_id" readonly="1"/>
 						<field name="type" readonly="1"/>
+						<field name="attachment_name" string="File name" readonly="1"/>
+						<div class="d-flex gap-2">
+							<button
+								name="action_open_upload_wizard"
+								type="object"
+								string="Upload"
+								class="btn-link"
+								icon="fa-upload"
+							/>
+							<button
+								name="action_download_document_file"
+								type="object"
+								string="Download"
+								class="btn-link"
+								icon="fa-download"
+								invisible="not attachment_file"
+							/>
+						</div>
+						<field name="attachment_file" invisible="1"/>
 					</group>
 				</sheet>
 			</form>

@@ -10,6 +10,7 @@
     "assets": {
         "web.assets_backend": [
             "fivefive_custom/static/src/scss/fivefive_purchase_order_form.scss",
+            "fivefive_custom/static/src/js/list_confirm_delete.js",
         ],
     },
     "data": [
@@ -29,6 +30,7 @@
         "views/inventory/form_view.xml",
         "views/warehouse/table_view.xml",
         "views/warehouse/form_view.xml",
+        "views/purchase_order_document/upload_wizard.xml",
         "views/purchase_order_document/table_view.xml",
         "views/purchase_order_document/form_view.xml",
         "views/menu_view.xml",

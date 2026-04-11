@@ -40,7 +40,7 @@
 					<notebook>
 						<page string="Commercial Invoice Lines">
 							<field name="commercial_invoice_line_ids">
-								<list editable="bottom">
+								<list editable="bottom" class="ff_confirm_list_delete">
 									<field name="name" width="200px"/>
 									<field name="unit_id" width="100px"/>
 									<field name="size_id" width="100px"/>
@@ -53,8 +53,22 @@
 						</page>
 						<page string="Documents">
 							<field name="document_ids">
-								<list editable="bottom">
+								<list editable="bottom" class="ff_confirm_list_delete">
+									<field name="attachment_name" string="Name"/>
 									<field name="type"/>
+									<field
+										name="attachment_file"
+										filename="attachment_name"
+										string="Upload"
+									/>
+									<button
+										name="action_download_document_file"
+										type="object"
+										string="Download"
+										class="btn-link"
+										icon="fa-download"
+										invisible="not attachment_file"
+									/>
 								</list>
 							</field>
 						</page>
