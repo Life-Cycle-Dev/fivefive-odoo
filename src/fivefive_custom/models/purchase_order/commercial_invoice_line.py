@@ -1,4 +1,8 @@
-from odoo import api, models, fields
+from odoo import api, fields, models
+from odoo.exceptions import UserError
+
+_ALLOWED_PO_STATES_FOR_LINES = ("draft", "po_issued")
+
 
 class CommercialInvoiceLine(models.Model):
     _name = "five.five.commercial.invoice.line"
@@ -36,3 +40,33 @@ class CommercialInvoiceLine(models.Model):
     def _compute_total_price(self):
         for line in self:
             line.total_price = line.quantity * line.unit_price
+
+    @api.model
+    def _ff_po_states_allow_line_mutation(self, purchase_orders):
+        invalid = purchase_orders.filtered(
+            lambda p: p and p.state not in _ALLOWED_PO_STATES_FOR_LINES
+        )
+        if invalid:
+            raise UserError(
+                "แก้ไข/เพิ่ม/ลบรายการ Commercial Invoice ได้เฉพาะเมื่อ PO อยู่ใน Draft หรือ PO Issued เท่านั้น"
+            )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        po_ids = [v["purchase_order_id"] for v in vals_list if v.get("purchase_order_id")]
+        if po_ids:
+            self._ff_po_states_allow_line_mutation(
+                self.env["five.five.purchase.order"].browse(po_ids)
+            )
+        return super().create(vals_list)
+
+    def write(self, vals):
+        orders = self.mapped("purchase_order_id")
+        if vals.get("purchase_order_id"):
+            orders |= self.env["five.five.purchase.order"].browse(vals["purchase_order_id"])
+        self._ff_po_states_allow_line_mutation(orders)
+        return super().write(vals)
+
+    def unlink(self):
+        self._ff_po_states_allow_line_mutation(self.mapped("purchase_order_id"))
+        return super().unlink()

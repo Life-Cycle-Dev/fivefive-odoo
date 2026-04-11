@@ -1,5 +1,7 @@
-from odoo import _, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+
+_ALLOWED_PO_STATES_FOR_DOCUMENTS = ("draft", "po_issued")
 
 
 class PurchaseOrderDocument(models.Model):
@@ -32,13 +34,43 @@ class PurchaseOrderDocument(models.Model):
     attachment_file = fields.Binary(string="File", attachment=True, required=True)
     attachment_name = fields.Char(string="File Name", required=True)
 
+    @api.model
+    def _ff_po_states_allow_document_mutation(self, purchase_orders):
+        invalid = purchase_orders.filtered(
+            lambda p: p and p.state not in _ALLOWED_PO_STATES_FOR_DOCUMENTS
+        )
+        if invalid:
+            raise UserError(
+                "แก้ไข/เพิ่ม/ลบเอกสารแนบได้เฉพาะเมื่อ PO อยู่ใน Draft หรือ PO Issued เท่านั้น"
+            )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        po_ids = [v["purchase_order_id"] for v in vals_list if v.get("purchase_order_id")]
+        if po_ids:
+            self._ff_po_states_allow_document_mutation(
+                self.env["five.five.purchase.order"].browse(po_ids)
+            )
+        return super().create(vals_list)
+
+    def write(self, vals):
+        orders = self.mapped("purchase_order_id")
+        if vals.get("purchase_order_id"):
+            orders |= self.env["five.five.purchase.order"].browse(vals["purchase_order_id"])
+        self._ff_po_states_allow_document_mutation(orders)
+        return super().write(vals)
+
+    def unlink(self):
+        self._ff_po_states_allow_document_mutation(self.mapped("purchase_order_id"))
+        return super().unlink()
+
     def action_open_upload_wizard(self):
         self.ensure_one()
         rid = self._ids[0] if self._ids else 0
+
         if not isinstance(rid, int) or rid <= 0:
-            raise UserError(
-                _("Please save the purchase order (or this document line) before using Upload.")
-            )
+            raise UserError("กรุณาบันทึกข้อมูล PO ก่อนทำการอัพเดทเอกสารเพิ่มเติม")
+
         return {
             "type": "ir.actions.act_window",
             "name": _("Upload File"),
@@ -58,8 +90,10 @@ class PurchaseOrderDocument(models.Model):
             ],
             limit=1,
         )
+
         if not attachment:
-            raise UserError(_("No file to download."))
+            raise UserError("ไม่พบไฟล์ที่อัพโหลด")
+
         return {
             "type": "ir.actions.act_url",
             "url": f"/web/content/{attachment.id}?download=true",

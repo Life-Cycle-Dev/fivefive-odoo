@@ -74,14 +74,14 @@ class ProductVariant(models.Model):
             sku = f"product-sku-{candidate}"
             if not self.search_count([("sku", "=", sku)]):
                 return sku
-        raise UserError("Could not generate a unique sku. Please try again.")
+        raise UserError("ไม่สามารถสร้างรหัส sku ได้ กรุณาลองอีกครั้ง")
 
     def _generate_barcode(self):
         for _ in range(200):
             candidate = str(secrets.randbelow(10**10)).zfill(10)
             if not self.search_count([("barcode", "=", candidate)]):
                 return candidate
-        raise UserError("Could not generate a unique barcode. Please try again.")
+        raise UserError("ไม่สามารถสร้างรหัส barcode ได้ กรุณาลองอีกครั้ง")
 
     @api.model_create_multi
     def create(self, vals_list):

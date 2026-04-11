@@ -94,9 +94,7 @@ class PurchaseOrder(models.Model):
             if not vals.get("number") or vals.get("number") == "draft":
                 vals["number"] = self.env["ir.sequence"].next_by_code("five.five.purchase.order")
                 if not vals["number"]:
-                    raise UserError(
-                        _("No sequence found for purchase orders (code: five.five.purchase.order). Update the module.")
-                    )
+                    raise UserError("No sequence found for purchase orders (code: five.five.purchase.order). Update the module.")
             supplier_id = vals.get("supplier_id")
             if supplier_id:
                 supplier = self.env["five.five.supplier"].browse(supplier_id)
@@ -131,13 +129,13 @@ class PurchaseOrder(models.Model):
     def action_po_issue(self):
         for record in self:
             if record.state != "draft":
-                raise UserError(_("Only draft purchase orders can be issued."))
+                raise UserError("เฉพาะ PO ที่อยู่ใน status Draft เท่านั้น ที่สามารถ Issue PO ได้ ไม่สามารถดำเนินการต่อได้")
             record.state = "po_issued"
 
             if record.state == "draft":
                 number = self.env["ir.sequence"].next_by_code("five.five.purchase.order")
                 if not number:
-                    raise UserError(_("No sequence found for purchase orders (code: five.five.purchase.order). Update the module."))
+                    raise UserError("No sequence found for purchase orders (code: five.five.purchase.order). Update the module.")
 
                 record.number = number
 

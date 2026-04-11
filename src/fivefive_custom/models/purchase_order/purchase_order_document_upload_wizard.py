@@ -18,7 +18,7 @@ class PurchaseOrderDocumentUploadWizard(models.TransientModel):
     def action_apply_upload(self):
         self.ensure_one()
         if not self.upload_file:
-            raise UserError(_("Please choose a file to upload."))
+            raise UserError("กรุณาเลือกไฟล์ที่ต้องการอัพโหลด")
         filename = (self.upload_filename or "").strip() or _("document")
         self.document_id.write(
             {
