@@ -4,9 +4,9 @@
 		<field name="name">five.five.purchase.order.list</field>
 		<field name="model">five.five.purchase.order</field>
 		<field name="arch" type="xml">
-			<list>
-				<field name="number"/>
-				<field name="state" widget="badge" optional="show" width="80px"/>
+			<list duplicate="false">
+				<field name="number" width="180px"/>
+				<field name="state" widget="badge" optional="show" width="150px"/>
 				<field name="supplier_id"/>
 				<field name="total_amount"/>
 				<field name="balance_amount" width="200px"/>

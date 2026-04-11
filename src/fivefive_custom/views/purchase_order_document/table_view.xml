@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+	<record id="view_five_five_purchase_order_document_model_list" model="ir.ui.view">
+		<field name="name">five.five.purchase.order.document.list</field>
+		<field name="model">five.five.purchase.order.document</field>
+		<field name="arch" type="xml">
+			<list create="false">
+				<field name="purchase_order_id" width="180px"/>
+				<field name="type"/>
+			</list>
+		</field>
+	</record>
+</odoo>

@@ -4,7 +4,7 @@
 		<field name="name">five.five.purchase.order.form</field>
 		<field name="model">five.five.purchase.order</field>
 		<field name="arch" type="xml">
-			<form>
+			<form duplicate="false" delete="false">
 				<header>
 					<button name="action_po_issue" string="Issue PO" type="object" class="btn-primary" invisible="state != 'draft'"/>
 					<field name="state" widget="statusbar" statusbar_visible="draft,po_issued,documents_completed,clearing,closed,cancelled"/>
@@ -48,6 +48,13 @@
 									<field name="unit_price"/>
 									<field name="quantity"/>
 									<field name="total_price" readonly="1"/>
+								</list>
+							</field>
+						</page>
+						<page string="Documents">
+							<field name="document_ids">
+								<list editable="bottom">
+									<field name="type"/>
 								</list>
 							</field>
 						</page>

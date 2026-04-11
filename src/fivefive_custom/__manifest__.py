@@ -29,6 +29,8 @@
         "views/inventory/form_view.xml",
         "views/warehouse/table_view.xml",
         "views/warehouse/form_view.xml",
+        "views/purchase_order_document/table_view.xml",
+        "views/purchase_order_document/form_view.xml",
         "views/menu_view.xml",
     ],
     "installable": True,
