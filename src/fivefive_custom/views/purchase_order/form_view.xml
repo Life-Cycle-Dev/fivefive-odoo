@@ -5,11 +5,13 @@
 		<field name="model">five.five.purchase.order</field>
 		<field name="arch" type="xml">
 			<form duplicate="false" delete="false">
-				<header>
-					<button name="action_po_issue" string="Issue PO" type="object" class="btn-primary" invisible="state != 'draft'"/>
-					<button name="action_post" string="Post" type="object" class="btn-primary" invisible="state != 'po_issued'"/>
-					<field name="state" widget="statusbar" statusbar_visible="draft,po_issued,documents_completed,clearing,closed,cancelled"/>
-				</header>
+					<header>
+						<button name="action_po_issue" string="Issue" type="object" class="btn-primary" invisible="state != 'draft'"/>
+						<button name="action_cancel" string="Cancel" type="object" class="btn-danger" invisible="state != 'draft'"/>
+						<button name="action_post" string="Post" type="object" class="btn-primary" invisible="state != 'po_issued'"/>
+						<button name="action_reset_to_draft" string="Reset to draft" type="object" class="btn-secondary" invisible="state not in ['documents_completed', 'po_issued']"/>
+						<field name="state" widget="statusbar" statusbar_visible="draft,po_issued,documents_completed,clearing,closed,cancelled"/>
+					</header>
 				<sheet>
 					<div class="oe_title">
 						<h1>
