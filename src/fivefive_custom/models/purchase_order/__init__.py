@@ -2,4 +2,5 @@ from . import draft
 from . import commercial_invoice_line
 from . import purchase_order_document
 from . import purchase_order_document_upload_wizard
+from . import purchase_order_cancel_wizard
 from . import documents_completed

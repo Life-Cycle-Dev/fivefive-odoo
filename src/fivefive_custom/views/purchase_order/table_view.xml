@@ -4,9 +4,20 @@
 		<field name="name">five.five.purchase.order.list</field>
 		<field name="model">five.five.purchase.order</field>
 		<field name="arch" type="xml">
-			<list duplicate="false">
+			<list duplicate="false" class="ff_five_five_purchase_order_list">
 				<field name="number" width="180px"/>
-				<field name="state" widget="badge" optional="show" width="150px"/>
+				<field
+					name="state"
+					widget="badge"
+					optional="show"
+					width="150px"
+					decoration-muted="state == 'draft'"
+					decoration-info="state == 'po_issued'"
+					decoration-primary="state == 'documents_completed'"
+					decoration-warning="state == 'clearing'"
+					decoration-success="state == 'closed'"
+					decoration-danger="state == 'cancelled'"
+				/>
 				<field name="supplier_id"/>
 				<field name="total_amount"/>
 				<field name="balance_amount" width="200px"/>

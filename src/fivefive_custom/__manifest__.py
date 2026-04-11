@@ -17,6 +17,7 @@
         "security/ir.model.access.csv",
         "data/purchase_order_sequence.xml",
         "views/purchase_order/table_view.xml",
+        "views/purchase_order/cancel_wizard.xml",
         "views/purchase_order/form_view.xml",
         "views/supplier/table_view.xml",
         "views/supplier/form_view.xml",

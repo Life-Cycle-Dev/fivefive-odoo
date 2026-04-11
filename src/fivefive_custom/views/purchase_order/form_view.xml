@@ -4,7 +4,7 @@
 		<field name="name">five.five.purchase.order.form</field>
 		<field name="model">five.five.purchase.order</field>
 		<field name="arch" type="xml">
-			<form duplicate="false" delete="false">
+			<form duplicate="false" delete="false" class="ff_five_five_purchase_order">
 					<header>
 						<button name="action_po_issue" string="Issue" type="object" class="btn-primary" invisible="state != 'draft'"/>
 						<button name="action_cancel" string="Cancel" type="object" class="btn-danger" invisible="state != 'draft'"/>
@@ -20,6 +20,7 @@
 					</div>
 					<group>
 						<group>
+							<field name="reason_cancel" class="text-danger" placeholder="Reason for Cancel" readonly="1" invisible="state != 'cancelled'"/>
 							<field name="supplier_id" placeholder="Select a supplier..." readonly="state not in ['draft', 'po_issued']"/>
 						</group>
 					</group>

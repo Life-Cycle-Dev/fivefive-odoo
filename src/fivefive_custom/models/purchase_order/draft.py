@@ -57,7 +57,7 @@ class PurchaseOrder(models.Model):
     state = fields.Selection(
         [
             ("draft", "Draft"),
-            ("po_issued", "PO Issued"),
+            ("po_issued", "Issued"),
             ("documents_completed", "Documents Completed"),
             ("clearing", "Clearing"),
             ("closed", "Closed"),
@@ -67,6 +67,7 @@ class PurchaseOrder(models.Model):
         default="draft",
         tracking=True,
     )
+    reason_cancel = fields.Text(string="Reason for Cancel")
 
     @api.model
     def _prepare_supplier_snapshot_values_for_supplier(self, supplier):
@@ -140,3 +141,17 @@ class PurchaseOrder(models.Model):
                 record.number = number
 
         return True
+
+    def action_cancel(self):
+        self.ensure_one()
+        if self.state != "draft":
+            raise UserError("สามารถ Cancel PO ที่อยู่ใน status Draft เท่านั้น ไม่สามารถดำเนินการต่อได้")
+
+        return {
+            "type": "ir.actions.act_window",
+            "name": "ยกเลิก PO",
+            "res_model": "five.five.purchase.order.cancel.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {"default_purchase_order_id": self.id},
+        }

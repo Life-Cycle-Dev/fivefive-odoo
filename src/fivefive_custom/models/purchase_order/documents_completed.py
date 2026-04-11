@@ -12,15 +12,6 @@ class PurchaseOrderDocumentCompleted(models.Model):
         tracking=True,
     )
 
-    def action_cancel(self):
-        for record in self:
-            if record.state != "draft":
-                raise UserError("สามารถ Cancel PO ที่อยู่ใน status Draft เท่านั้น ไม่สามารถดำเนินการต่อได้")
-
-            record.state = "cancelled"
-
-        return True
-
     def action_post(self):
         for record in self:
             if record.state != "po_issued":

@@ -20,3 +20,37 @@
         }
     }
 }
+
+// สี badge คอลัมน์ state เฉพาะ list view (widget badge + decoration-* ใน table_view.xml)
+// `decoration-muted` ใช้ class `text-bg-300` ตาม BadgeField ของ Odoo 18
+.o_list_view.ff_five_five_purchase_order_list .o_field_cell.o_badge_cell .badge.rounded-pill {
+    &.text-bg-300 {
+        background-color: #6b7280 !important;
+        color: #ffffff !important;
+    }
+
+    &.text-bg-info {
+        background-color: #2563eb !important;
+        color: #ffffff !important;
+    }
+
+    &.text-bg-primary {
+        background-color: #7c3aed !important;
+        color: #ffffff !important;
+    }
+
+    &.text-bg-warning {
+        background-color: #d97706 !important;
+        color: #1f2937 !important;
+    }
+
+    &.text-bg-success {
+        background-color: #059669 !important;
+        color: #ffffff !important;
+    }
+
+    &.text-bg-danger {
+        background-color: #dc2626 !important;
+        color: #ffffff !important;
+    }
+}
