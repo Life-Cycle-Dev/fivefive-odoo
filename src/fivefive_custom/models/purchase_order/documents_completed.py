@@ -57,6 +57,9 @@ class PurchaseOrderDocumentCompleted(models.Model):
 
     def action_pay(self):
         self.ensure_one()
+        default_amount_usd = 0.0
+        if self.state in ["documents_completed", "clearing"]:
+            default_amount_usd = self.balance_amount_usd
 
         return {
             "type": "ir.actions.act_window",
@@ -65,6 +68,7 @@ class PurchaseOrderDocumentCompleted(models.Model):
             "view_mode": "form",
             "target": "new",
             "context": {
-                "default_purchase_order_id": self.id
+                "default_purchase_order_id": self.id,
+                "default_amount_usd": default_amount_usd,
             },
         }

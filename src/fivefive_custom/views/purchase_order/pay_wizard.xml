@@ -7,7 +7,8 @@
 			<form string="ทำเรื่องการจ่ายเงิน PO">
 				<group>
 					<field name="purchase_order_id" readonly="1"/>
-					<field name="amount"/>
+					<field name="amount_usd"/>
+					<field name="amount_thb"/>
 					<field name="pay_at"/>
 					<field name="note"/>
 					<field name="attachment"/>

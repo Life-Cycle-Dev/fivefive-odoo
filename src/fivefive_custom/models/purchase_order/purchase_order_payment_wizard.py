@@ -15,7 +15,8 @@ class PurchaseOrderPaymentWizard(models.TransientModel):
         ondelete="cascade",
     )
 
-    amount = fields.Float(string="Amount", default=0, required=True)
+    amount_usd = fields.Float(string="Amount (USD)", default=0, required=True)
+    amount_thb = fields.Float(string="Amount (THB)", default=0, required=True)
     pay_at = fields.Date(string="Payment At", required=True, default=date.today())
     attachment = fields.Binary(string="Attachment")
     note = fields.Char(string="Note")
@@ -23,20 +24,21 @@ class PurchaseOrderPaymentWizard(models.TransientModel):
     def action_confirm(self):
         self.ensure_one()
 
-        if self.amount <= 0:
+        if self.amount_usd <= 0:
             raise UserError("Amount ต้องมากกว่า 0")
 
         po = self.purchase_order_id
         if po.state not in ["po_issued", "documents_completed", "clearing"]:
             raise UserError("สามารถจ่ายเงินได้เฉพาะ PO ที่อยู่ใน status Issued, Documents Completed, หรือ Clearing เท่านั้น")
 
-        if float_compare(self.amount, po.balance_amount, precision_digits=2) > 0:
+        if float_compare(self.amount_usd, po.balance_amount_usd, precision_digits=2) > 0:
             raise UserError("Amount ต้องไม่มากกว่ายอดคงเหลือของ PO")
 
         payment = self.env["five.five.purchase.order.payment"].create(
             {
                 "purchase_order_id": po.id,
-                "amount": self.amount,
+                "amount_usd": self.amount_usd,
+                "amount_thb": self.amount_thb,
                 "pay_at": self.pay_at,
                 "attachment": self.attachment,
                 "note": self.note,

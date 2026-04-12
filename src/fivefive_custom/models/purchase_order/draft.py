@@ -35,6 +35,7 @@ class PurchaseOrder(models.Model):
     )
     total_amount_usd = fields.Float(string="Total Amount (USD)", compute="_compute_total_amount", store=True)
     amount_paid_usd = fields.Float(string="Amount Paid (USD)", default=0.0)
+    amount_paid_thb = fields.Float(string="Amount Paid (THB)", default=0.0)
     balance_amount_usd = fields.Float(string="Balance Amount (USD)", compute="_compute_balance_amount", store=True)
 
     supplier_name = fields.Char(string="Supplier Name")

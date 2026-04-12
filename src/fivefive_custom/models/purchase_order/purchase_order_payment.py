@@ -14,7 +14,8 @@ class PurchaseOrderPayment(models.Model):
         index=True,
     )
 
-    amount = fields.Float(string="Amount", required=True)
+    amount_usd = fields.Float(string="Amount (USD)", default=0, required=True)
+    amount_thb = fields.Float(string="Amount (THB)", default=0, required=True)
     pay_at = fields.Date(string="Payment At", required=True)
     attachment = fields.Binary(string="Attachment")
     note = fields.Char(string="Note")
@@ -39,10 +40,12 @@ class PurchaseOrderPayment(models.Model):
 
     def _recompute_purchase_order_payment_summary(self, purchase_orders):
         for po in purchase_orders:
-            amount_paid = sum(po.payment_ids.mapped("amount"))
+            amount_paid_usd = sum(po.payment_ids.mapped("amount_usd"))
+            amount_paid_thb = sum(po.payment_ids.mapped("amount_thb"))
             po.write(
                 {
-                    "amount_paid": amount_paid,
+                    "amount_paid_usd": amount_paid_usd,
+                    "amount_paid_thb": amount_paid_thb,
                 }
             )
 
@@ -50,7 +53,7 @@ class PurchaseOrderPayment(models.Model):
         self.ensure_one()
         if self.is_cancel:
             raise UserError("Payment นี้ถูกยกเลิกไปแล้ว")
-        if float_compare(self.amount, 0, precision_digits=2) <= 0:
+        if float_compare(self.amount_usd, 0, precision_digits=2) <= 0:
             raise UserError("ยกเลิกได้เฉพาะ Payment ที่มียอดมากกว่า 0")
         if self.is_reversed:
             raise UserError("Payment นี้ถูกยกเลิกไปแล้ว")
@@ -71,7 +74,7 @@ class PurchaseOrderPayment(models.Model):
             if payment.is_cancel:
                 raise UserError("Payment นี้ถูกยกเลิกไปแล้ว")
 
-            if float_compare(payment.amount, 0, precision_digits=2) <= 0:
+            if float_compare(payment.amount_usd, 0, precision_digits=2) <= 0:
                 raise UserError("ยกเลิกได้เฉพาะ Payment ที่มียอดมากกว่า 0")
 
             existed_reversal = self.search_count([("reversed_from_payment_id", "=", payment.id)])
@@ -86,7 +89,8 @@ class PurchaseOrderPayment(models.Model):
                 {
                     "purchase_order_id": payment.purchase_order_id.id,
                     "pay_at": fields.Date.context_today(self),
-                    "amount": -abs(payment.amount),
+                    "amount_usd": -abs(payment.amount_usd),
+                    "amount_thb": -abs(payment.amount_thb),
                     "is_cancel": True,
                     "cancel_reason": reason,
                     "cancel_attachment": cancel_attachment,
