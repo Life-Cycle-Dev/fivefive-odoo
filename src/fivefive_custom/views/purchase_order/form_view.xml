@@ -9,6 +9,7 @@
 						<button name="action_po_issue" string="Issue" type="object" class="btn-primary" invisible="state != 'draft'"/>
 						<button name="action_cancel" string="Cancel" type="object" class="btn-danger" invisible="state != 'draft'"/>
 						<button name="action_post" string="Post" type="object" class="btn-primary" invisible="state != 'po_issued'"/>
+						<button name="action_pay" string="Clearing" type="object" class="btn-primary" invisible="state not in ['documents_completed']"/>
 						<button name="action_pay" string="Pay" type="object" class="btn-primary" invisible="state not in ['documents_completed', 'clearing'] or balance_amount_usd == 0"/>
 						<button name="action_reset_to_draft" string="Reset to draft" type="object" class="btn-secondary" invisible="state not in ['documents_completed', 'po_issued']"/>
 						<field name="state" widget="statusbar" statusbar_visible="draft,po_issued,documents_completed,clearing,closed,cancelled"/>
@@ -85,12 +86,13 @@
 						</page>
 							<page string="Payment">
 								<field name="payment_ids" readonly="1">
-									<list decoration-danger="is_cancel" decoration-success="not is_cancel">
+									<list editable="bottom" decoration-danger="is_cancel" decoration-success="not is_cancel">
 										<field name="pay_at" width="200px"/>
 										<field name="amount_usd" width="100px"/>
 										<field name="amount_thb" width="100px"/>
 										<field name="note" width="200px"/>
 										<field name="cancel_reason" width="200px"/>
+										<field name="attachment" width="200px"/>
 										<button
 											name="action_open_cancel_payment_wizard"
 											type="object"
