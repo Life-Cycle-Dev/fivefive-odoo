@@ -155,7 +155,7 @@ class PurchaseOrder(models.Model):
         if self.state != "draft":
             raise UserError("สามารถ Cancel PO ที่อยู่ใน status Draft เท่านั้น ไม่สามารถดำเนินการต่อได้")
 
-        if self.amount_paid > 0:
+        if self.amount_paid_usd > 0:
             raise UserError("ไม่สามารถ Cancel PO ที่มีการจ่ายเงินแล้วได้ กรุณาดำเนินการยกเลิกการจ่ายก่อนดำเนินการต่อ")
 
         return {
