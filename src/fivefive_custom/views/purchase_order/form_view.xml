@@ -9,6 +9,7 @@
 						<button name="action_po_issue" string="Issue" type="object" class="btn-primary" invisible="state != 'draft'"/>
 						<button name="action_cancel" string="Cancel" type="object" class="btn-danger" invisible="state != 'draft'"/>
 						<button name="action_post" string="Post" type="object" class="btn-primary" invisible="state != 'po_issued'"/>
+						<button name="action_pay" string="Pay" type="object" class="btn-primary" invisible="state != 'documents_completed'"/>
 						<button name="action_reset_to_draft" string="Reset to draft" type="object" class="btn-secondary" invisible="state not in ['documents_completed', 'po_issued']"/>
 						<field name="state" widget="statusbar" statusbar_visible="draft,po_issued,documents_completed,clearing,closed,cancelled"/>
 					</header>
@@ -22,6 +23,11 @@
 						<group>
 							<field name="reason_cancel" class="text-danger" placeholder="Reason for Cancel" readonly="1" invisible="state != 'cancelled'"/>
 							<field name="supplier_id" placeholder="Select a supplier..." readonly="state not in ['draft', 'po_issued']"/>
+						</group>
+						<group>
+							<field name="shipment_container_no" invisible="state in ['draft']"/>
+							<field name="bl_no" invisible="state in ['draft']"/>
+							<field name="arrived_at" invisible="state in ['draft']"/>
 						</group>
 					</group>
 
@@ -58,6 +64,7 @@
 						<page string="Documents">
 							<field name="document_ids" readonly="state not in ['draft', 'po_issued']">
 								<list editable="bottom" class="ff_confirm_list_delete">
+									<field name="number"/>
 									<field name="attachment_name" string="Name"/>
 									<field name="type"/>
 									<field

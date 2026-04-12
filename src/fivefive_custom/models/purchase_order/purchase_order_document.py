@@ -8,6 +8,7 @@ class PurchaseOrderDocument(models.Model):
     _name = "five.five.purchase.order.document"
     _description = "Purchase Order Document"
 
+    number = fields.Char(string="Document Number")
     purchase_order_id = fields.Many2one(
         "five.five.purchase.order",
         string="Purchase Order",

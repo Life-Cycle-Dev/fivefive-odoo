@@ -13,3 +13,5 @@ access_five_five_commercial_invoice_line_user,access.five.five.commercial.invoic
 access_five_five_inventory_user,access.five.five.inventory.user,model_five_five_inventory,,1,1,1,1
 access_five_five_warehouse_user,access.five.five.warehouse.user,model_five_five_warehouse,,1,1,1,1
 access_five_five_product_size_user,access.five.five.product.size.user,model_five_five_product_size,,1,1,1,1
+access_five_five_purchase_order_payment_user,access.five.five.purchase.order.payment.user,model_five_five_purchase_order_payment,,1,1,1,1
+access_five_five_purchase_order_payment_wizard_user,access.five.five.purchase.order.payment.wizard.user,model_five_five_purchase_order_payment_wizard,,1,1,1,1

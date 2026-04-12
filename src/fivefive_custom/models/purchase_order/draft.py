@@ -153,5 +153,7 @@ class PurchaseOrder(models.Model):
             "res_model": "five.five.purchase.order.cancel.wizard",
             "view_mode": "form",
             "target": "new",
-            "context": {"default_purchase_order_id": self.id},
+            "context": {
+                "default_purchase_order_id": self.id
+            },
         }

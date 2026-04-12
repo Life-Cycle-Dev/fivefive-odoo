@@ -8,7 +8,17 @@ class PurchaseOrderDocumentCompleted(models.Model):
         "five.five.purchase.order.document",
         "purchase_order_id",
         string="Documents",
-        required=True,
+        tracking=True,
+    )
+
+    shipment_container_no = fields.Char(string="Container NO.")
+    bl_no = fields.Char(string="BL NO.")
+    arrived_at = fields.Date(string="Arrived at (eta)")
+
+    payment_ids = fields.One2many(
+        "five.five.purchase.order.payment",
+        "purchase_order_id",
+        string="Payments",
         tracking=True,
     )
 
@@ -16,6 +26,15 @@ class PurchaseOrderDocumentCompleted(models.Model):
         for record in self:
             if record.state != "po_issued":
                 raise UserError("เฉพาะ PO ที่อยู่ใน status PO Issued เท่านั้น ที่สามารถ Post ได้ ไม่สามารถดำเนินการต่อได้")
+
+            if record.shipment_container_no == "" or not record.shipment_container_no:
+                raise UserError("กรุณาใส่ Container NO. ก่อน Post PO")
+
+            if record.bl_no == "" or not record.bl_no:
+                raise UserError("กรุณาใส่ BL NO. ก่อน Post PO")
+
+            if record.arrived_at == "" or not record.arrived_at:
+                raise UserError("กรุณาใส่ Arrived at (eta) ก่อน Post PO")
 
             required_types = {"ci", "pl", "bl", "co", "hc"}
             attached_types = set(record.document_ids.mapped("type"))
@@ -35,3 +54,17 @@ class PurchaseOrderDocumentCompleted(models.Model):
             record.state = "draft"
 
         return True
+
+    def action_pay(self):
+        self.ensure_one()
+
+        return {
+            "type": "ir.actions.act_window",
+            "name": "ทำเรื่องการจ่ายเงิน PO",
+            "res_model": "five.five.purchase.order.payment.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_purchase_order_id": self.id
+            },
+        }
