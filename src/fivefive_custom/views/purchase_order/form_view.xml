@@ -9,8 +9,8 @@
 						<button name="action_po_issue" string="Issue" type="object" class="btn-primary" invisible="state != 'draft'"/>
 						<button name="action_cancel" string="Cancel" type="object" class="btn-danger" invisible="state != 'draft'"/>
 						<button name="action_post" string="Post" type="object" class="btn-primary" invisible="state != 'po_issued'"/>
-						<button name="action_pay" string="Clearing" type="object" class="btn-primary" invisible="state not in ['documents_completed']"/>
-						<button name="action_pay" string="Pay" type="object" class="btn-primary" invisible="state not in ['documents_completed', 'clearing'] or balance_amount_usd == 0"/>
+						<button name="action_clearing" string="Clearing" type="object" class="btn-primary" invisible="state not in ['documents_completed']"/>
+						<button name="action_pay" string="Pay" type="object" class="btn-primary" invisible="state not in ['po_issued', 'documents_completed', 'clearing'] or balance_amount_usd == 0"/>
 						<button name="action_reset_to_draft" string="Reset to draft" type="object" class="btn-secondary" invisible="state not in ['documents_completed', 'po_issued']"/>
 						<field name="state" widget="statusbar" statusbar_visible="draft,po_issued,documents_completed,clearing,closed,cancelled"/>
 					</header>

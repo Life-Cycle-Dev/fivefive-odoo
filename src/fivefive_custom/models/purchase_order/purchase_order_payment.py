@@ -51,6 +51,8 @@ class PurchaseOrderPayment(models.Model):
 
     def action_open_cancel_payment_wizard(self):
         self.ensure_one()
+        if self.purchase_order_id.state == "clearing":
+            raise UserError("ไม่สามารถยกเลิก Payment ที่อยู่ใน status Clearing ได้")
         if self.is_cancel:
             raise UserError("Payment นี้ถูกยกเลิกไปแล้ว")
         if float_compare(self.amount_usd, 0, precision_digits=2) <= 0:
@@ -71,6 +73,9 @@ class PurchaseOrderPayment(models.Model):
 
     def action_cancel_payment(self, reason, cancel_attachment=False, cancel_attachment_name=False):
         for payment in self:
+            if payment.purchase_order_id.state == "clearing":
+                raise UserError("ไม่สามารถยกเลิก Payment ที่อยู่ใน status Clearing ได้")
+
             if payment.is_cancel:
                 raise UserError("Payment นี้ถูกยกเลิกไปแล้ว")
 

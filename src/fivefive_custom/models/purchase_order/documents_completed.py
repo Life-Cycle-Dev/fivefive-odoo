@@ -72,3 +72,15 @@ class PurchaseOrderDocumentCompleted(models.Model):
                 "default_amount_usd": default_amount_usd,
             },
         }
+
+    def action_clearing(self):
+        for record in self:
+            if record.state != 'documents_completed':
+                raise UserError("สามารถ Clearing PO ที่อยู่ใน status Documents Completed เท่านั้น ไม่สามารถดำเนินการต่อได้")
+
+            if record.balance_amount_usd != 0:
+                raise UserError("สามารถ Clearing PO ที่มียอดคงเหลือเป็น 0 เท่านั้น ไม่สามารถดำเนินการต่อได้")
+
+            record.state = "clearing"
+
+        return True
