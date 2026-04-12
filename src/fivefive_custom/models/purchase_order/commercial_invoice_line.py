@@ -32,14 +32,14 @@ class CommercialInvoiceLine(models.Model):
         string="Grade",
         required=True,
     )
-    unit_price = fields.Float(string="Unit Price", required=True)
+    unit_price_usd = fields.Float(string="Unit Price (USD)", required=True)
     quantity = fields.Float(string="Quantity", required=True)
-    total_price = fields.Float(string="Total Price", compute="_compute_total_price", store=True)
+    total_price_usd = fields.Float(string="Total Price (USD)", compute="_compute_total_price", store=True)
 
-    @api.depends("unit_price", "quantity")
+    @api.depends("unit_price_usd", "quantity")
     def _compute_total_price(self):
         for line in self:
-            line.total_price = line.quantity * line.unit_price
+            line.total_price_usd = line.quantity * line.unit_price_usd
 
     @api.model
     def _ff_po_states_allow_line_mutation(self, purchase_orders):

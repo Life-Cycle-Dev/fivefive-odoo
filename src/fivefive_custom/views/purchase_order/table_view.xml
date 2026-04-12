@@ -19,8 +19,8 @@
 					decoration-danger="state == 'cancelled'"
 				/>
 				<field name="supplier_id"/>
-				<field name="total_amount"/>
-				<field name="balance_amount" width="200px"/>
+				<field name="total_amount_usd" width="250px"/>
+				<field name="balance_amount_usd" width="250px"/>
 			</list>
 		</field>
 	</record>

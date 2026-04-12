@@ -1,5 +1,6 @@
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+from odoo.tools.float_utils import float_compare
 
 _SUPPLIER_SNAPSHOT_FIELDS = (
     "supplier_name",
@@ -32,9 +33,9 @@ class PurchaseOrder(models.Model):
         "purchase_order_id",
         string="Commercial Invoice Lines",
     )
-    total_amount = fields.Float(string="Total Amount", compute="_compute_total_amount", store=True)
-    amount_paid = fields.Float(string="Amount Paid", default=0.0)
-    balance_amount = fields.Float(string="Balance Amount", compute="_compute_balance_amount", store=True)
+    total_amount_usd = fields.Float(string="Total Amount (USD)", compute="_compute_total_amount", store=True)
+    amount_paid_usd = fields.Float(string="Amount Paid (USD)", default=0.0)
+    balance_amount_usd = fields.Float(string="Balance Amount (USD)", compute="_compute_balance_amount", store=True)
 
     supplier_name = fields.Char(string="Supplier Name")
     supplier_tax_id = fields.Char(string="Supplier Tax ID")
@@ -117,15 +118,21 @@ class PurchaseOrder(models.Model):
         else:
             self.update({name: False for name in _SUPPLIER_SNAPSHOT_FIELDS})
 
-    @api.depends("commercial_invoice_line_ids.total_price")
+    @api.depends("commercial_invoice_line_ids.total_price_usd")
     def _compute_total_amount(self):
         for record in self:
-            record.total_amount = sum(record.commercial_invoice_line_ids.mapped("total_price"))
+            record.total_amount_usd = sum(record.commercial_invoice_line_ids.mapped("total_price_usd"))
 
-    @api.depends("total_amount", "amount_paid")
+    @api.depends("total_amount_usd", "amount_paid_usd")
     def _compute_balance_amount(self):
         for record in self:
-            record.balance_amount = record.total_amount - record.amount_paid
+            record.balance_amount_usd = record.total_amount_usd - record.amount_paid_usd
+
+    @api.constrains("total_amount_usd", "amount_paid_usd", "commercial_invoice_line_ids", "commercial_invoice_line_ids.total_price_usd")
+    def _check_total_amount_not_less_than_amount_paid(self):
+        for record in self:
+            if float_compare(record.total_amount_usd, record.amount_paid_usd, precision_digits=2) < 0:
+                raise UserError("ไม่สามารถอัปเดต Commercial Invoice Lines ได้ เพราะยอดรวมจะน้อยกว่า Amount Paid")
 
     def action_po_issue(self):
         for record in self:
@@ -146,6 +153,9 @@ class PurchaseOrder(models.Model):
         self.ensure_one()
         if self.state != "draft":
             raise UserError("สามารถ Cancel PO ที่อยู่ใน status Draft เท่านั้น ไม่สามารถดำเนินการต่อได้")
+
+        if self.amount_paid > 0:
+            raise UserError("ไม่สามารถ Cancel PO ที่มีการจ่ายเงินแล้วได้ กรุณาดำเนินการยกเลิกการจ่ายก่อนดำเนินการต่อ")
 
         return {
             "type": "ir.actions.act_window",

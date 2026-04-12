@@ -9,7 +9,7 @@
 						<button name="action_po_issue" string="Issue" type="object" class="btn-primary" invisible="state != 'draft'"/>
 						<button name="action_cancel" string="Cancel" type="object" class="btn-danger" invisible="state != 'draft'"/>
 						<button name="action_post" string="Post" type="object" class="btn-primary" invisible="state != 'po_issued'"/>
-						<button name="action_pay" string="Pay" type="object" class="btn-primary" invisible="state != 'documents_completed'"/>
+						<button name="action_pay" string="Pay" type="object" class="btn-primary" invisible="state not in ['documents_completed', 'po_issued']"/>
 						<button name="action_reset_to_draft" string="Reset to draft" type="object" class="btn-secondary" invisible="state not in ['documents_completed', 'po_issued']"/>
 						<field name="state" widget="statusbar" statusbar_visible="draft,po_issued,documents_completed,clearing,closed,cancelled"/>
 					</header>
@@ -55,9 +55,9 @@
 									<field name="unit_id" width="100px"/>
 									<field name="size_id" width="100px"/>
 									<field name="grade_id" width="100px"/>
-									<field name="unit_price"/>
+									<field name="unit_price_usd"/>
 									<field name="quantity"/>
-									<field name="total_price" readonly="1"/>
+									<field name="total_price_usd" readonly="1"/>
 								</list>
 							</field>
 						</page>
@@ -83,6 +83,24 @@
 								</list>
 							</field>
 						</page>
+							<page string="Payment">
+								<field name="payment_ids" readonly="1">
+									<list decoration-danger="is_cancel" decoration-success="not is_cancel">
+										<field name="pay_at" width="200px"/>
+										<field name="amount" width="100px"/>
+										<field name="note" width="200px"/>
+										<field name="cancel_reason" width="200px"/>
+										<button
+											name="action_open_cancel_payment_wizard"
+											type="object"
+											string="Cancel Payment"
+											class="btn-link text-danger"
+											icon="fa-ban"
+											invisible="is_cancel or is_reversed"
+										/>
+									</list>
+								</field>
+							</page>
 					</notebook>
 
 					<group class="mt-4">
@@ -90,9 +108,9 @@
 
 						</group>
 						<group class="ms-auto ff_po_totals">
-							<field name="total_amount" readonly="1" class="text-end"/>
-							<field name="amount_paid" readonly="1" class="text-end"/>
-							<field name="balance_amount" readonly="1" class="text-end"/>
+							<field name="total_amount_usd" readonly="1" class="text-end"/>
+							<field name="amount_paid_usd" readonly="1" class="text-end"/>
+							<field name="balance_amount_usd" readonly="1" class="text-end"/>
 						</group>
 					</group>
 				</sheet>

@@ -15,3 +15,4 @@ access_five_five_warehouse_user,access.five.five.warehouse.user,model_five_five_
 access_five_five_product_size_user,access.five.five.product.size.user,model_five_five_product_size,,1,1,1,1
 access_five_five_purchase_order_payment_user,access.five.five.purchase.order.payment.user,model_five_five_purchase_order_payment,,1,1,1,1
 access_five_five_purchase_order_payment_wizard_user,access.five.five.purchase.order.payment.wizard.user,model_five_five_purchase_order_payment_wizard,,1,1,1,1
+access_five_five_purchase_order_payment_cancel_wizard_user,access.five.five.purchase.order.payment.cancel.wizard.user,model_five_five_purchase_order_payment_cancel_wizard,,1,1,1,1
