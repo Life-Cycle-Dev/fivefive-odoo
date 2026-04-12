@@ -26,9 +26,9 @@
 							<field name="supplier_id" placeholder="Select a supplier..." readonly="state not in ['draft', 'po_issued']"/>
 						</group>
 						<group>
-							<field name="shipment_container_no" invisible="state in ['draft']"/>
-							<field name="bl_no" invisible="state in ['draft']"/>
-							<field name="arrived_at" invisible="state in ['draft']"/>
+							<field name="shipment_container_no" invisible="state in ['draft']" readonly="state not in ['po_issued', 'documents_completed']"/>
+							<field name="bl_no" invisible="state in ['draft']" readonly="state not in ['po_issued', 'documents_completed']"/>
+							<field name="arrived_at" invisible="state in ['draft']" readonly="state not in ['po_issued', 'documents_completed']"/>
 						</group>
 					</group>
 
