@@ -25,13 +25,13 @@
 						<group>
 							<field name="reason_cancel" class="text-danger" placeholder="Reason for Cancel" readonly="1" invisible="state != 'cancelled'"/>
 							<field name="supplier_id" placeholder="Select a supplier..." readonly="state not in ['draft', 'po_issued']"/>
+							<field name="warehouse_id" invisible="state not in ['clearing', 'closed']" readonly="1"/>
+							<field name="logistic_id" invisible="state not in ['clearing', 'closed']" readonly="1"/>
 						</group>
 						<group>
 							<field name="shipment_container_no" invisible="state in ['draft']" readonly="state not in ['po_issued', 'documents_completed']"/>
 							<field name="bl_no" invisible="state in ['draft']" readonly="state not in ['po_issued', 'documents_completed']"/>
 							<field name="arrived_at" invisible="state in ['draft']" readonly="state not in ['po_issued', 'documents_completed']"/>
-							<field name="warehouse_id" invisible="state not in ['clearing', 'closed']" readonly="1"/>
-							<field name="logistic_id" invisible="state not in ['clearing', 'closed']" readonly="1"/>
 						</group>
 					</group>
 
