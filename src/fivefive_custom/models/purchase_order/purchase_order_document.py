@@ -24,6 +24,7 @@ class PurchaseOrderDocument(models.Model):
             ("bl", "BL"),
             ("co", "CO"),
             ("hc", "HC"),
+            ("do", "DO"),
             ("other", "Other"),
         ],
         string="Document Type",
@@ -37,6 +38,9 @@ class PurchaseOrderDocument(models.Model):
 
     @api.model
     def _ff_po_states_allow_document_mutation(self, purchase_orders):
+        if self.env.context.get("skip_po_document_state_check"):
+            return
+
         invalid = purchase_orders.filtered(
             lambda p: p and p.state not in _ALLOWED_PO_STATES_FOR_DOCUMENTS
         )

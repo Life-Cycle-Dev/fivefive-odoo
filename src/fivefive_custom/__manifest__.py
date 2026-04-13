@@ -18,6 +18,7 @@
         "data/purchase_order_sequence.xml",
         "views/purchase_order/table_view.xml",
         "views/purchase_order/pay_wizard.xml",
+        "views/purchase_order/clearing_wizard.xml",
         "views/purchase_order/payment_cancel_wizard.xml",
         "views/purchase_order/cancel_wizard.xml",
         "views/purchase_order/form_view.xml",

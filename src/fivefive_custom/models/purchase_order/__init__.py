@@ -7,3 +7,4 @@ from . import purchase_order_document
 from . import purchase_order_document_upload_wizard
 from . import purchase_order_cancel_wizard
 from . import documents_completed
+from . import purchase_order_clearing_wizard

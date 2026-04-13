@@ -4,7 +4,7 @@ from odoo.exceptions import UserError
 
 class PurchaseOrderDocumentUploadWizard(models.TransientModel):
     _name = "five.five.purchase.order.document.upload.wizard"
-    _description = "Upload purchase order document file"
+    _description = "Upload purchase order document file wizard"
 
     document_id = fields.Many2one(
         "five.five.purchase.order.document",

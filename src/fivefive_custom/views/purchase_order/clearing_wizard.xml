@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_five_five_purchase_order_clearing_wizard_form" model="ir.ui.view">
+        <field name="name">five.five.purchase.order.clearing.wizard.form</field>
+        <field name="model">five.five.purchase.order.clearing.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Clearing PO">
+                <group>
+                    <field name="purchase_order_id" readonly="1"/>
+                    <field name="warehouse_id"/>
+                    <field name="logistic_id"/>
+                </group>
+                <group string="DO Document">
+                    <field name="do_attachment_number"/>
+                    <field name="do_attachment_name" readonly="1" invisible="1"/>
+                    <field name="do_attachment" filename="do_attachment_name" required="1"/>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object" string="ยืนยัน" class="btn-primary"/>
+                    <button special="cancel" string="ปิด" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -4,7 +4,7 @@ from odoo.exceptions import UserError
 
 class PurchaseOrderPaymentCancelWizard(models.TransientModel):
     _name = "five.five.purchase.order.payment.cancel.wizard"
-    _description = "Cancel purchase order payment with reason"
+    _description = "Cancel purchase order payment with reason wizard"
 
     payment_id = fields.Many2one(
         "five.five.purchase.order.payment",
