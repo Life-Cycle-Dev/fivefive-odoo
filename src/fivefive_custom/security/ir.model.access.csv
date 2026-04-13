@@ -8,6 +8,7 @@ access_five_five_product_grade_user,access.five.five.product.grade.user,model_fi
 access_five_five_store_user,access.five.five.store.user,model_five_five_store,,1,1,1,1
 access_five_five_purchase_order_user,access.five.five.purchase.order.user,model_five_five_purchase_order,,1,1,1,1
 access_five_five_purchase_order_cancel_wizard_user,access.five.five.purchase.order.cancel.wizard.user,model_five_five_purchase_order_cancel_wizard,,1,1,1,1
+access_five_five_purchase_order_cancel_clearing_wizard_user,access.five.five.purchase.order.cancel.clearing.wizard.user,model_five_five_purchase_order_cancel_clearing_wizard,,1,1,1,1
 access_five_five_purchase_order_document_user,access.five.five.purchase.order.document.user,model_five_five_purchase_order_document,,1,1,1,1
 access_five_five_commercial_invoice_line_user,access.five.five.commercial.invoice.line.user,model_five_five_commercial_invoice_line,,1,1,1,1
 access_five_five_inventory_user,access.five.five.inventory.user,model_five_five_inventory,,1,1,1,1

@@ -11,6 +11,7 @@
 						<button name="action_post" string="Post" type="object" class="btn-primary" invisible="state != 'po_issued'"/>
 						<button name="action_clearing" string="Clearing" type="object" class="btn-primary" invisible="state not in ['documents_completed'] or balance_amount_usd != 0"/>
 						<button name="action_pay" string="Pay" type="object" class="btn-primary" invisible="state not in ['po_issued', 'documents_completed', 'clearing'] or balance_amount_usd == 0"/>
+						<button name="action_cancel_clearing" string="Cancel Clearing" type="object" class="btn-secondary" invisible="state not in ['clearing']"/>
 						<button name="action_reset_to_draft" string="Reset to draft" type="object" class="btn-secondary" invisible="state not in ['documents_completed', 'po_issued']"/>
 						<field name="state" widget="statusbar" statusbar_visible="draft,po_issued,documents_completed,clearing,closed,cancelled"/>
 					</header>
@@ -29,8 +30,8 @@
 							<field name="shipment_container_no" invisible="state in ['draft']" readonly="state not in ['po_issued', 'documents_completed']"/>
 							<field name="bl_no" invisible="state in ['draft']" readonly="state not in ['po_issued', 'documents_completed']"/>
 							<field name="arrived_at" invisible="state in ['draft']" readonly="state not in ['po_issued', 'documents_completed']"/>
-							<field name="warehouse_id" invisible="state in ['draft']" readonly="1"/>
-							<field name="logistic_id" invisible="state in ['draft']" readonly="1"/>
+							<field name="warehouse_id" invisible="state not in ['clearing', 'closed']" readonly="1"/>
+							<field name="logistic_id" invisible="state not in ['clearing', 'closed']" readonly="1"/>
 						</group>
 					</group>
 

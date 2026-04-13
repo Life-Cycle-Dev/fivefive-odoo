@@ -111,3 +111,19 @@ class PurchaseOrderDocumentCompleted(models.Model):
                 "default_logistic_id": self.logistic_id.id,
             },
         }
+
+    def action_cancel_clearing(self):
+        self.ensure_one()
+        if self.state != "clearing":
+            raise UserError("สามารถ Cancel Clearing ได้เฉพาะ PO ที่อยู่ใน status Clearing เท่านั้น")
+
+        return {
+            "type": "ir.actions.act_window",
+            "name": "ยืนยันยกเลิก Clearing",
+            "res_model": "five.five.purchase.order.cancel.clearing.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_purchase_order_id": self.id,
+            },
+        }

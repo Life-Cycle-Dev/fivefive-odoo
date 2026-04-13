@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_five_five_purchase_order_cancel_clearing_wizard_form" model="ir.ui.view">
+        <field name="name">five.five.purchase.order.cancel.clearing.wizard.form</field>
+        <field name="model">five.five.purchase.order.cancel.clearing.wizard</field>
+        <field name="arch" type="xml">
+            <form string="ยืนยันยกเลิก Clearing">
+                <group>
+                    <field name="purchase_order_id" readonly="1"/>
+                </group>
+                <group string="ข้อมูลที่จะถูกลบเมื่อยืนยัน">
+                    <div>- เอกสาร DO Document</div>
+                    <div>- ค่า Warehouse ใน PO</div>
+                    <div>- ค่า Logistic ใน PO</div>
+                    <div>- สถานะจะเปลี่ยนจาก Clearing กลับเป็น Documents Completed</div>
+                </group>
+                <footer>
+                    <button name="action_confirm_cancel_clearing" type="object" string="ยกเลิก Clearing" class="btn-danger"/>
+                    <button special="cancel" string="ปิด" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
