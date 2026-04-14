@@ -18,3 +18,10 @@ access_five_five_purchase_order_payment_user,access.five.five.purchase.order.pay
 access_five_five_purchase_order_payment_wizard_user,access.five.five.purchase.order.payment.wizard.user,model_five_five_purchase_order_payment_wizard,,1,1,1,1
 access_five_five_purchase_order_payment_cancel_wizard_user,access.five.five.purchase.order.payment.cancel.wizard.user,model_five_five_purchase_order_payment_cancel_wizard,,1,1,1,1
 access_five_five_purchase_order_clearing_wizard_user,access.five.five.purchase.order.clearing.wizard.user,model_five_five_purchase_order_clearing_wizard,,1,1,1,1
+access_five_five_product_convert_user,access.five.five.product.convert.user,model_five_five_product_convert,,1,1,1,1
+access_five_five_product_cost_user,access.five.five.product.cost.user,model_five_five_product_cost,,1,1,1,1
+access_five_five_commercial_invoice_line_convert_wizard_user,access.five.five.commercial.invoice.line.convert.wizard.user,model_five_five_commercial_invoice_line_convert_wizard,,1,1,1,1
+access_five_five_commercial_invoice_line_convert_wizard_line_user,access.five.five.commercial.invoice.line.convert.wizard.line.user,model_five_five_commercial_invoice_line_convert_wizard_line,,1,1,1,1
+access_five_five_product_convert_cost_wizard_user,access.five.five.product.convert.cost.wizard.user,model_five_five_product_convert_cost_wizard,,1,1,1,1
+access_five_five_product_convert_cost_wizard_line_user,access.five.five.product.convert.cost.wizard.line.user,model_five_five_product_convert_cost_wizard_line,,1,1,1,1
+access_five_five_commercial_invoice_line_convert_add_line_wizard_user,access.five.five.commercial.invoice.line.convert.add.line.wizard.user,model_five_five_commercial_invoice_line_convert_add_line_wizard,,1,1,1,1

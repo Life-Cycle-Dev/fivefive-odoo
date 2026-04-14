@@ -9,3 +9,6 @@ from . import purchase_order_cancel_wizard
 from . import purchase_order_cancel_clearing_wizard
 from . import documents_completed
 from . import purchase_order_clearing_wizard
+from . import commercial_invoice_line_convert_wizard
+from . import commercial_invoice_line_convert_add_line_wizard
+from . import product_convert_cost_wizard

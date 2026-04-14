@@ -33,6 +33,12 @@ class PurchaseOrder(models.Model):
         "purchase_order_id",
         string="Commercial Invoice Lines",
     )
+    converted_product_ids = fields.One2many(
+        "five.five.product.convert",
+        "purchase_order_id",
+        string="Converted Products",
+        readonly=True,
+    )
     total_amount_usd = fields.Float(string="Total Amount (USD)", compute="_compute_total_amount", store=True)
     amount_paid_usd = fields.Float(string="Amount Paid (USD)", default=0.0)
     amount_paid_thb = fields.Float(string="Amount Paid (THB)", default=0.0)

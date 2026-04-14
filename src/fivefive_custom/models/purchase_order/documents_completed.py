@@ -26,6 +26,7 @@ class PurchaseOrderDocumentCompleted(models.Model):
     shipment_container_no = fields.Char(string="Container NO.")
     bl_no = fields.Char(string="BL NO.")
     arrived_at = fields.Date(string="Arrived at (eta)")
+    ci_number = fields.Char(string="CI Number")
 
     payment_ids = fields.One2many(
         "five.five.purchase.order.payment",

@@ -49,6 +49,24 @@ class PurchaseOrderDocument(models.Model):
                 "แก้ไข/เพิ่ม/ลบเอกสารแนบได้เฉพาะเมื่อ PO อยู่ใน Draft หรือ PO Issued เท่านั้น"
             )
 
+    @api.model
+    def _ff_sync_purchase_order_ci_number(self, purchase_orders):
+        purchase_orders = purchase_orders.filtered(lambda p: p)
+        if not purchase_orders:
+            return
+
+        for po in purchase_orders:
+            numbers = []
+            for n in po.document_ids.filtered(
+                lambda d: d.type == "ci" and d.number
+            ).mapped("number"):
+                n = (n or "").strip()
+                if n:
+                    numbers.append(n)
+
+            numbers = list(dict.fromkeys(numbers))
+            po.ci_number = ",".join(numbers) if numbers else False
+
     @api.model_create_multi
     def create(self, vals_list):
         po_ids = [v["purchase_order_id"] for v in vals_list if v.get("purchase_order_id")]
@@ -56,18 +74,27 @@ class PurchaseOrderDocument(models.Model):
             self._ff_po_states_allow_document_mutation(
                 self.env["five.five.purchase.order"].browse(po_ids)
             )
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        records._ff_sync_purchase_order_ci_number(records.mapped("purchase_order_id"))
+        return records
 
     def write(self, vals):
-        orders = self.mapped("purchase_order_id")
+        orders_before = self.mapped("purchase_order_id")
+        orders = orders_before
         if vals.get("purchase_order_id"):
             orders |= self.env["five.five.purchase.order"].browse(vals["purchase_order_id"])
         self._ff_po_states_allow_document_mutation(orders)
-        return super().write(vals)
+        res = super().write(vals)
+
+        self._ff_sync_purchase_order_ci_number(orders_before | self.mapped("purchase_order_id"))
+        return res
 
     def unlink(self):
-        self._ff_po_states_allow_document_mutation(self.mapped("purchase_order_id"))
-        return super().unlink()
+        orders = self.mapped("purchase_order_id")
+        self._ff_po_states_allow_document_mutation(orders)
+        res = super().unlink()
+        self._ff_sync_purchase_order_ci_number(orders)
+        return res
 
     def action_open_upload_wizard(self):
         self.ensure_one()

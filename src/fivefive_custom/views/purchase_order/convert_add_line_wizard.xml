@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+	<record id="view_five_five_commercial_invoice_line_convert_add_line_wizard_form" model="ir.ui.view">
+		<field name="name">five.five.commercial.invoice.line.convert.add.line.wizard.form</field>
+		<field name="model">five.five.commercial.invoice.line.convert.add.line.wizard</field>
+		<field name="arch" type="xml">
+			<form string="Convert Line">
+				<group string="Invoice Line">
+					<group>
+						<field name="wizard_id" invisible="1"/>
+						<field name="wizard_line_id" invisible="1"/>
+						<field name="commercial_invoice_line_name" readonly="1"/>
+					</group>
+					<group>
+						<field name="commercial_invoice_unit_id" readonly="1"/>
+						<field name="commercial_invoice_size_id" readonly="1"/>
+						<field name="commercial_invoice_grade_id" readonly="1"/>
+						<field name="commercial_invoice_quantity" readonly="1"/>
+					</group>
+				</group>
+
+				<group string="Convert Line">
+					<field name="product_variant_id"/>
+					<field name="quantity"/>
+					<field name="quality_note"/>
+				</group>
+				<footer>
+					<button name="action_apply" type="object" string="Save" class="btn-primary"/>
+					<button special="cancel" string="Cancel" class="btn-secondary"/>
+				</footer>
+			</form>
+		</field>
+	</record>
+</odoo>
+

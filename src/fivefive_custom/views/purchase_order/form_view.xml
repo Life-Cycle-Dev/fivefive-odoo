@@ -32,6 +32,7 @@
 							<field name="shipment_container_no" invisible="state in ['draft']" readonly="state not in ['po_issued', 'documents_completed']"/>
 							<field name="bl_no" invisible="state in ['draft']" readonly="state not in ['po_issued', 'documents_completed']"/>
 							<field name="arrived_at" invisible="state in ['draft']" readonly="state not in ['po_issued', 'documents_completed']"/>
+							<field name="ci_number" invisible="ci_number == '' or ci_number == False" readonly="1"/>
 						</group>
 					</group>
 
@@ -62,6 +63,8 @@
 									<field name="unit_price_usd"/>
 									<field name="quantity"/>
 									<field name="total_price_usd" readonly="1"/>
+									<button name="action_unconvert_products" string="Unconvert" type="object" width="30px" class="btn-danger" confirm="Unconvert จะลบ Converted Products และ Costs ทั้งหมดของบรรทัดนี้ คุณแน่ใจหรือไม่?" invisible="not is_convert_to_product"/>
+									<button name="action_convert_to_product" string="Convert" type="object" width="30px" class="btn-primary me-1" invisible="is_convert_to_product or po_state not in ['clearing']"/>
 								</list>
 							</field>
 						</page>
@@ -104,6 +107,17 @@
 											icon="fa-ban"
 											invisible="is_cancel or is_reversed"
 										/>
+									</list>
+								</field>
+							</page>
+							<page string="Converted Products">
+								<field name="converted_product_ids">
+									<list create="0" edit="0">
+										<field name="commercial_invoice_line_id"/>
+										<field name="product_variant_id"/>
+										<field name="quantity"/>
+										<field name="quality_note"/>
+										<field name="cost_summary" readonly="1"/>
 									</list>
 								</field>
 							</page>
