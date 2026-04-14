@@ -1,5 +1,6 @@
 from odoo import api, fields, models
 from odoo.exceptions import UserError
+from odoo.tools.float_utils import float_is_zero
 
 _ALLOWED_PO_STATES_FOR_LINES = ("draft", "po_issued")
 
@@ -115,6 +116,67 @@ class CommercialInvoiceLine(models.Model):
             "domain": [("commercial_invoice_line_id", "=", self.id)],
             "context": {"default_commercial_invoice_line_id": self.id},
         }
+
+    def _ff_recompute_auto_fixed_costs_for_converts(self):
+        """
+        Auto-create/update fixed costs on product.convert derived from this CI line.
+        - Exchange rate THB/USD = amount_paid_thb / amount_paid_usd on PO
+        - Per-qty USD = total_price_usd / total_converted_qty
+        - Fixed cost per qty (THB) = per-qty USD * exchange_rate
+        Recomputed for all converts of the CI line whenever quantities change.
+        """
+        ProductCost = self.env["five.five.product.cost"]
+
+        for line in self:
+            po = line.purchase_order_id
+            converts = line.product_convert_ids
+
+            # If no converts: nothing to compute, but keep line flag consistent.
+            if not converts:
+                line.with_context(skip_po_ci_line_state_check=True).write(
+                    {"is_convert_to_product": False}
+                )
+                continue
+
+            total_qty = sum(converts.mapped("quantity")) or 0.0
+            if float_is_zero(total_qty, precision_digits=6):
+                # Remove auto costs only; keep manual costs.
+                ProductCost.search(
+                    [
+                        ("product_convert_id", "in", converts.ids),
+                        ("is_auto_from_ci", "=", True),
+                    ]
+                ).unlink()
+                continue
+
+            amount_paid_usd = po.amount_paid_usd or 0.0
+            amount_paid_thb = po.amount_paid_thb or 0.0
+            exchange_rate = (amount_paid_thb / amount_paid_usd) if amount_paid_usd else 0.0
+
+            per_qty_usd = (line.total_price_usd or 0.0) / total_qty
+            fixed_cost_thb_per_qty = per_qty_usd * exchange_rate
+
+            # Remove old auto costs for all converts from this CI line.
+            ProductCost.search(
+                [
+                    ("product_convert_id", "in", converts.ids),
+                    ("is_auto_from_ci", "=", True),
+                ]
+            ).unlink()
+
+            # Re-create a single auto fixed cost line per convert.
+            ProductCost.create(
+                [
+                    {
+                        "product_convert_id": c.id,
+                        "cost_name": "Auto CI Cost",
+                        "cost": fixed_cost_thb_per_qty,
+                        "type": "fixed",
+                        "is_auto_from_ci": True,
+                    }
+                    for c in converts
+                ]
+            )
 
     def action_unconvert_products(self):
         for line in self:

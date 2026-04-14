@@ -43,6 +43,12 @@ class PurchaseOrder(models.Model):
     amount_paid_usd = fields.Float(string="Amount Paid (USD)", default=0.0)
     amount_paid_thb = fields.Float(string="Amount Paid (THB)", default=0.0)
     balance_amount_usd = fields.Float(string="Balance Amount (USD)", compute="_compute_balance_amount", store=True)
+    exchange_rate_thb_per_usd = fields.Float(
+        string="Rate (THB/USD)",
+        compute="_compute_exchange_rate_thb_per_usd",
+        store=False,
+        digits=(16, 6),
+    )
 
     supplier_name = fields.Char(string="Supplier Name")
     supplier_tax_id = fields.Char(string="Supplier Tax ID")
@@ -134,6 +140,14 @@ class PurchaseOrder(models.Model):
     def _compute_balance_amount(self):
         for record in self:
             record.balance_amount_usd = record.total_amount_usd - record.amount_paid_usd
+
+    @api.depends("amount_paid_thb", "amount_paid_usd")
+    def _compute_exchange_rate_thb_per_usd(self):
+        for record in self:
+            if record.amount_paid_usd:
+                record.exchange_rate_thb_per_usd = record.amount_paid_thb / record.amount_paid_usd
+            else:
+                record.exchange_rate_thb_per_usd = 0.0
 
     @api.constrains("total_amount_usd", "amount_paid_usd", "commercial_invoice_line_ids", "commercial_invoice_line_ids.total_price_usd")
     def _check_total_amount_not_less_than_amount_paid(self):

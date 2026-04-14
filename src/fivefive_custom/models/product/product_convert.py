@@ -74,6 +74,26 @@ class ProductConvert(models.Model):
                 line.with_context(skip_po_ci_line_state_check=True).write(
                     {"is_convert_to_product": False}
                 )
+            else:
+                # Quantities changed: recompute auto costs for remaining converts
+                line._ff_recompute_auto_fixed_costs_for_converts()
+        return res
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        ci_lines = records.mapped("commercial_invoice_line_id")
+        if ci_lines:
+            ci_lines._ff_recompute_auto_fixed_costs_for_converts()
+        return records
+
+    def write(self, vals):
+        ci_lines_before = self.mapped("commercial_invoice_line_id")
+        res = super().write(vals)
+        ci_lines_after = self.mapped("commercial_invoice_line_id")
+        ci_lines = ci_lines_before | ci_lines_after
+        if ci_lines and any(k in vals for k in ("quantity", "commercial_invoice_line_id")):
+            ci_lines._ff_recompute_auto_fixed_costs_for_converts()
         return res
 
     def action_open_form(self):

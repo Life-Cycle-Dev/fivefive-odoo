@@ -133,6 +133,7 @@
 							<field name="amount_paid_usd" readonly="1" class="text-end"/>
 							<field name="amount_paid_thb" readonly="1" class="text-end"/>
 							<field name="balance_amount_usd" readonly="1" class="text-end"/>
+							<field name="exchange_rate_thb_per_usd" readonly="1" class="text-end"/>
 						</group>
 					</group>
 				</sheet>

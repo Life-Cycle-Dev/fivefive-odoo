@@ -108,6 +108,8 @@ class CommercialInvoiceLineConvertWizard(models.TransientModel):
             )
 
         self.env["five.five.product.convert"].create(convert_vals_list)
+        # Auto-create/recompute fixed costs derived from CI for all converts of this CI line.
+        cil._ff_recompute_auto_fixed_costs_for_converts()
         cil.with_context(skip_po_ci_line_state_check=True).write(
             {"is_convert_to_product": True}
         )

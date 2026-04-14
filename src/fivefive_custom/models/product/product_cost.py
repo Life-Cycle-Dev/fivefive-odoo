@@ -40,3 +40,9 @@ class ProductCost(models.Model):
         default=fields.Date.context_today,
         help="ใช้สำหรับ cost แบบ interval (daily/weekly/monthly/yearly) ว่าจะเริ่มคิดตั้งแต่วันไหน",
     )
+
+    is_auto_from_ci = fields.Boolean(
+        string="Auto from CI",
+        default=False,
+        help="ต้นทุนที่ระบบสร้างอัตโนมัติจาก Commercial Invoice",
+    )
