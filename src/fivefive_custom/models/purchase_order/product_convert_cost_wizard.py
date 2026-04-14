@@ -112,7 +112,7 @@ class ProductConvertCostWizardLine(models.TransientModel):
     )
 
     cost_name = fields.Char(string="Cost Name", required=True)
-    cost = fields.Float(string="Cost (THB)", required=True, digits=(16, 2))
+    cost = fields.Float(string="Cost/Qty (THB)", required=True, digits=(16, 2))
     type = fields.Selection(
         selection=[
             ("fixed", "Fixed"),
