@@ -18,15 +18,11 @@
 					</group>
 				</group>
 				<group string="Products to convert">
-					<button name="action_open_add_convert_line_wizard" type="object" string="Add line" class="btn-primary"/>
 					<field name="convert_line_ids">
-						<list create="0" edit="0">
+						<list editable="bottom">
 							<field name="product_variant_id"/>
 							<field name="quantity"/>
 							<field name="quality_note"/>
-							<button name="action_open_edit_convert_line_wizard" type="object" string="Edit" class="btn-secondary"/>
-							<button name="action_open_cost_wizard" type="object" string="Costs" class="btn-secondary"/>
-							<field name="cost_summary" readonly="1"/>
 						</list>
 					</field>
 				</group>

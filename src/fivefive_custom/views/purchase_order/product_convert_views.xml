@@ -31,8 +31,9 @@
 						<field name="product_cost_ids">
 							<list editable="bottom">
 								<field name="cost_name"/>
-								<field name="cost"/>
+								<field name="cost" width="200px"/>
 								<field name="type"/>
+								<field name="start_calculate_cost"/>
 							</list>
 						</field>
 					</group>

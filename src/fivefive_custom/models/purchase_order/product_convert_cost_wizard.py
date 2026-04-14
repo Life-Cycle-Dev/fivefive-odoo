@@ -63,6 +63,7 @@ class ProductConvertCostWizard(models.TransientModel):
                         "cost_name": (c or {}).get("cost_name") or "",
                         "cost": (c or {}).get("cost") or 0.0,
                         "type": (c or {}).get("type") or "fixed",
+                        "start_calculate_cost": (c or {}).get("start_calculate_cost") or False,
                     },
                 )
             )
@@ -79,11 +80,14 @@ class ProductConvertCostWizard(models.TransientModel):
                 raise UserError("Cost ต้องไม่ติดลบ")
             if not line.type:
                 raise UserError("กรุณาเลือก Cost Type ให้ครบ")
+            if line.type in ("daily", "weekly", "monthly", "yearly") and not line.start_calculate_cost:
+                raise UserError("กรุณาเลือก Start Calculate Cost สำหรับ cost แบบ interval")
             payload.append(
                 {
                     "cost_name": line.cost_name.strip(),
                     "cost": line.cost,
                     "type": line.type,
+                    "start_calculate_cost": line.start_calculate_cost.isoformat() if line.start_calculate_cost else False,
                 }
             )
 
@@ -125,4 +129,5 @@ class ProductConvertCostWizardLine(models.TransientModel):
         required=True,
         default="fixed",
     )
+    start_calculate_cost = fields.Date(string="Start Calculate Cost")
 

@@ -118,6 +118,7 @@
 										<field name="quantity"/>
 										<field name="quality_note"/>
 										<field name="cost_summary" readonly="1"/>
+										<button name="action_open_form" type="object" string="Edit Costs" class="btn-secondary"/>
 									</list>
 								</field>
 							</page>

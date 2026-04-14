@@ -98,36 +98,12 @@ class CommercialInvoiceLineConvertWizard(models.TransientModel):
 
         convert_vals_list = []
         for line in self.convert_line_ids:
-            costs = line._parse_cost_payload()
-            cost_commands = []
-            for c in costs:
-                name = ((c or {}).get("cost_name") or "").strip()
-                ctype = (c or {}).get("type")
-                cost_val = (c or {}).get("cost")
-                if not name:
-                    raise UserError("กรุณากรอก Cost Name ให้ครบ")
-                if cost_val is None or float(cost_val) < 0:
-                    raise UserError("Cost ต้องไม่ติดลบ")
-                if ctype not in ("fixed", "daily", "weekly", "monthly", "yearly"):
-                    raise UserError("กรุณาเลือก Cost Type ให้ครบ")
-                cost_commands.append(
-                    (
-                        0,
-                        0,
-                        {
-                            "cost_name": name,
-                            "cost": float(cost_val),
-                            "type": ctype,
-                        },
-                    )
-                )
             convert_vals_list.append(
                 {
                     "commercial_invoice_line_id": cil.id,
                     "product_variant_id": line.product_variant_id.id,
                     "quantity": line.quantity,
                     "quality_note": line.quality_note.strip(),
-                    "product_cost_ids": cost_commands,
                 }
             )
 

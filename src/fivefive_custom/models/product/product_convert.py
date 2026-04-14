@@ -75,3 +75,14 @@ class ProductConvert(models.Model):
                     {"is_convert_to_product": False}
                 )
         return res
+
+    def action_open_form(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Product Convert",
+            "res_model": "five.five.product.convert",
+            "view_mode": "form",
+            "res_id": self.id,
+            "target": "new",
+        }

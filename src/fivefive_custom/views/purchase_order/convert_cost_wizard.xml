@@ -17,6 +17,7 @@
 							<field name="cost_name"/>
 							<field name="cost"/>
 							<field name="type"/>
+							<field name="start_calculate_cost"/>
 						</list>
 					</field>
 				</group>

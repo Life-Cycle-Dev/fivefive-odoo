@@ -34,3 +34,9 @@ class ProductCost(models.Model):
         string="Cost Type",
         required=True,
     )
+
+    start_calculate_cost = fields.Date(
+        string="Start Calculate Cost",
+        default=fields.Date.context_today,
+        help="ใช้สำหรับ cost แบบ interval (daily/weekly/monthly/yearly) ว่าจะเริ่มคิดตั้งแต่วันไหน",
+    )
