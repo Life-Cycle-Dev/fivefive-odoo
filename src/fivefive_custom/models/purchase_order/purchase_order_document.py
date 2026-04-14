@@ -50,6 +50,32 @@ class PurchaseOrderDocument(models.Model):
             )
 
     @api.model
+    def _ff_validate_required_number_for_types(self, vals_list_or_vals, records=None):
+        required_types = ("ci", "bl")
+
+        if isinstance(vals_list_or_vals, dict):
+            vals_list = [vals_list_or_vals]
+        else:
+            vals_list = vals_list_or_vals or []
+
+        if records is None:
+            for vals in vals_list:
+                doc_type = vals.get("type")
+                if doc_type in required_types:
+                    number = (vals.get("number") or "").strip()
+                    if not number:
+                        raise UserError("กรุณากรอก Document Number สำหรับเอกสารประเภท CI หรือ BL")
+            return
+
+        for rec in records:
+            vals = vals_list[0] if vals_list else {}
+            doc_type = vals.get("type", rec.type)
+            if doc_type in required_types:
+                number = (vals.get("number") if "number" in vals else rec.number) or ""
+                if not str(number).strip():
+                    raise UserError("กรุณากรอก Document Number สำหรับเอกสารประเภท CI หรือ BL")
+
+    @api.model
     def _ff_sync_purchase_order_ci_number(self, purchase_orders):
         purchase_orders = purchase_orders.filtered(lambda p: p)
         if not purchase_orders:
@@ -67,6 +93,24 @@ class PurchaseOrderDocument(models.Model):
             numbers = list(dict.fromkeys(numbers))
             po.ci_number = ",".join(numbers) if numbers else False
 
+    @api.model
+    def _ff_sync_purchase_order_bl_number(self, purchase_orders):
+        purchase_orders = purchase_orders.filtered(lambda p: p)
+        if not purchase_orders:
+            return
+
+        for po in purchase_orders:
+            numbers = []
+            for n in po.document_ids.filtered(
+                lambda d: d.type == "bl" and d.number
+            ).mapped("number"):
+                n = (n or "").strip()
+                if n:
+                    numbers.append(n)
+
+            numbers = list(dict.fromkeys(numbers))
+            po.bl_number = ",".join(numbers) if numbers else False
+
     @api.model_create_multi
     def create(self, vals_list):
         po_ids = [v["purchase_order_id"] for v in vals_list if v.get("purchase_order_id")]
@@ -74,8 +118,11 @@ class PurchaseOrderDocument(models.Model):
             self._ff_po_states_allow_document_mutation(
                 self.env["five.five.purchase.order"].browse(po_ids)
             )
+        self._ff_validate_required_number_for_types(vals_list)
         records = super().create(vals_list)
-        records._ff_sync_purchase_order_ci_number(records.mapped("purchase_order_id"))
+        orders = records.mapped("purchase_order_id")
+        records._ff_sync_purchase_order_ci_number(orders)
+        records._ff_sync_purchase_order_bl_number(orders)
         return records
 
     def write(self, vals):
@@ -84,9 +131,13 @@ class PurchaseOrderDocument(models.Model):
         if vals.get("purchase_order_id"):
             orders |= self.env["five.five.purchase.order"].browse(vals["purchase_order_id"])
         self._ff_po_states_allow_document_mutation(orders)
+        self._ff_validate_required_number_for_types(vals, records=self)
         res = super().write(vals)
 
-        self._ff_sync_purchase_order_ci_number(orders_before | self.mapped("purchase_order_id"))
+        orders_after = self.mapped("purchase_order_id")
+        sync_orders = orders_before | orders_after
+        self._ff_sync_purchase_order_ci_number(sync_orders)
+        self._ff_sync_purchase_order_bl_number(sync_orders)
         return res
 
     def unlink(self):
@@ -94,6 +145,7 @@ class PurchaseOrderDocument(models.Model):
         self._ff_po_states_allow_document_mutation(orders)
         res = super().unlink()
         self._ff_sync_purchase_order_ci_number(orders)
+        self._ff_sync_purchase_order_bl_number(orders)
         return res
 
     def action_open_upload_wizard(self):

@@ -37,6 +37,13 @@ class PurchaseOrderCancelClearingWizard(models.TransientModel):
         if po.state != "clearing":
             raise UserError("สามารถ Cancel Clearing ได้เฉพาะ PO ที่อยู่ใน status Clearing เท่านั้น")
 
+        converted_products = self.env["five.five.product.convert"].search(
+            [("purchase_order_id", "=", po.id)]
+        )
+        converted_products_count = len(converted_products)
+        if converted_products:
+            converted_products.unlink()
+
         do_docs = po.document_ids.filtered(lambda doc: doc.type == "do")
         if do_docs:
             do_docs.with_context(skip_po_document_state_check=True).unlink()
@@ -44,7 +51,8 @@ class PurchaseOrderCancelClearingWizard(models.TransientModel):
         po.message_post(
             body=(
                 f"ยกเลิกการ Clearing PO หมายเลข {po.number} "
-                f"(ลบเอกสาร DO {len(do_docs)} รายการ และล้าง Warehouse/Logistic)"
+                f"(ลบ Converted Products {converted_products_count} รายการ, "
+                f"ลบเอกสาร DO {len(do_docs)} รายการ และล้าง Warehouse/Logistic)"
             )
         )
         po.write(

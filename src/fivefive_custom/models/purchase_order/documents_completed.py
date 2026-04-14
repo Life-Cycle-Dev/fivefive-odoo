@@ -23,8 +23,8 @@ class PurchaseOrderDocumentCompleted(models.Model):
         tracking=True,
     )
 
-    shipment_container_no = fields.Char(string="Container NO.")
-    bl_no = fields.Char(string="BL NO.")
+    shipment_container_number = fields.Char(string="Container NO.")
+    bl_number = fields.Char(string="BL Number")
     arrived_at = fields.Date(string="Arrived at (eta)")
     ci_number = fields.Char(string="CI Number")
 
@@ -41,10 +41,10 @@ class PurchaseOrderDocumentCompleted(models.Model):
             if record.state != "po_issued":
                 raise UserError("เฉพาะ PO ที่อยู่ใน status PO Issued เท่านั้น ที่สามารถ Post ได้ ไม่สามารถดำเนินการต่อได้")
 
-            if record.shipment_container_no == "" or not record.shipment_container_no:
+            if record.shipment_container_number == "" or not record.shipment_container_number:
                 error_message += "- กรุณาใส่ Container NO. ก่อน Post PO\n"
 
-            if record.bl_no == "" or not record.bl_no:
+            if record.bl_number == "" or not record.bl_number:
                 error_message += "- กรุณาใส่ BL NO. ก่อน Post PO\n"
 
             if record.arrived_at == "" or not record.arrived_at:

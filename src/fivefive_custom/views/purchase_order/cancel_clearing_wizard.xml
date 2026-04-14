@@ -13,6 +13,7 @@
                     <div>- ค่า Warehouse ใน PO</div>
                     <div>- ค่า Logistic ใน PO</div>
                     <div>- สถานะจะเปลี่ยนจาก Clearing กลับเป็น Documents Completed</div>
+                    <div>- Product ที่ Convert ไปแล้ว</div>
                 </group>
                 <footer>
                     <button name="action_confirm_cancel_clearing" type="object" string="ยกเลิก Clearing" class="btn-danger"/>
