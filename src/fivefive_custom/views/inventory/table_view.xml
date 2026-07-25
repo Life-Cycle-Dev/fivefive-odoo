@@ -10,6 +10,7 @@
                 </searchpanel>
                 <field name="product_variant_id" string="Product Variant"/>
                 <field name="warehouse_id" string="Warehouse"/>
+                <field name="lot_number" string="Lot Number"/>
                 <field name="quality_note" string="Quality Note"/>
                 <separator/>
                 <filter string="Product Variant" name="group_by_product_variant" context="{'group_by': 'product_variant_id'}"/>
@@ -22,9 +23,10 @@
         <field name="name">five.five.inventory.list</field>
         <field name="model">five.five.inventory</field>
         <field name="arch" type="xml">
-            <list default_order="product_variant_id,warehouse_id,id desc" class="ff_five_five_inventory_list" create="false" edit="false" delete="false">
+            <list default_order="product_variant_id,warehouse_id,lot_number,id desc" class="ff_five_five_inventory_list" create="false" edit="false" delete="false">
                 <field name="product_variant_id" string="Product Variant" width="200px"/>
                 <field name="warehouse_id" string="Warehouse" width="160px"/>
+                <field name="lot_number" string="Lot Number" width="140px"/>
                 <field name="quantity" string="Quantity" width="100px"/>
                 <field name="quality_note" string="Quality Note" width="140px"/>
                 <field name="total_cost_thb" string="Total Cost (THB)" width="160px"/>
