@@ -19,6 +19,24 @@
         </field>
     </record>
 
+    <record id="view_five_five_store_pos_user_change_password_wizard_form" model="ir.ui.view">
+        <field name="name">five.five.store.pos.user.change.password.wizard.form</field>
+        <field name="model">five.five.store.pos.user.change.password.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Change Password">
+                <group>
+                    <field name="pos_user_id" invisible="1"/>
+                    <field name="new_password" password="True"/>
+                    <field name="confirm_password" password="True"/>
+                </group>
+                <footer>
+                    <button name="action_change_password" type="object" string="Change Password" class="btn-primary"/>
+                    <button special="cancel" string="Cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
     <record id="view_five_five_store_pos_user_list" model="ir.ui.view">
         <field name="name">five.five.store.pos.user.list</field>
         <field name="model">five.five.store.pos.user</field>
@@ -27,7 +45,7 @@
                 <field name="name"/>
                 <field name="username"/>
                 <field name="store_id"/>
-                <field name="active"/>
+                <field name="active" widget="boolean_toggle"/>
             </list>
         </field>
     </record>
@@ -38,15 +56,20 @@
         <field name="arch" type="xml">
             <form string="POS User">
                 <header>
+                    <button name="action_change_password" type="object" string="Change Password" class="btn-primary"/>
                     <button name="action_generate_password" type="object" string="Suggest Password" class="btn-secondary"/>
                 </header>
                 <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Display Name"/></h1>
+                    </div>
                     <group>
-                        <field name="store_id"/>
-                        <field name="name"/>
-                        <field name="username"/>
-                        <field name="password_plain" password="True" placeholder="Set login password"/>
-                        <field name="active"/>
+                        <group string="Account">
+                            <field name="store_id"/>
+                            <field name="username"/>
+                            <field name="password_plain" password="True" placeholder="Set login password"/>
+                            <field name="active"/>
+                        </group>
                     </group>
                 </sheet>
             </form>
@@ -58,18 +81,16 @@
         <field name="model">five.five.store.pos.session</field>
         <field name="arch" type="xml">
             <list default_order="opened_at desc">
-                <field name="name"/>
                 <field name="store_id"/>
                 <field name="pos_user_id"/>
                 <field name="state" widget="badge" decoration-success="state == 'open'" decoration-muted="state == 'closed'"/>
-                <field name="opening_cash"/>
-                <field name="closing_cash"/>
-                <field name="expected_cash"/>
-                <field name="cash_difference"/>
-                <field name="total_sales"/>
-                <field name="order_count"/>
+                <field name="total_sales" sum="Total Sales"/>
+                <field name="order_count" string="Orders"/>
                 <field name="opened_at"/>
-                <field name="closed_at"/>
+                <field name="closed_at" optional="hide"/>
+                <field name="opening_cash" optional="hide"/>
+                <field name="closing_cash" optional="hide"/>
+                <field name="cash_difference" optional="hide"/>
             </list>
         </field>
     </record>
@@ -78,21 +99,38 @@
         <field name="name">five.five.store.pos.session.form</field>
         <field name="model">five.five.store.pos.session</field>
         <field name="arch" type="xml">
-            <form string="POS Session">
+            <form string="POS Session" create="0" edit="0" delete="0">
+                <header>
+                    <field name="state" widget="statusbar" statusbar_visible="open,closed"/>
+                </header>
                 <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
                     <group>
-                        <field name="name" readonly="1"/>
-                        <field name="store_id" readonly="1"/>
-                        <field name="pos_user_id" readonly="1"/>
-                        <field name="state" readonly="1"/>
+                        <group string="Session">
+                            <field name="store_id" readonly="1"/>
+                            <field name="pos_user_id" readonly="1"/>
+                            <field name="opened_at" readonly="1"/>
+                            <field name="closed_at" readonly="1"/>
+                        </group>
+                        <group string="Summary">
+                            <field name="order_count" readonly="1"/>
+                            <field name="total_sales" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Cash" invisible="state != 'closed'">
+                        <group>
+                            <field name="opening_cash" readonly="1"/>
+                            <field name="expected_cash" readonly="1"/>
+                            <field name="closing_cash" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="cash_difference" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Cash" invisible="state != 'open'">
                         <field name="opening_cash" readonly="1"/>
-                        <field name="closing_cash" readonly="1"/>
-                        <field name="expected_cash" readonly="1"/>
-                        <field name="cash_difference" readonly="1"/>
-                        <field name="total_sales" readonly="1"/>
-                        <field name="order_count" readonly="1"/>
-                        <field name="opened_at" readonly="1"/>
-                        <field name="closed_at" readonly="1"/>
                     </group>
                     <notebook>
                         <page string="Orders">
@@ -100,11 +138,8 @@
                                 <list>
                                     <field name="number"/>
                                     <field name="order_date"/>
-                                    <field name="subtotal"/>
-                                    <field name="discount_amount"/>
                                     <field name="total"/>
-                                    <field name="amount_paid"/>
-                                    <field name="change_amount"/>
+                                    <field name="state" widget="badge" decoration-success="state == 'done'" decoration-muted="state == 'cancelled'"/>
                                 </list>
                             </field>
                         </page>
@@ -118,21 +153,16 @@
         <field name="name">five.five.store.pos.order.list</field>
         <field name="model">five.five.store.pos.order</field>
         <field name="arch" type="xml">
-            <list default_order="order_date desc">
+            <list default_order="order_date desc" create="0" delete="0">
                 <field name="number"/>
                 <field name="order_date"/>
                 <field name="store_id"/>
                 <field name="pos_user_id"/>
-                <field name="session_id"/>
-                <field name="subtotal"/>
-                <field name="discount_amount"/>
-                <field name="total"/>
-                <field name="amount_paid"/>
-                <field name="change_amount"/>
-                <field name="state"/>
-                <field name="return_stock"/>
-                <field name="cancel_reason"/>
-                <field name="cancelled_at"/>
+                <field name="total" sum="Total"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'" decoration-muted="state == 'cancelled'"/>
+                <field name="discount_amount" optional="hide"/>
+                <field name="session_id" optional="hide"/>
+                <field name="cancelled_at" optional="hide"/>
             </list>
         </field>
     </record>
@@ -141,38 +171,48 @@
         <field name="name">five.five.store.pos.order.form</field>
         <field name="model">five.five.store.pos.order</field>
         <field name="arch" type="xml">
-            <form string="POS Order">
+            <form string="POS Order" create="0" edit="0" delete="0">
+                <header>
+                    <field name="state" widget="statusbar" statusbar_visible="done,cancelled"/>
+                </header>
                 <sheet>
+                    <div class="oe_title">
+                        <h1><field name="number" readonly="1"/></h1>
+                    </div>
                     <group>
-                        <field name="number" readonly="1"/>
-                        <field name="order_date" readonly="1"/>
-                        <field name="store_id" readonly="1"/>
-                        <field name="pos_user_id" readonly="1"/>
-                        <field name="session_id" readonly="1"/>
-                        <field name="state" readonly="1"/>
-                    </group>
-                    <group>
-                        <field name="subtotal" readonly="1"/>
-                        <field name="discount_type" readonly="1"/>
-                        <field name="discount_value" readonly="1"/>
-                        <field name="discount_amount" readonly="1"/>
-                        <field name="total" readonly="1"/>
-                        <field name="amount_paid" readonly="1"/>
-                        <field name="change_amount" readonly="1"/>
+                        <group string="Order">
+                            <field name="order_date" readonly="1"/>
+                            <field name="store_id" readonly="1"/>
+                            <field name="pos_user_id" readonly="1"/>
+                            <field name="session_id" readonly="1"/>
+                        </group>
+                        <group string="Payment">
+                            <field name="subtotal" readonly="1"/>
+                            <field name="discount_type" readonly="1" invisible="not discount_amount"/>
+                            <field name="discount_value" readonly="1" invisible="not discount_amount"/>
+                            <field name="discount_amount" readonly="1" invisible="not discount_amount"/>
+                            <field name="total" readonly="1"/>
+                            <field name="amount_paid" readonly="1"/>
+                            <field name="change_amount" readonly="1"/>
+                        </group>
                     </group>
                     <group string="Cancellation" invisible="state != 'cancelled'">
                         <field name="return_stock" readonly="1"/>
                         <field name="cancel_reason" readonly="1"/>
                         <field name="cancelled_at" readonly="1"/>
                     </group>
-                    <field name="line_ids" readonly="1">
-                        <list>
-                            <field name="product_variant_id"/>
-                            <field name="quantity"/>
-                            <field name="unit_price"/>
-                            <field name="subtotal"/>
-                        </list>
-                    </field>
+                    <notebook>
+                        <page string="Items">
+                            <field name="line_ids" readonly="1">
+                                <list>
+                                    <field name="product_variant_id"/>
+                                    <field name="quantity"/>
+                                    <field name="unit_price"/>
+                                    <field name="subtotal" sum="Subtotal"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
                 </sheet>
             </form>
         </field>

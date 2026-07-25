@@ -1,41 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_five_five_root" name="Purchase Order"/>
+    <!-- ปิด root เดิม (Purchase Order รวมทุกอย่าง) -->
+    <record id="menu_five_five_root" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
 
-    <!-- Top-level sections -->
-    <menuitem
-        id="menu_five_five_orders_model"
-        name="Orders"
-        parent="menu_five_five_root"
-        sequence="10"
-    />
-
-    <menuitem
-        id="menu_five_five_supplier_model"
-        name="Supplier"
-        parent="menu_five_five_root"
-        sequence="20"
-    />
-
-    <menuitem
-        id="menu_five_five_product_model"
-        name="Product"
-        parent="menu_five_five_root"
-        sequence="30"
-    />
-
-    <menuitem
-        id="menu_five_five_inventory_model"
-        name="Inventory"
-        parent="menu_five_five_root"
-        sequence="40"
-    />
-
+    <!-- แอpp แยกใน App Switcher -->
+    <menuitem id="menu_five_five_orders_model" name="Purchase Orders" sequence="10"/>
+    <menuitem id="menu_five_five_supplier_model" name="Supplier" sequence="20"/>
+    <menuitem id="menu_five_five_product_model" name="Product" sequence="30"/>
+    <menuitem id="menu_five_five_inventory_model" name="Inventory" sequence="40"/>
     <menuitem
         id="menu_five_five_store_pos_model"
         name="POS"
-        parent="menu_five_five_root"
         sequence="50"
+        action="action_five_five_store_pos_order"
     />
 
     <!-- Orders -->
@@ -148,19 +127,11 @@
 
     <!-- POS -->
     <menuitem
-        id="menu_five_five_store_pos_open_sub_menu"
-        name="Open POS"
-        parent="menu_five_five_store_pos_model"
-        action="action_open_store_pos"
-        sequence="1"
-    />
-
-    <menuitem
         id="menu_five_five_store_pos_order_sub_menu"
         name="POS Orders"
         parent="menu_five_five_store_pos_model"
         action="action_five_five_store_pos_order"
-        sequence="2"
+        sequence="1"
     />
 
     <menuitem
@@ -168,6 +139,14 @@
         name="POS Sessions"
         parent="menu_five_five_store_pos_model"
         action="action_five_five_store_pos_session"
+        sequence="2"
+    />
+
+    <menuitem
+        id="menu_five_five_store_requisition_sub_menu"
+        name="Stock Requisitions"
+        parent="menu_five_five_store_pos_model"
+        action="action_five_five_store_requisition"
         sequence="3"
     />
 
@@ -180,10 +159,10 @@
     />
 
     <menuitem
-        id="menu_five_five_store_requisition_sub_menu"
-        name="Stock Requisitions"
+        id="menu_five_five_store_pos_open_sub_menu"
+        name="Open POS"
         parent="menu_five_five_store_pos_model"
-        action="action_five_five_store_requisition"
+        action="action_open_store_pos"
         sequence="5"
     />
 </odoo>

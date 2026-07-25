@@ -115,6 +115,17 @@ class StorePosOrder(models.Model):
             if float_compare(variant.sell_price_thb, 0, precision_digits=2) <= 0:
                 raise UserError(_("Sell price is not set for %(product)s.") % {"product": variant.display_name})
 
+            unit_price = line.get("unit_price")
+            if unit_price is None:
+                unit_price = variant.sell_price_thb
+            else:
+                unit_price = float(unit_price)
+            if float_compare(unit_price, variant.sell_price_thb, precision_digits=2) < 0:
+                raise UserError(
+                    _("Unit price for %(product)s cannot be lower than the default sell price (%(price)s).")
+                    % {"product": variant.display_name, "price": variant.sell_price_thb}
+                )
+
             available_qty = sum(
                 StoreInventory.search(
                     [
@@ -130,13 +141,13 @@ class StorePosOrder(models.Model):
                     % {"product": variant.display_name, "qty": available_qty}
                 )
 
-            line_subtotal = variant.sell_price_thb * qty
+            line_subtotal = unit_price * qty
             subtotal += line_subtotal
             order_lines.append(
                 {
                     "product_variant_id": variant.id,
                     "quantity": qty,
-                    "unit_price": variant.sell_price_thb,
+                    "unit_price": unit_price,
                     "subtotal": line_subtotal,
                 }
             )

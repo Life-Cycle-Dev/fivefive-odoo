@@ -32,6 +32,7 @@ access_five_five_product_convert_cost_wizard_line_user,access.five.five.product.
 access_five_five_commercial_invoice_line_convert_add_line_wizard_user,access.five.five.commercial.invoice.line.convert.add.line.wizard.user,model_five_five_commercial_invoice_line_convert_add_line_wizard,,1,1,1,1
 access_five_five_store_pos_user_user,access.five.five.store.pos.user.user,model_five_five_store_pos_user,,1,1,1,1
 access_five_five_store_pos_user_credential_wizard_user,access.five.five.store.pos.user.credential.wizard.user,model_five_five_store_pos_user_credential_wizard,,1,1,1,1
+access_five_five_store_pos_user_change_password_wizard_user,access.five.five.store.pos.user.change.password.wizard.user,model_five_five_store_pos_user_change_password_wizard,,1,1,1,1
 access_five_five_store_pos_session_user,access.five.five.store.pos.session.user,model_five_five_store_pos_session,,1,1,1,1
 access_five_five_store_pos_order_user,access.five.five.store.pos.order.user,model_five_five_store_pos_order,,1,1,1,1
 access_five_five_store_pos_order_line_user,access.five.five.store.pos.order.line.user,model_five_five_store_pos_order_line,,1,1,1,1

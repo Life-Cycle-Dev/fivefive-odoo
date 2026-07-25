@@ -17,12 +17,92 @@
         requisitionProducts: [],
         requisitionCart: [],
         requisitionSearch: "",
+        requisitions: [],
+        selectedRequisition: null,
         stockSearch: "",
         cancelOrderId: null,
         salesOrders: [],
-        stockItems: [],
+        stockSummary: [],
         lastOrder: null,
+        lastReceipt: null,
     };
+
+    let barcodeScanner = null;
+    let barcodeScannerActive = false;
+    let barcodeScannerMode = "pos";
+
+    const PAGE_SIZE = 20;
+
+    const listState = {
+        products: { page: 1 },
+        requisitionProducts: { page: 1 },
+        stock: { page: 1 },
+        sales: { page: 1 },
+        requisitions: { page: 1 },
+    };
+
+    const paginationMeta = {
+        products: { page: 1, total: 0, totalPages: 1 },
+        requisitionProducts: { page: 1, total: 0, totalPages: 1 },
+        stock: { page: 1, total: 0, totalPages: 1 },
+        sales: { page: 1, total: 0, totalPages: 1 },
+        requisitions: { page: 1, total: 0, totalPages: 1 },
+    };
+
+    const dateFilters = {
+        sales: { from: "", to: "" },
+        requisitions: { from: "", to: "" },
+    };
+
+    function debounce(fn, delay = 300) {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn(...args), delay);
+        };
+    }
+
+    function applyPaginationMeta(key, data) {
+        const meta = data?.pagination || {};
+        paginationMeta[key] = {
+            page: meta.page || 1,
+            total: meta.total || 0,
+            totalPages: meta.total_pages || 1,
+        };
+        listState[key].page = paginationMeta[key].page;
+    }
+
+    function renderPaginationBar(key, containerId) {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        const meta = paginationMeta[key];
+        if (!meta.total) {
+            el.innerHTML = "";
+            el.hidden = true;
+            return;
+        }
+        el.hidden = false;
+        el.innerHTML = `
+            <button type="button" class="pos-page-btn" data-page-key="${key}" data-page-action="prev" ${meta.page <= 1 ? "disabled" : ""} aria-label="หน้าก่อน">‹</button>
+            <span class="pos-page-info">${meta.page} / ${meta.totalPages} (${formatQty(meta.total)} รายการ)</span>
+            <button type="button" class="pos-page-btn" data-page-key="${key}" data-page-action="next" ${meta.page >= meta.totalPages ? "disabled" : ""} aria-label="หน้าถัดไป">›</button>
+        `;
+    }
+
+    async function changePage(key, delta) {
+        const meta = paginationMeta[key];
+        const nextPage = meta.page + delta;
+        if (nextPage < 1 || nextPage > meta.totalPages) return;
+        listState[key].page = nextPage;
+        const loaders = {
+            products: loadProducts,
+            requisitionProducts: loadRequisitionProducts,
+            stock: loadStock,
+            sales: loadSalesHistory,
+            requisitions: loadRequisitionList,
+        };
+        await loaders[key]();
+    }
 
     const orderStateLabels = {
         done: "สำเร็จ",
@@ -47,6 +127,7 @@
         success: document.getElementById("screen-success"),
         requisition: document.getElementById("screen-requisition"),
         requisitionList: document.getElementById("screen-requisition-list"),
+        requisitionDetail: document.getElementById("screen-requisition-detail"),
         stock: document.getElementById("screen-stock"),
         salesHistory: document.getElementById("screen-sales-history"),
     };
@@ -69,6 +150,129 @@
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
         });
+    }
+
+    function formatQty(value) {
+        return Number(value || 0).toLocaleString("th-TH", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        });
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    function buildReceiptHtml(receipt) {
+        const linesHtml = (receipt.lines || [])
+            .map((line) => {
+                const name = escapeHtml(line.product_name);
+                const qty = formatQty(line.quantity);
+                const unitPrice = formatMoney(line.unit_price);
+                const subtotal = formatMoney(line.subtotal);
+                return `
+                    <tr>
+                        <td class="item-name">${name}</td>
+                        <td class="item-qty">${qty}</td>
+                        <td class="item-price">${unitPrice}</td>
+                        <td class="item-total">${subtotal}</td>
+                    </tr>`;
+            })
+            .join("");
+
+        const noteHtml = receipt.note
+            ? `<div class="note">หมายเหตุ: ${escapeHtml(receipt.note)}</div>`
+            : "";
+
+        return `<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8"/>
+    <title>ใบเสร็จ ${escapeHtml(receipt.number)}</title>
+    <style>
+        @page { size: 80mm auto; margin: 4mm; }
+        * { box-sizing: border-box; }
+        body {
+            width: 72mm;
+            margin: 0 auto;
+            font-family: "Noto Sans Thai", sans-serif;
+            font-size: 12px;
+            color: #000;
+            line-height: 1.35;
+        }
+        .center { text-align: center; }
+        .store { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+        .title { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+        .meta { margin-bottom: 8px; }
+        .meta-row { display: flex; justify-content: space-between; gap: 8px; }
+        .divider { border-top: 1px dashed #000; margin: 8px 0; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 2px 0; vertical-align: top; }
+        th { font-size: 11px; font-weight: 600; border-bottom: 1px solid #000; }
+        .item-name { width: 46%; padding-right: 4px; word-break: break-word; }
+        .item-qty { width: 14%; text-align: center; }
+        .item-price, .item-total { width: 20%; text-align: right; white-space: nowrap; }
+        .summary-row { display: flex; justify-content: space-between; gap: 8px; margin: 2px 0; }
+        .summary-row.grand { font-size: 14px; font-weight: 700; margin-top: 4px; }
+        .change { font-size: 16px; font-weight: 700; text-align: center; margin: 6px 0; }
+        .note { margin-top: 6px; font-size: 11px; }
+        .thanks { margin-top: 10px; text-align: center; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="center store">${escapeHtml(receipt.store_name || "ร้านค้า")}</div>
+    <div class="center title">ใบเสร็จรับเงิน / Receipt</div>
+    <div class="meta">
+        <div class="meta-row"><span>เลขที่</span><span>${escapeHtml(receipt.number)}</span></div>
+        <div class="meta-row"><span>วันที่</span><span>${escapeHtml(formatDateTime(receipt.order_date))}</span></div>
+        <div class="meta-row"><span>พนักงาน</span><span>${escapeHtml(receipt.cashier_name || "-")}</span></div>
+    </div>
+    <div class="divider"></div>
+    <table>
+        <thead>
+            <tr>
+                <th class="item-name">สินค้า</th>
+                <th class="item-qty">จำนวน</th>
+                <th class="item-price">ราคา</th>
+                <th class="item-total">รวม</th>
+            </tr>
+        </thead>
+        <tbody>${linesHtml}</tbody>
+    </table>
+    <div class="divider"></div>
+    <div class="summary-row"><span>รวม</span><span>${formatMoney(receipt.subtotal)}</span></div>
+    <div class="summary-row"><span>ส่วนลด</span><span>${formatMoney(receipt.discount_amount)}</span></div>
+    <div class="summary-row grand"><span>ยอดชำระ</span><span>${formatMoney(receipt.total)}</span></div>
+    <div class="summary-row"><span>รับเงิน</span><span>${formatMoney(receipt.amount_paid)}</span></div>
+    <div class="change">เงินทอน ${formatMoney(receipt.change_amount)} บาท</div>
+    ${noteHtml}
+    <div class="thanks">ขอบคุณที่ใช้บริการ</div>
+</body>
+</html>`;
+    }
+
+    function printReceipt(receipt) {
+        if (!receipt) return;
+        let frame = document.getElementById("pos-receipt-print-frame");
+        if (!frame) {
+            frame = document.createElement("iframe");
+            frame.id = "pos-receipt-print-frame";
+            frame.setAttribute("aria-hidden", "true");
+            frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+            document.body.appendChild(frame);
+        }
+        const doc = frame.contentWindow.document;
+        doc.open();
+        doc.write(buildReceiptHtml(receipt));
+        doc.close();
+        frame.contentWindow.focus();
+        setTimeout(() => {
+            frame.contentWindow.print();
+        }, 250);
     }
 
     function saveAuth() {
@@ -115,6 +319,23 @@
             if (!element) return;
             element.classList.toggle("active", key === name);
         });
+        if (name === "pos") {
+            setTimeout(() => document.getElementById("barcode-input")?.focus(), 100);
+        }
+        if (name !== "pos" && name !== "requisition") {
+            closeBarcodeScanner();
+        }
+    }
+
+    function requisitionBadgeClass(state) {
+        const classes = {
+            submitted: "pos-badge-submitted",
+            prepared: "pos-badge-prepared",
+            received: "pos-badge-received",
+            done: "pos-badge-done",
+            cancelled: "pos-badge-cancelled",
+        };
+        return classes[state] || "pos-badge-submitted";
     }
 
     function showError(elementId, message) {
@@ -178,23 +399,109 @@
 
     function cartRowHtml(line, editable) {
         const lineTotal = line.unit_price * line.quantity;
-        const actions = editable
-            ? `<div class="pos-cart-row-actions">
-                <button type="button" class="pos-mini-btn" data-action="dec" data-id="${line.id}">−</button>
-                <button type="button" class="pos-mini-btn" data-action="inc" data-id="${line.id}">+</button>
-                <button type="button" class="pos-mini-btn" data-action="remove" data-id="${line.id}">×</button>
+        const basePrice = line.base_unit_price ?? line.unit_price;
+        const qtyCol = editable
+            ? `<div class="pos-qty-stepper">
+                <button type="button" class="pos-step-btn" data-action="dec" data-id="${line.id}">−</button>
+                <span class="pos-qty-value">${formatQty(line.quantity)}</span>
+                <button type="button" class="pos-step-btn" data-action="inc" data-id="${line.id}">+</button>
+               </div>`
+            : `<div class="pos-qty-readonly">${formatQty(line.quantity)}</div>`;
+        const priceSub = editable
+            ? `<div class="pos-cart-price-edit">
+                <input
+                    type="number"
+                    class="pos-price-input"
+                    data-price-id="${line.id}"
+                    value="${line.unit_price}"
+                    min="${basePrice}"
+                    step="0.01"
+                    inputmode="decimal"
+                />
+                <span class="pos-cart-price-hint">/ ชิ้น · ขั้นต่ำ ${formatMoney(basePrice)}</span>
+               </div>`
+            : `<div class="pos-cart-row-sub">${formatMoney(line.unit_price)} / ชิ้น</div>`;
+        const removeCol = editable
+            ? `<div class="pos-cart-remove">
+                <button type="button" class="pos-remove-btn" data-action="remove" data-id="${line.id}" aria-label="ลบ">×</button>
                </div>`
             : "";
         return `
-            <div class="pos-cart-row">
-                <div>${formatMoney(line.quantity)}</div>
-                <div>
+            <div class="pos-cart-row${editable ? " pos-cart-row--editable" : ""}">
+                <div class="pos-cart-qty">${qtyCol}</div>
+                <div class="pos-cart-info">
                     <div class="pos-cart-row-name">${line.name}</div>
-                    <div class="pos-cart-row-sub">${formatMoney(line.unit_price)} / ชิ้น</div>
-                    ${actions}
+                    ${priceSub}
                 </div>
-                <div class="pos-cart-row-price">${formatMoney(lineTotal)}</div>
+                <div class="pos-cart-price">${formatMoney(lineTotal)}</div>
+                ${removeCol}
             </div>`;
+    }
+
+    function updateLinePrice(productId, rawValue) {
+        const line = state.cart.find((item) => item.id === productId);
+        if (!line) return;
+        const basePrice = line.base_unit_price ?? line.unit_price;
+        const parsed = Number(rawValue);
+        if (!rawValue || Number.isNaN(parsed)) {
+            line.unit_price = basePrice;
+            renderCartPanel(true);
+            return;
+        }
+        const normalized = Math.round(parsed * 100) / 100;
+        if (normalized < basePrice) {
+            alert(`ราคาต้องไม่ต่ำกว่าราคาเริ่มต้น ${formatMoney(basePrice)} บาท`);
+            line.unit_price = basePrice;
+            renderCartPanel(true);
+            return;
+        }
+        if (line.unit_price === normalized) return;
+        line.unit_price = normalized;
+        renderCartPanel(true);
+    }
+
+    function requisitionCartRowHtml(line) {
+        return `
+            <div class="pos-cart-row pos-cart-row--editable pos-req-cart-row">
+                <div class="pos-cart-qty">
+                    <div class="pos-qty-stepper">
+                        <button type="button" class="pos-step-btn" data-req-action="dec" data-id="${line.id}">−</button>
+                        <input
+                            type="number"
+                            class="pos-qty-input"
+                            data-req-qty-id="${line.id}"
+                            value="${line.quantity}"
+                            min="1"
+                            step="1"
+                            inputmode="numeric"
+                        />
+                        <button type="button" class="pos-step-btn" data-req-action="inc" data-id="${line.id}">+</button>
+                    </div>
+                </div>
+                <div class="pos-cart-info">
+                    <div class="pos-cart-row-name">${line.name}</div>
+                </div>
+                <div class="pos-cart-remove">
+                    <button type="button" class="pos-remove-btn" data-req-action="remove" data-id="${line.id}" aria-label="ลบ">×</button>
+                </div>
+            </div>`;
+    }
+
+    function updateRequisitionQty(productId, rawValue) {
+        const line = state.requisitionCart.find((item) => item.id === productId);
+        if (!line) return;
+        const parsed = Number(rawValue);
+        if (!rawValue || Number.isNaN(parsed) || parsed <= 0) {
+            line.quantity = 1;
+            renderRequisitionCart();
+            return;
+        }
+        const normalized = Math.round(parsed);
+        if (line.quantity === normalized) {
+            return;
+        }
+        line.quantity = normalized;
+        renderRequisitionCart();
     }
 
     function renderCartPanel(editable = true) {
@@ -226,29 +533,39 @@
         });
 
         const checkoutBtn = document.getElementById("checkout-btn");
-        if (checkoutBtn) checkoutBtn.disabled = !state.cart.length;
+        if (checkoutBtn) checkoutBtn.disabled = !state.cart.length || !state.session;
 
+        updateSessionHeader();
         updateAmountDisplay();
+    }
+
+    function updateSessionHeader() {
+        const badge = document.getElementById("pos-session-badge");
+        const banner = document.getElementById("no-session-banner");
+        if (badge) {
+            badge.textContent = state.session ? String(state.session.id) : "ปิดแล้ว";
+        }
+        if (banner) {
+            banner.hidden = !!state.session;
+        }
+    }
+
+    function requireOpenSession(message) {
+        if (state.session) return true;
+        alert(message || "กรุณาเปิดกะก่อนทำรายการขาย");
+        showScreen("openSession");
+        return false;
     }
 
     function renderProducts() {
         const grid = document.getElementById("product-grid");
         if (!grid) return;
         grid.innerHTML = "";
-        const filtered = state.products.filter((product) => {
-            if (!state.search) return true;
-            const text = state.search.toLowerCase();
-            return (
-                (product.name || "").toLowerCase().includes(text) ||
-                (product.barcode || "").includes(text) ||
-                (product.sku || "").toLowerCase().includes(text)
-            );
-        });
-        if (!filtered.length) {
+        if (!state.products.length) {
             grid.innerHTML = '<div class="pos-empty">ไม่มีสินค้าในสต็อกร้าน</div>';
             return;
         }
-        filtered.forEach((product) => {
+        state.products.forEach((product) => {
             const button = document.createElement("button");
             button.type = "button";
             button.className = "pos-product";
@@ -261,7 +578,7 @@
             button.innerHTML = `
                 ${product.image_url ? `<img class="pos-product-image" src="${product.image_url}" alt="">` : `<div class="pos-product-image-empty"></div>`}
                 <div class="pos-product-name">${product.name}</div>
-                <div class="pos-product-meta">คงเหลือ ${formatMoney(product.available_qty)}</div>
+                <div class="pos-product-meta">คงเหลือ ${formatQty(product.available_qty)}</div>
                 ${priceHtml}
             `;
             button.addEventListener("click", () => {
@@ -293,6 +610,7 @@
                 id: product.id,
                 name: product.name,
                 unit_price: product.sell_price_thb,
+                base_unit_price: product.sell_price_thb,
                 available_qty: product.available_qty,
                 quantity: 1,
             });
@@ -300,12 +618,33 @@
         renderCartPanel(true);
     }
 
-    function addByBarcode() {
-        const input = document.getElementById("barcode-input");
-        if (!input) return;
-        const code = input.value.trim();
-        if (!code) return;
-        const product = findProductByBarcode(code);
+    function mergeProduct(product) {
+        const index = state.products.findIndex((item) => item.id === product.id);
+        if (index >= 0) {
+            state.products[index] = product;
+        } else {
+            state.products.push(product);
+        }
+        renderProducts();
+    }
+
+    async function handleBarcodeScanned(code) {
+        const trimmed = (code || "").trim();
+        if (!trimmed) return;
+        let product = findProductByBarcode(trimmed);
+        if (!product) {
+            try {
+                const data = await rpc("/pos/api/products/barcode", {
+                    token: state.token,
+                    barcode: trimmed,
+                });
+                product = data.product;
+                if (product) mergeProduct(product);
+            } catch (error) {
+                alert(error.message || "ไม่พบสินค้าจากบาร์โค้ดนี้");
+                return;
+            }
+        }
         if (!product) {
             alert("ไม่พบสินค้าจากบาร์โค้ดนี้");
             return;
@@ -314,9 +653,119 @@
             alert("สินค้านี้ยังไม่ได้ตั้งราคาขาย กรุณาตั้ง Sell Price (THB) ที่ Product Variant");
             return;
         }
+        if (product.available_qty <= 0) {
+            alert("สินค้านี้ไม่มีในสต็อกร้าน");
+            return;
+        }
         addToCart(product);
+    }
+
+    async function addByBarcode() {
+        const input = document.getElementById("barcode-input");
+        if (!input) return;
+        const code = input.value.trim();
+        if (!code) return;
+        await handleBarcodeScanned(code);
         input.value = "";
         input.focus();
+    }
+
+    async function handleRequisitionBarcode(code) {
+        const trimmed = (code || "").trim();
+        if (!trimmed) return;
+        let product = state.requisitionProducts.find(
+            (item) =>
+                item.barcode === trimmed ||
+                (item.sku || "").toLowerCase() === trimmed.toLowerCase()
+        );
+        if (!product) {
+            const data = await rpc("/pos/api/requisition/products", {
+                token: state.token,
+                search: trimmed,
+                page: 1,
+                page_size: PAGE_SIZE,
+            });
+            product = (data.products || []).find(
+                (item) =>
+                    item.barcode === trimmed ||
+                    (item.sku || "").toLowerCase() === trimmed.toLowerCase()
+            );
+        }
+        if (!product) {
+            alert("ไม่พบสินค้าจากบาร์โค้ดนี้");
+            return;
+        }
+        addToRequisitionCart(product);
+    }
+
+    async function openBarcodeScanner(mode = "pos") {
+        if (typeof Html5Qrcode === "undefined") {
+            alert("ไม่สามารถโหลดตัวสแกนบาร์โค้ดได้ กรุณารีเฟรชหน้า");
+            return;
+        }
+        if (mode === "pos" && !requireOpenSession()) return;
+
+        barcodeScannerMode = mode;
+        const modal = document.getElementById("barcode-scanner-modal");
+        showError("barcode-scanner-error", "");
+        modal?.classList.add("show");
+
+        barcodeScanner = new Html5Qrcode("barcode-scanner-region");
+        const config = {
+            fps: 10,
+            qrbox: { width: 280, height: 120 },
+        };
+        if (window.Html5QrcodeSupportedFormats) {
+            config.formatsToSupport = [
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.UPC_E,
+                Html5QrcodeSupportedFormats.QR_CODE,
+            ];
+        }
+
+        try {
+            await barcodeScanner.start(
+                { facingMode: "environment" },
+                config,
+                (decodedText) => {
+                    closeBarcodeScanner();
+                    if (barcodeScannerMode === "requisition") {
+                        handleRequisitionBarcode(decodedText).catch((error) => {
+                            alert(error.message || "ไม่สามารถค้นหาสินค้าได้");
+                        });
+                    } else {
+                        handleBarcodeScanned(decodedText);
+                    }
+                },
+                () => {}
+            );
+            barcodeScannerActive = true;
+        } catch (error) {
+            showError("barcode-scanner-error", `ไม่สามารถเปิดกล้องได้: ${error.message || error}`);
+        }
+    }
+
+    async function closeBarcodeScanner() {
+        const modal = document.getElementById("barcode-scanner-modal");
+        modal?.classList.remove("show");
+        if (barcodeScanner && barcodeScannerActive) {
+            try {
+                await barcodeScanner.stop();
+            } catch (_) {
+                /* ignore */
+            }
+            try {
+                await barcodeScanner.clear();
+            } catch (_) {
+                /* ignore */
+            }
+            barcodeScannerActive = false;
+        }
+        barcodeScanner = null;
     }
 
     function updateCart(action, productId) {
@@ -385,6 +834,7 @@
     }
 
     function openDiscountScreen() {
+        if (!requireOpenSession()) return;
         const discountType = document.getElementById("discount-type");
         const discountValue = document.getElementById("discount-value");
         const orderNote = document.getElementById("order-note");
@@ -396,6 +846,7 @@
     }
 
     function showPayConfirmModal() {
+        if (!requireOpenSession()) return;
         const totals = computeTotals();
         if (totals.amountPaid < totals.total) {
             showError("checkout-error", "จำนวนเงินที่รับต้องไม่น้อยกว่ายอดชำระ");
@@ -415,35 +866,52 @@
         const data = await rpc("/pos/api/products", {
             token: state.token,
             search: state.search,
+            page: listState.products.page,
+            page_size: PAGE_SIZE,
         });
         state.products = data.products || [];
+        applyPaginationMeta("products", data);
         renderProducts();
+        renderPaginationBar("products", "products-pagination");
     }
 
+    const debouncedLoadProducts = debounce(async () => {
+        try {
+            await loadProducts();
+        } catch (error) {
+            console.error("loadProducts failed:", error);
+        }
+    }, 300);
+
     function renderRequisitionProducts() {
-        const grid = document.getElementById("requisition-product-grid");
-        if (!grid) return;
-        grid.innerHTML = "";
-        const filtered = state.requisitionProducts.filter((product) => {
-            if (!state.requisitionSearch) return true;
-            const text = state.requisitionSearch.toLowerCase();
-            return (product.name || "").toLowerCase().includes(text) || (product.barcode || "").includes(text);
-        });
-        if (!filtered.length) {
-            grid.innerHTML = '<div class="pos-empty">ไม่พบสินค้า</div>';
+        const list = document.getElementById("requisition-product-list");
+        if (!list) return;
+        list.innerHTML = "";
+        if (!state.requisitionProducts.length) {
+            list.innerHTML = '<div class="pos-empty">ไม่พบสินค้า</div>';
             return;
         }
-        filtered.forEach((product) => {
+        state.requisitionProducts.forEach((product) => {
             const button = document.createElement("button");
             button.type = "button";
-            button.className = "pos-product";
+            button.className = "pos-row-item";
+            const metaParts = [];
+            if (product.sku) metaParts.push(`SKU ${product.sku}`);
+            if (product.barcode) metaParts.push(`บาร์โค้ด ${product.barcode}`);
+            const meta = metaParts.length ? metaParts.join(" · ") : "แตะเพื่อเพิ่ม";
+            const priceLabel =
+                product.has_sell_price && product.sell_price_thb > 0
+                    ? formatMoney(product.sell_price_thb)
+                    : "—";
             button.innerHTML = `
-                ${product.image_url ? `<img class="pos-product-image" src="${product.image_url}" alt="">` : `<div class="pos-product-image-empty"></div>`}
-                <div class="pos-product-name">${product.name}</div>
-                <div class="pos-product-price">${formatMoney(product.sell_price_thb)}</div>
+                <div class="pos-row-main">
+                    <div class="pos-row-title">${product.name}</div>
+                    <div class="pos-row-meta">${meta}</div>
+                </div>
+                <div class="pos-row-price">${priceLabel}</div>
             `;
             button.addEventListener("click", () => addToRequisitionCart(product));
-            grid.appendChild(button);
+            list.appendChild(button);
         });
     }
 
@@ -456,20 +924,7 @@
             list.innerHTML = '<div class="pos-empty">ยังไม่มีรายการเบิก</div>';
         } else {
             state.requisitionCart.forEach((line) => {
-                const item = document.createElement("div");
-                item.className = "pos-line-item";
-                item.innerHTML = `
-                    <div>
-                        <strong>${line.name}</strong>
-                        <div class="pos-cart-row-actions" style="margin-top:6px;">
-                            <button type="button" class="pos-mini-btn" data-req-action="dec" data-id="${line.id}">−</button>
-                            <span style="padding:0 8px;">${formatMoney(line.quantity)}</span>
-                            <button type="button" class="pos-mini-btn" data-req-action="inc" data-id="${line.id}">+</button>
-                            <button type="button" class="pos-mini-btn" data-req-action="remove" data-id="${line.id}">×</button>
-                        </div>
-                    </div>
-                `;
-                list.appendChild(item);
+                list.insertAdjacentHTML("beforeend", requisitionCartRowHtml(line));
             });
         }
         submitBtn.disabled = !state.requisitionCart.length;
@@ -505,9 +960,13 @@
         const data = await rpc("/pos/api/requisition/products", {
             token: state.token,
             search: state.requisitionSearch,
+            page: listState.requisitionProducts.page,
+            page_size: PAGE_SIZE,
         });
         state.requisitionProducts = data.products || [];
+        applyPaginationMeta("requisitionProducts", data);
         renderRequisitionProducts();
+        renderPaginationBar("requisitionProducts", "requisition-products-pagination");
     }
 
     async function submitRequisition() {
@@ -532,57 +991,178 @@
             document.getElementById("requisition-note").value = "";
         }
         renderRequisitionCart();
-        if (success) {
-            success.hidden = false;
-            success.textContent = `ส่งคำขอเบิก ${result.requisition.number} เรียบร้อยแล้ว`;
-        }
+        state.selectedRequisition = result.requisition;
+        renderRequisitionDetail();
+        showScreen("requisitionDetail");
     }
 
-    async function loadRequisitionList() {
+    function renderRequisitionAllocationHtml(allocations) {
+        if (!allocations?.length) {
+            return '<div class="pos-detail-wh-pending">รอจัดสรรคลัง</div>';
+        }
+        return allocations
+            .map(
+                (alloc) => `
+                <div class="pos-detail-allocation">
+                    <span class="pos-detail-wh-tag">${alloc.warehouse_name || "—"}</span>
+                    <span>${formatQty(alloc.quantity)}</span>
+                </div>`
+            )
+            .join("");
+    }
+
+    function renderRequisitionList() {
         const container = document.getElementById("requisition-list-container");
         if (!container) return;
-        const data = await rpc("/pos/api/requisition/list", { token: state.token });
-        const rows = data.requisitions || [];
-        if (!rows.length) {
-            container.innerHTML = '<div class="pos-empty">ยังไม่มีรายการเบิก</div>';
+        if (!state.requisitions.length) {
+            container.innerHTML = '<div class="pos-empty">ยังไม่มีประวัติการเบิก</div>';
             return;
         }
-        container.innerHTML = rows
+        container.innerHTML = state.requisitions
+            .map((row) => {
+                const linesPreview = row.items_preview || (row.line_count ? `${row.line_count} รายการ` : "");
+                const warehouse = row.warehouse_name ? `คลัง: ${row.warehouse_name}` : "";
+                return `
+                <button type="button" class="pos-row-item pos-row-item-block pos-requisition-card" data-requisition-id="${row.id}">
+                    <div class="pos-requisition-card-top">
+                        <div class="pos-row-main">
+                            <div class="pos-row-title">${row.number}</div>
+                            <div class="pos-row-meta">${formatDateTime(row.requested_at)}</div>
+                        </div>
+                        <div class="pos-requisition-card-side">
+                            <span class="pos-badge ${requisitionBadgeClass(row.state)}">${stateLabels[row.state] || row.state}</span>
+                            <svg class="pos-row-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                        </div>
+                    </div>
+                    ${linesPreview ? `<div class="pos-row-extra">${linesPreview}</div>` : ""}
+                    ${warehouse ? `<div class="pos-row-extra">${warehouse}</div>` : ""}
+                    <div class="pos-row-hint">แตะเพื่อดูรายละเอียด</div>
+                </button>`;
+            })
+            .join("");
+    }
+
+    function renderRequisitionDetail() {
+        const container = document.getElementById("requisition-detail-container");
+        const req = state.selectedRequisition;
+        if (!container || !req) return;
+
+        const timeline = [
+            ["ส่งคำขอ", req.requested_at],
+            ["จัดเตรียม", req.prepared_at],
+            ["รับสินค้า", req.received_at],
+            ["เสร็จสิ้น", req.done_at],
+        ]
+            .filter(([, value]) => value)
+            .map(([label, value]) => `<div class="pos-detail-row"><span>${label}</span><span>${formatDateTime(value)}</span></div>`)
+            .join("");
+
+        const linesHtml = (req.lines || [])
             .map(
-                (row) => `
-                <div class="pos-line-item">
-                    <div>
-                        <strong>${row.number}</strong>
-                        <div class="pos-product-meta">${stateLabels[row.state] || row.state}</div>
-                        ${row.warehouse_name ? `<div class="pos-product-meta">จาก: ${row.warehouse_name}</div>` : ""}
-                        <div class="pos-product-meta">${row.line_count} รายการ</div>
-                        ${
-                            row.can_mark_received
-                                ? `<button type="button" class="pos-btn pos-btn-primary" data-received-id="${row.id}">รับสินค้าแล้ว</button>`
-                                : ""
-                        }
+                (line) => `
+                <div class="pos-detail-line">
+                    <div class="pos-detail-line-head">
+                        <div class="pos-detail-line-name">${line.product_name}</div>
+                        <div class="pos-detail-line-qty">ขอ ${formatQty(line.requested_qty)}</div>
+                    </div>
+                    <div class="pos-detail-line-allocations">
+                        ${renderRequisitionAllocationHtml(line.allocations)}
                     </div>
                 </div>`
             )
             .join("");
-        container.querySelectorAll("[data-received-id]").forEach((button) => {
-            button.addEventListener("click", async () => {
+
+        const warehouseBlock = req.warehouse_names?.length
+            ? req.warehouse_names.map((name) => `<span class="pos-detail-wh-tag">${name}</span>`).join("")
+            : req.warehouse_name
+              ? `<span class="pos-detail-wh-tag">${req.warehouse_name}</span>`
+              : "";
+
+        container.innerHTML = `
+            <div class="pos-detail-card">
+                <div class="pos-detail-head">
+                    <div>
+                        <div class="pos-detail-number">${req.number}</div>
+                        <div class="pos-row-meta">${formatDateTime(req.requested_at)}</div>
+                    </div>
+                    <span class="pos-badge ${requisitionBadgeClass(req.state)}">${stateLabels[req.state] || req.state}</span>
+                </div>
+                ${
+                    warehouseBlock
+                        ? `<div class="pos-detail-section"><div class="pos-detail-section-title">คลังต้นทาง</div><div class="pos-detail-wh-tags">${warehouseBlock}</div></div>`
+                        : ""
+                }
+                ${req.note ? `<div class="pos-detail-note">${req.note}</div>` : ""}
+                ${timeline ? `<div class="pos-detail-section"><div class="pos-detail-section-title">สถานะ</div>${timeline}</div>` : ""}
+                <div class="pos-detail-section">
+                    <div class="pos-detail-section-title">รายการสินค้า / คลังที่เบิก</div>
+                    ${linesHtml || '<div class="pos-empty">ไม่มีรายการ</div>'}
+                </div>
+                ${
+                    req.can_mark_received
+                        ? `<button type="button" id="requisition-mark-received-btn" class="pos-primary-btn pos-btn-block" style="margin-top:12px;">รับสินค้าแล้ว</button>`
+                        : ""
+                }
+            </div>`;
+
+        const receivedBtn = document.getElementById("requisition-mark-received-btn");
+        if (receivedBtn) {
+            receivedBtn.addEventListener("click", async () => {
                 try {
+                    showError("requisition-detail-error", "");
                     await rpc("/pos/api/requisition/received", {
                         token: state.token,
-                        requisition_id: Number(button.dataset.receivedId),
+                        requisition_id: req.id,
                     });
-                    await loadRequisitionList();
+                    await openRequisitionDetail(req.id);
                 } catch (error) {
-                    alert(error.message);
+                    showError("requisition-detail-error", error.message);
                 }
             });
+        }
+    }
+
+    async function loadRequisitionList() {
+        const data = await rpc("/pos/api/requisition/list", {
+            token: state.token,
+            page: listState.requisitions.page,
+            page_size: PAGE_SIZE,
+            date_from: dateFilters.requisitions.from || null,
+            date_to: dateFilters.requisitions.to || null,
         });
+        state.requisitions = data.requisitions || [];
+        applyPaginationMeta("requisitions", data);
+        renderRequisitionList();
+        renderPaginationBar("requisitions", "requisition-list-pagination");
+    }
+
+    async function openRequisitionDetail(requisitionId) {
+        showError("requisition-detail-error", "");
+        const data = await rpc("/pos/api/requisition/detail", {
+            token: state.token,
+            requisition_id: requisitionId,
+        });
+        state.selectedRequisition = data.requisition;
+        renderRequisitionDetail();
+        showScreen("requisitionDetail");
+    }
+
+    async function openRequisitionHistoryScreen() {
+        showError("requisition-list-error", "");
+        listState.requisitions.page = 1;
+        dateFilters.requisitions = { from: "", to: "" };
+        const fromEl = document.getElementById("requisition-date-from");
+        const toEl = document.getElementById("requisition-date-to");
+        if (fromEl) fromEl.value = "";
+        if (toEl) toEl.value = "";
+        await loadRequisitionList();
+        showScreen("requisitionList");
     }
 
     async function openRequisitionScreen() {
         state.requisitionCart = [];
         state.requisitionSearch = "";
+        listState.requisitionProducts.page = 1;
         if (document.getElementById("requisition-search")) {
             document.getElementById("requisition-search").value = "";
         }
@@ -620,10 +1200,19 @@
     async function handleMenuAction(action) {
         closeDrawer();
         if (action === "pos") {
-            showScreen("pos");
+            if (state.session) {
+                showScreen("pos");
+            } else {
+                showScreen("openSession");
+            }
             return;
         }
         if (action === "close-session") {
+            if (!state.session) {
+                alert("ยังไม่มีกะที่เปิดอยู่");
+                showScreen("openSession");
+                return;
+            }
             document.getElementById("closing-cash").value = "";
             showError("close-session-error", "");
             showScreen("closeSession");
@@ -631,6 +1220,10 @@
         }
         if (action === "requisition") {
             await openRequisitionScreen();
+            return;
+        }
+        if (action === "requisition-history") {
+            await openRequisitionHistoryScreen();
             return;
         }
         if (action === "stock") {
@@ -646,71 +1239,41 @@
         const data = await rpc("/pos/api/stock", {
             token: state.token,
             search: state.stockSearch,
+            page: listState.stock.page,
+            page_size: PAGE_SIZE,
         });
-        state.stockItems = data.items || [];
+        state.stockSummary = data.summary || [];
         renderStock();
+        renderPaginationBar("stock", "stock-pagination");
     }
 
     function renderStock() {
-        const summaryEl = document.getElementById("stock-summary");
         const container = document.getElementById("stock-list-container");
-        if (!summaryEl || !container) return;
+        if (!container) return;
 
-        const summary = {};
-        state.stockItems.forEach((item) => {
-            if (!summary[item.product_name]) {
-                summary[item.product_name] = { qty: 0, price: item.sell_price_thb };
-            }
-            summary[item.product_name].qty += Number(item.quantity || 0);
-        });
-        const summaryRows = Object.entries(summary);
-        if (!summaryRows.length) {
-            summaryEl.innerHTML = '<div class="pos-empty" style="padding:12px;">ไม่มีสต็อกในร้าน</div>';
-            container.innerHTML = "";
+        const rows = state.stockSummary;
+
+        if (!rows.length) {
+            container.innerHTML = '<div class="pos-empty">ไม่มีสต็อกในร้าน</div>';
             return;
         }
-        summaryEl.innerHTML = `
-            <div style="font-weight:700;margin-bottom:8px;">สรุปสต็อก</div>
-            ${summaryRows
-                .map(
-                    ([name, row]) => `
-                <div class="pos-summary-row">
-                    <span>${name}</span>
-                    <span>${formatMoney(row.qty)} ชิ้น · ${formatMoney(row.price)} บาท</span>
-                </div>`
-                )
-                .join("")}
-        `;
-        container.innerHTML = `
-            <table class="pos-stock-table">
-                <thead>
-                    <tr>
-                        <th>สินค้า</th>
-                        <th>Lot</th>
-                        <th>จำนวน</th>
-                        <th>ราคาขาย</th>
-                        <th>หมายเหตุ</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${state.stockItems
-                        .map(
-                            (item) => `
-                        <tr>
-                            <td>${item.product_name}</td>
-                            <td>${item.lot_number || "-"}</td>
-                            <td>${formatMoney(item.quantity)}</td>
-                            <td>${formatMoney(item.sell_price_thb)}</td>
-                            <td>${item.quality_note || "-"}</td>
-                        </tr>`
-                        )
-                        .join("")}
-                </tbody>
-            </table>`;
+        container.innerHTML = rows
+            .map(
+                (row) => `
+            <div class="pos-row-item pos-row-static">
+                <div class="pos-row-main">
+                    <div class="pos-row-title">${row.product_name}</div>
+                    <div class="pos-row-meta">ราคาขาย ${formatMoney(row.sell_price_thb)} บาท/ชิ้น</div>
+                </div>
+                <div class="pos-row-price">${formatQty(row.total_qty)} ชิ้น</div>
+            </div>`
+            )
+            .join("");
     }
 
     async function openStockScreen() {
         state.stockSearch = "";
+        listState.stock.page = 1;
         const search = document.getElementById("stock-search");
         if (search) search.value = "";
         await loadStock();
@@ -718,9 +1281,17 @@
     }
 
     async function loadSalesHistory() {
-        const data = await rpc("/pos/api/orders/list", { token: state.token, limit: 50 });
+        const data = await rpc("/pos/api/orders/list", {
+            token: state.token,
+            page: listState.sales.page,
+            page_size: PAGE_SIZE,
+            date_from: dateFilters.sales.from || null,
+            date_to: dateFilters.sales.to || null,
+        });
         state.salesOrders = data.orders || [];
+        applyPaginationMeta("sales", data);
         renderSalesHistory();
+        renderPaginationBar("sales", "sales-pagination");
     }
 
     function renderSalesHistory() {
@@ -734,31 +1305,27 @@
             .map((order) => {
                 const badgeClass = order.state === "cancelled" ? "pos-badge-cancelled" : "pos-badge-done";
                 const linesHtml = (order.lines || [])
-                    .map(
-                        (line) =>
-                            `<div class="pos-product-meta">${line.product_name} × ${formatMoney(line.quantity)} = ${formatMoney(line.subtotal)}</div>`
-                    )
-                    .join("");
+                    .map((line) => `${line.product_name} × ${formatQty(line.quantity)}`)
+                    .join(" · ");
                 const cancelInfo =
                     order.state === "cancelled"
-                        ? `<div class="pos-product-meta">${
+                        ? `<div class="pos-row-extra">${
                               order.return_stock ? "คืนสต็อกแล้ว" : "ไม่คืนสต็อก"
                           }${order.cancel_reason ? ` · ${order.cancel_reason}` : ""}</div>`
                         : "";
                 return `
-                <div class="pos-list-card">
-                    <div class="pos-list-card-head">
-                        <div>
-                            <div class="pos-list-card-title">${order.number}</div>
-                            <div class="pos-product-meta">${formatDateTime(order.order_date)}</div>
+                <div class="pos-row-item pos-row-static pos-row-item-block">
+                    <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;width:100%;">
+                        <div class="pos-row-main">
+                            <div class="pos-row-title">${order.number}</div>
+                            <div class="pos-row-meta">${formatDateTime(order.order_date)}</div>
                         </div>
-                        <span class="pos-badge ${badgeClass}">${orderStateLabels[order.state] || order.state}</span>
+                        <div style="text-align:right;">
+                            <span class="pos-badge ${badgeClass}">${orderStateLabels[order.state] || order.state}</span>
+                            <div class="pos-row-price" style="margin-top:6px;">${formatMoney(order.total)} บาท</div>
+                        </div>
                     </div>
-                    ${linesHtml}
-                    <div class="pos-summary-row" style="margin-top:8px;">
-                        <span>ยอดชำระ</span>
-                        <strong>${formatMoney(order.total)} บาท</strong>
-                    </div>
+                    ${linesHtml ? `<div class="pos-row-extra">${linesHtml}</div>` : ""}
                     ${cancelInfo}
                     ${
                         order.can_cancel
@@ -779,6 +1346,12 @@
 
     async function openSalesHistoryScreen() {
         showError("sales-history-error", "");
+        listState.sales.page = 1;
+        dateFilters.sales = { from: "", to: "" };
+        const fromEl = document.getElementById("sales-date-from");
+        const toEl = document.getElementById("sales-date-to");
+        if (fromEl) fromEl.value = "";
+        if (toEl) toEl.value = "";
         await loadSalesHistory();
         showScreen("salesHistory");
     }
@@ -855,7 +1428,7 @@
         }
         document.getElementById("pos-store-name").textContent = state.user.store_name;
         document.getElementById("pos-user-name").textContent = state.user.name;
-        document.getElementById("pos-session-badge").textContent = state.session.id;
+        updateSessionHeader();
         try {
             await loadProducts();
         } catch (error) {
@@ -877,6 +1450,7 @@
         const lines = state.cart.map((line) => ({
             product_variant_id: line.id,
             quantity: line.quantity,
+            unit_price: line.unit_price,
         }));
         const result = await rpc("/pos/api/order/create", {
             token: state.token,
@@ -886,6 +1460,10 @@
             amount_paid: totals.amountPaid,
         });
         state.lastOrder = result.order;
+        state.lastReceipt = {
+            ...result.order,
+            note: state.orderNote || "",
+        };
         document.getElementById("success-order-number").textContent = result.order.number;
         document.getElementById("success-subtotal").textContent = formatMoney(result.order.subtotal);
         document.getElementById("success-discount").textContent = formatMoney(result.order.discount_amount);
@@ -900,6 +1478,7 @@
         hidePayConfirmModal();
         await loadProducts();
         showScreen("success");
+        printReceipt(state.lastReceipt);
     }
 
     function bindEvents() {
@@ -914,7 +1493,7 @@
         };
 
         document.addEventListener("click", (event) => {
-            if (event.target.closest("#pos-menu-btn")) {
+            if (event.target.closest(".pos-menu-btn")) {
                 event.preventDefault();
                 openDrawer();
             }
@@ -952,7 +1531,8 @@
 
         document.getElementById("product-search").addEventListener("input", (event) => {
             state.search = event.target.value.trim();
-            renderProducts();
+            listState.products.page = 1;
+            debouncedLoadProducts();
         });
 
         document.getElementById("cart-list").addEventListener("click", (event) => {
@@ -960,28 +1540,43 @@
             if (!button) return;
             updateCart(button.dataset.action, Number(button.dataset.id));
         });
+        document.getElementById("cart-list").addEventListener("blur", (event) => {
+            const input = event.target.closest("[data-price-id]");
+            if (!input) return;
+            updateLinePrice(Number(input.dataset.priceId), input.value);
+        }, true);
+        document.getElementById("cart-list").addEventListener("keydown", (event) => {
+            const input = event.target.closest("[data-price-id]");
+            if (!input || event.key !== "Enter") return;
+            event.preventDefault();
+            updateLinePrice(Number(input.dataset.priceId), input.value);
+            input.blur();
+        });
 
-        document.getElementById("barcode-add-btn").addEventListener("click", addByBarcode);
+        document.getElementById("barcode-add-btn").addEventListener("click", () => {
+            addByBarcode();
+        });
         document.getElementById("barcode-input").addEventListener("keydown", (event) => {
             if (event.key === "Enter") {
                 event.preventDefault();
                 addByBarcode();
             }
         });
+        document.getElementById("barcode-scan-btn")?.addEventListener("click", () => {
+            openBarcodeScanner("pos");
+        });
+        document.getElementById("barcode-scanner-close-btn")?.addEventListener("click", () => {
+            closeBarcodeScanner();
+        });
+        document.getElementById("barcode-scanner-modal")?.addEventListener("click", (event) => {
+            if (event.target.id === "barcode-scanner-modal") {
+                closeBarcodeScanner();
+            }
+        });
 
         document.getElementById("checkout-btn").addEventListener("click", openDiscountScreen);
 
-        document.getElementById("back-to-pos-btn").addEventListener("click", () => {
-            renderCartPanel(true);
-            showScreen("pos");
-        });
-
         document.getElementById("to-payment-btn").addEventListener("click", openPaymentScreen);
-
-        document.getElementById("back-to-discount-btn").addEventListener("click", () => {
-            renderCartPanel(false);
-            showScreen("discount");
-        });
 
         document.getElementById("clear-discount-btn").addEventListener("click", () => {
             state.discountValue = 0;
@@ -1020,19 +1615,15 @@
             }
         });
 
-        document.getElementById("new-order-btn").addEventListener("click", async () => {
+        on("new-order-btn", "click", async () => {
             renderCartPanel(true);
             await loadProducts();
             showScreen("pos");
         });
 
-        document.getElementById("close-session-btn").addEventListener("click", () => {
-            document.getElementById("closing-cash").value = "";
-            showError("close-session-error", "");
-            showScreen("closeSession");
+        on("print-receipt-btn", "click", () => {
+            printReceipt(state.lastReceipt);
         });
-
-        document.getElementById("cancel-close-btn").addEventListener("click", () => showScreen("pos"));
 
         document.getElementById("close-session-form").addEventListener("submit", async (event) => {
             event.preventDefault();
@@ -1046,27 +1637,20 @@
                 alert(
                     `ปิดกะเรียบร้อย\nเงินที่คาดหวัง: ${formatMoney(state.session?.expected_cash || data.expected_cash)} บาท\nส่วนต่าง: ${formatMoney(data.cash_difference)} บาท`
                 );
-                await rpc("/pos/api/logout", { token: state.token });
-                clearAuth();
-                showScreen("login");
+                state.session = null;
+                saveAuth();
+                updateSessionHeader();
+                showScreen("openSession");
             } catch (error) {
                 showError("close-session-error", error.message);
             }
         });
 
-        document.getElementById("logout-btn").addEventListener("click", async () => {
-            if (state.token) {
-                try {
-                    await rpc("/pos/api/logout", { token: state.token });
-                } catch (_error) {
-                    // ignore
-                }
-            }
-            clearAuth();
-            showScreen("login");
+        on("cancel-close-btn", "click", () => {
+            showScreen(state.session ? "pos" : "openSession");
         });
 
-        const menuBtn = document.getElementById("pos-menu-btn");
+        const menuBtn = document.querySelector(".pos-menu-btn");
         if (menuBtn) {
             menuBtn.addEventListener("click", (event) => {
                 event.preventDefault();
@@ -1097,11 +1681,36 @@
             });
         });
 
-        on("back-from-stock-btn", "click", () => showScreen("pos"));
-        on("back-from-sales-btn", "click", () => showScreen("pos"));
-        on("stock-search", "input", async (event) => {
+        on("stock-search", "input", debounce(async (event) => {
             state.stockSearch = event.target.value.trim();
+            listState.stock.page = 1;
             await loadStock();
+        }));
+
+        document.addEventListener("click", async (event) => {
+            const button = event.target.closest("[data-page-key][data-page-action]");
+            if (!button || button.disabled) return;
+            try {
+                await changePage(button.dataset.pageKey, button.dataset.pageAction === "next" ? 1 : -1);
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        on("sales-filter-btn", "click", async () => {
+            dateFilters.sales.from = document.getElementById("sales-date-from")?.value || "";
+            dateFilters.sales.to = document.getElementById("sales-date-to")?.value || "";
+            listState.sales.page = 1;
+            showError("sales-history-error", "");
+            await loadSalesHistory();
+        });
+
+        on("requisition-filter-btn", "click", async () => {
+            dateFilters.requisitions.from = document.getElementById("requisition-date-from")?.value || "";
+            dateFilters.requisitions.to = document.getElementById("requisition-date-to")?.value || "";
+            listState.requisitions.page = 1;
+            showError("requisition-list-error", "");
+            await loadRequisitionList();
         });
 
         on("cancel-return-stock", "change", toggleCancelReasonField);
@@ -1114,20 +1723,50 @@
             }
         });
 
-        document.getElementById("back-from-requisition-btn").addEventListener("click", () => showScreen("pos"));
-        document.getElementById("requisition-list-btn").addEventListener("click", async () => {
-            await loadRequisitionList();
-            showScreen("requisitionList");
+        on("requisition-list-btn", "click", async () => {
+            await openRequisitionHistoryScreen();
         });
-        document.getElementById("back-from-requisition-list-btn").addEventListener("click", () => showScreen("requisition"));
-        document.getElementById("requisition-search").addEventListener("input", (event) => {
+        on("requisition-list-container", "click", async (event) => {
+            const card = event.target.closest("[data-requisition-id]");
+            if (!card) return;
+            try {
+                await openRequisitionDetail(Number(card.dataset.requisitionId));
+            } catch (error) {
+                showError("requisition-list-error", error.message);
+            }
+        });
+        on("requisition-new-btn", "click", async () => {
+            await openRequisitionScreen();
+        });
+        on("requisition-detail-back-btn", "click", async () => {
+            await openRequisitionHistoryScreen();
+        });
+        on("requisition-search", "input", debounce((event) => {
             state.requisitionSearch = event.target.value.trim();
-            renderRequisitionProducts();
+            listState.requisitionProducts.page = 1;
+            loadRequisitionProducts().catch((error) => {
+                showError("requisition-error", error.message);
+            });
+        }));
+        on("requisition-scan-btn", "click", () => {
+            openBarcodeScanner("requisition");
         });
-        document.getElementById("requisition-cart-list").addEventListener("click", (event) => {
+        on("requisition-cart-list", "click", (event) => {
             const button = event.target.closest("[data-req-action]");
             if (!button) return;
             updateRequisitionCart(button.dataset.reqAction, Number(button.dataset.id));
+        });
+        on("requisition-cart-list", "blur", (event) => {
+            const input = event.target.closest("[data-req-qty-id]");
+            if (!input) return;
+            updateRequisitionQty(Number(input.dataset.reqQtyId), input.value);
+        });
+        on("requisition-cart-list", "keydown", (event) => {
+            const input = event.target.closest("[data-req-qty-id]");
+            if (!input || event.key !== "Enter") return;
+            event.preventDefault();
+            updateRequisitionQty(Number(input.dataset.reqQtyId), input.value);
+            input.blur();
         });
         on("submit-requisition-btn", "click", async () => {
             try {

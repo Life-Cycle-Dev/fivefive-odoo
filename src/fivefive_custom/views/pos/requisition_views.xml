@@ -8,7 +8,6 @@
                 <field name="number"/>
                 <field name="requested_at"/>
                 <field name="store_id"/>
-                <field name="warehouse_id"/>
                 <field name="pos_user_id"/>
                 <field name="state" widget="badge"
                     decoration-info="state == 'submitted'"
@@ -16,7 +15,8 @@
                     decoration-primary="state == 'received'"
                     decoration-success="state == 'done'"
                     decoration-muted="state == 'cancelled'"/>
-                <field name="movement_count"/>
+                <field name="movement_count" string="Movements"/>
+                <field name="warehouse_id" optional="hide"/>
             </list>
         </field>
     </record>
@@ -38,20 +38,21 @@
                         <h1><field name="number" readonly="1"/></h1>
                     </div>
                     <group>
-                        <group>
+                        <group string="Request">
                             <field name="store_id" readonly="1"/>
-                            <field name="warehouse_id" readonly="1"/>
+                            <field name="warehouse_ids" widget="many2many_tags" readonly="1"/>
+                            <field name="warehouse_id" readonly="1" invisible="warehouse_ids"/>
                             <field name="pos_user_id" readonly="1"/>
                             <field name="session_id" readonly="1"/>
+                            <field name="note" readonly="1"/>
                         </group>
-                        <group>
+                        <group string="Timeline">
                             <field name="requested_at" readonly="1"/>
                             <field name="prepared_at" readonly="1"/>
                             <field name="received_at" readonly="1"/>
                             <field name="done_at" readonly="1"/>
                         </group>
                     </group>
-                    <field name="note" readonly="1"/>
                     <notebook>
                         <page string="Requested Items">
                             <field name="line_ids" readonly="1">
@@ -66,14 +67,13 @@
                             <field name="movement_ids" readonly="1">
                                 <list>
                                     <field name="name"/>
-                                    <field name="warehouse_id"/>
-                                    <field name="lot_number"/>
                                     <field name="product_variant_id"/>
+                                    <field name="lot_number"/>
                                     <field name="quantity"/>
-                                    <field name="transfer_cost_thb"/>
                                     <field name="state" widget="badge"/>
-                                    <field name="prepared_at"/>
-                                    <field name="done_at"/>
+                                    <field name="transfer_cost_thb" optional="hide"/>
+                                    <field name="prepared_at" optional="hide"/>
+                                    <field name="done_at" optional="hide"/>
                                 </list>
                             </field>
                         </page>
@@ -91,19 +91,22 @@
                 <group>
                     <field name="requisition_id" readonly="1"/>
                     <field name="store_id" readonly="1"/>
-                    <field name="warehouse_id"/>
+                    <field name="warehouse_ids" widget="many2many_tags" options="{'no_create': True}"/>
                 </group>
-                <group string="Lot Allocations" invisible="not warehouse_id">
+                <group string="Lot Allocations" invisible="not warehouse_ids">
                     <field name="line_ids" nolabel="1">
                         <list editable="bottom" create="0" delete="0">
                             <field name="requisition_line_id" column_invisible="1"/>
                             <field name="product_variant_id" string="Product Variant" readonly="1"/>
                             <field name="requested_qty" string="Requested" readonly="1"/>
                             <field name="warehouse_inventory_id" column_invisible="1"/>
-                            <field name="lot_number" string="Lot Number" readonly="1"/>
+                            <field name="warehouse_id" string="Warehouse" readonly="1"/>
                             <field name="quality_note" string="Quality Note" readonly="1"/>
                             <field name="available_quantity" string="Available" readonly="1"/>
+                            <field name="unit_cost_thb" string="Unit Cost" readonly="1"/>
+                            <field name="lot_total_cost_thb" string="Lot Cost" readonly="1" optional="hide"/>
                             <field name="quantity" string="Allocate Qty"/>
+                            <field name="allocation_cost_thb" string="Alloc. Cost" readonly="1"/>
                         </list>
                     </field>
                 </group>
@@ -122,15 +125,15 @@
             <list default_order="id desc">
                 <field name="name"/>
                 <field name="requisition_id"/>
-                <field name="warehouse_id"/>
                 <field name="store_id"/>
                 <field name="product_variant_id"/>
-                <field name="lot_number"/>
                 <field name="quantity"/>
-                <field name="transfer_cost_thb"/>
                 <field name="state" widget="badge"/>
-                <field name="prepared_at"/>
-                <field name="done_at"/>
+                <field name="lot_number" optional="hide"/>
+                <field name="warehouse_id" optional="hide"/>
+                <field name="transfer_cost_thb" optional="hide"/>
+                <field name="prepared_at" optional="hide"/>
+                <field name="done_at" optional="hide"/>
             </list>
         </field>
     </record>
@@ -145,18 +148,24 @@
                     <field name="state" widget="statusbar" statusbar_visible="prepared,done"/>
                 </header>
                 <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
                     <group>
-                        <field name="name" readonly="1"/>
-                        <field name="requisition_id" readonly="1"/>
-                        <field name="warehouse_id" readonly="1"/>
-                        <field name="store_id" readonly="1"/>
-                        <field name="product_variant_id" readonly="1"/>
-                        <field name="lot_number" readonly="1"/>
-                        <field name="quality_note" readonly="1"/>
-                        <field name="quantity" readonly="1"/>
-                        <field name="transfer_cost_thb" readonly="1"/>
-                        <field name="prepared_at" readonly="1"/>
-                        <field name="done_at" readonly="1"/>
+                        <group string="Movement">
+                            <field name="requisition_id" readonly="1"/>
+                            <field name="warehouse_id" readonly="1"/>
+                            <field name="store_id" readonly="1"/>
+                            <field name="product_variant_id" readonly="1"/>
+                            <field name="lot_number" readonly="1"/>
+                            <field name="quality_note" readonly="1"/>
+                        </group>
+                        <group string="Details">
+                            <field name="quantity" readonly="1"/>
+                            <field name="transfer_cost_thb" readonly="1"/>
+                            <field name="prepared_at" readonly="1"/>
+                            <field name="done_at" readonly="1"/>
+                        </group>
                     </group>
                 </sheet>
             </form>

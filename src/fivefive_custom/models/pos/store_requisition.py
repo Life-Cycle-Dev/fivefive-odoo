@@ -11,6 +11,13 @@ class StoreRequisition(models.Model):
     number = fields.Char(string="Number", required=True, copy=False, index=True)
     store_id = fields.Many2one("five.five.store", required=True, index=True)
     warehouse_id = fields.Many2one("five.five.warehouse", string="Source Warehouse", index=True)
+    warehouse_ids = fields.Many2many(
+        "five.five.warehouse",
+        "ff_store_req_wh_rel",
+        "requisition_id",
+        "warehouse_id",
+        string="Source Warehouses",
+    )
     pos_user_id = fields.Many2one("five.five.store.pos.user", required=True, index=True)
     session_id = fields.Many2one("five.five.store.pos.session", string="POS Session")
     state = fields.Selection(

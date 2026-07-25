@@ -121,6 +121,19 @@ class StorePosUser(models.Model):
             },
         }
 
+    def action_change_password(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Change Password"),
+            "res_model": "five.five.store.pos.user.change.password.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_pos_user_id": self.id,
+            },
+        }
+
     @api.model
     def authenticate(self, username, password):
         user = self.sudo().search(
@@ -160,4 +173,22 @@ class StorePosUserCredentialWizard(models.TransientModel):
         if not self.password:
             raise UserError(_("No password to apply."))
         self.pos_user_id.write({"password_plain": self.password})
+        return {"type": "ir.actions.act_window_close"}
+
+
+class StorePosUserChangePasswordWizard(models.TransientModel):
+    _name = "five.five.store.pos.user.change.password.wizard"
+    _description = "Change POS user password"
+
+    pos_user_id = fields.Many2one("five.five.store.pos.user", required=True)
+    new_password = fields.Char(string="New Password", required=True)
+    confirm_password = fields.Char(string="Confirm Password", required=True)
+
+    def action_change_password(self):
+        self.ensure_one()
+        if self.new_password != self.confirm_password:
+            raise ValidationError(_("Passwords do not match."))
+        if len(self.new_password) < 4:
+            raise ValidationError(_("Password must be at least 4 characters."))
+        self.pos_user_id.write({"password_plain": self.new_password})
         return {"type": "ir.actions.act_window_close"}
