@@ -18,6 +18,15 @@ class PurchaseOrderPaymentWizard(models.TransientModel):
     amount_usd = fields.Float(string="Amount (USD)", default=0, required=True)
     amount_thb = fields.Float(string="Amount (THB)", default=0, required=True)
     pay_at = fields.Date(string="Payment At", required=True, default=date.today())
+    payment_status = fields.Selection(
+        [
+            ("pending", "Pending"),
+            ("paid", "Paid"),
+        ],
+        string="Status",
+        default="pending",
+        required=True,
+    )
     attachment = fields.Binary(string="Attachment")
     note = fields.Char(string="Note")
 
@@ -31,8 +40,9 @@ class PurchaseOrderPaymentWizard(models.TransientModel):
         if po.state not in ["po_issued", "documents_completed", "clearing"]:
             raise UserError("สามารถจ่ายเงินได้เฉพาะ PO ที่อยู่ใน status Issued, Documents Completed, หรือ Clearing เท่านั้น")
 
-        if float_compare(self.amount_usd, po.balance_amount_usd, precision_digits=2) > 0:
-            raise UserError("Amount ต้องไม่มากกว่ายอดคงเหลือของ PO")
+        remaining_to_record = po.total_amount_usd - po.amount_recorded_usd
+        if float_compare(self.amount_usd, remaining_to_record, precision_digits=2) > 0:
+            raise UserError("Amount ต้องไม่มากกว่ายอดที่ยังไม่ได้บันทึก Payment")
 
         payment = self.env["five.five.purchase.order.payment"].create(
             {
@@ -40,6 +50,7 @@ class PurchaseOrderPaymentWizard(models.TransientModel):
                 "amount_usd": self.amount_usd,
                 "amount_thb": self.amount_thb,
                 "pay_at": self.pay_at,
+                "payment_status": self.payment_status,
                 "attachment": self.attachment,
                 "note": self.note,
             }

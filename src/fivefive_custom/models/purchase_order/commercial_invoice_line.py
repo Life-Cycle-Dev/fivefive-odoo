@@ -120,7 +120,7 @@ class CommercialInvoiceLine(models.Model):
     def _ff_recompute_auto_fixed_costs_for_converts(self):
         """
         Auto-create/update fixed costs on product.convert derived from this CI line.
-        - Exchange rate THB/USD = amount_paid_thb / amount_paid_usd on PO
+        - Exchange rate THB/USD = amount_recorded_thb / amount_recorded_usd on PO
         - Per-qty USD = total_price_usd / total_converted_qty
         - Fixed cost per qty (THB) = per-qty USD * exchange_rate
         Recomputed for all converts of the CI line whenever quantities change.
@@ -149,9 +149,9 @@ class CommercialInvoiceLine(models.Model):
                 ).unlink()
                 continue
 
-            amount_paid_usd = po.amount_paid_usd or 0.0
-            amount_paid_thb = po.amount_paid_thb or 0.0
-            exchange_rate = (amount_paid_thb / amount_paid_usd) if amount_paid_usd else 0.0
+            amount_recorded_usd = po.amount_recorded_usd or 0.0
+            amount_recorded_thb = po.amount_recorded_thb or 0.0
+            exchange_rate = (amount_recorded_thb / amount_recorded_usd) if amount_recorded_usd else 0.0
 
             per_qty_usd = (line.total_price_usd or 0.0) / total_qty
             fixed_cost_thb_per_qty = per_qty_usd * exchange_rate

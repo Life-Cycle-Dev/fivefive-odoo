@@ -17,6 +17,15 @@ class PurchaseOrderPayment(models.Model):
     amount_usd = fields.Float(string="Amount (USD)", default=0, required=True)
     amount_thb = fields.Float(string="Amount (THB)", default=0, required=True)
     pay_at = fields.Date(string="Payment At", required=True)
+    payment_status = fields.Selection(
+        [
+            ("pending", "Pending"),
+            ("paid", "Paid"),
+        ],
+        string="Status",
+        default="pending",
+        required=True,
+    )
     attachment = fields.Binary(string="Attachment")
     note = fields.Char(string="Note")
 
@@ -34,20 +43,72 @@ class PurchaseOrderPayment(models.Model):
         compute="_compute_is_reversed",
     )
 
+    def init(self):
+        super().init()
+        self.env.cr.execute(
+            """
+            UPDATE five_five_purchase_order_payment
+               SET payment_status = 'paid'
+             WHERE payment_status IS NULL
+                OR payment_status = ''
+            """
+        )
+        self.env.cr.execute(
+            """
+            UPDATE five_five_purchase_order po
+               SET amount_recorded_usd = COALESCE(sub.usd, 0),
+                   amount_recorded_thb = COALESCE(sub.thb, 0),
+                   amount_paid_usd = COALESCE(sub.paid_usd, 0),
+                   amount_paid_thb = COALESCE(sub.paid_thb, 0)
+              FROM (
+                    SELECT purchase_order_id,
+                           SUM(amount_usd) AS usd,
+                           SUM(amount_thb) AS thb,
+                           SUM(CASE WHEN payment_status = 'paid' THEN amount_usd ELSE 0 END) AS paid_usd,
+                           SUM(CASE WHEN payment_status = 'paid' THEN amount_thb ELSE 0 END) AS paid_thb
+                      FROM five_five_purchase_order_payment
+                  GROUP BY purchase_order_id
+                   ) sub
+             WHERE po.id = sub.purchase_order_id
+            """
+        )
+
     def _compute_is_reversed(self):
         for payment in self:
             payment.is_reversed = bool(self.search_count([("reversed_from_payment_id", "=", payment.id)]))
 
     def _recompute_purchase_order_payment_summary(self, purchase_orders):
         for po in purchase_orders:
-            amount_paid_usd = sum(po.payment_ids.mapped("amount_usd"))
-            amount_paid_thb = sum(po.payment_ids.mapped("amount_thb"))
+            amount_recorded_usd = sum(po.payment_ids.mapped("amount_usd"))
+            amount_recorded_thb = sum(po.payment_ids.mapped("amount_thb"))
+            paid_payments = po.payment_ids.filtered(lambda payment: payment.payment_status == "paid")
+            amount_paid_usd = sum(paid_payments.mapped("amount_usd"))
+            amount_paid_thb = sum(paid_payments.mapped("amount_thb"))
             po.write(
                 {
+                    "amount_recorded_usd": amount_recorded_usd,
+                    "amount_recorded_thb": amount_recorded_thb,
                     "amount_paid_usd": amount_paid_usd,
                     "amount_paid_thb": amount_paid_thb,
                 }
             )
+            po.commercial_invoice_line_ids._ff_recompute_auto_fixed_costs_for_converts()
+
+    def action_mark_as_paid(self):
+        for payment in self:
+            if payment.purchase_order_id.state not in ["po_issued", "documents_completed", "clearing", "closed"]:
+                raise UserError("ไม่สามารถ Mark as Paid ใน status นี้ได้")
+            if payment.is_cancel:
+                raise UserError("Payment ที่ถูกยกเลิกแล้วไม่สามารถ Mark as Paid ได้")
+            if payment.is_reversed:
+                raise UserError("Payment นี้ถูกยกเลิกไปแล้ว")
+            if payment.payment_status == "paid":
+                raise UserError("Payment นี้ถูก Mark as Paid แล้ว")
+            if float_compare(payment.amount_usd, 0, precision_digits=2) <= 0:
+                raise UserError("Mark as Paid ได้เฉพาะ Payment ที่มียอดมากกว่า 0")
+            payment.payment_status = "paid"
+            payment._recompute_purchase_order_payment_summary(payment.purchase_order_id)
+        return True
 
     def action_open_cancel_payment_wizard(self):
         self.ensure_one()
@@ -74,7 +135,7 @@ class PurchaseOrderPayment(models.Model):
     def action_cancel_payment(self, reason, cancel_attachment=False, cancel_attachment_name=False):
         for payment in self:
             if payment.purchase_order_id.state not in ["draft", "po_issued", "documents_completed"]:
-                raise UserError(f"ไม่สามารถยกเลิก Payment ที่อยู่ใน status {self.purchase_order_id.state} ได้")
+                raise UserError(f"ไม่สามารถยกเลิก Payment ที่อยู่ใน status {payment.purchase_order_id.state} ได้")
 
             if payment.is_cancel:
                 raise UserError("Payment นี้ถูกยกเลิกไปแล้ว")
@@ -96,6 +157,7 @@ class PurchaseOrderPayment(models.Model):
                     "pay_at": fields.Date.context_today(self),
                     "amount_usd": -abs(payment.amount_usd),
                     "amount_thb": -abs(payment.amount_thb),
+                    "payment_status": payment.payment_status,
                     "is_cancel": True,
                     "cancel_reason": reason,
                     "cancel_attachment": cancel_attachment,

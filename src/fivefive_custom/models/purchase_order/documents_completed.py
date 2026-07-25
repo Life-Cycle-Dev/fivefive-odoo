@@ -1,5 +1,6 @@
 from odoo import models, fields
 from odoo.exceptions import UserError
+from odoo.tools.float_utils import float_compare
 
 class PurchaseOrderDocumentCompleted(models.Model):
     _inherit = "five.five.purchase.order"
@@ -75,9 +76,7 @@ class PurchaseOrderDocumentCompleted(models.Model):
 
     def action_pay(self):
         self.ensure_one()
-        default_amount_usd = 0.0
-        if self.state in ["documents_completed", "clearing"]:
-            default_amount_usd = self.balance_amount_usd
+        default_amount_usd = max(self.total_amount_usd - self.amount_recorded_usd, 0.0)
 
         return {
             "type": "ir.actions.act_window",
@@ -97,8 +96,11 @@ class PurchaseOrderDocumentCompleted(models.Model):
         if self.state != "documents_completed":
             raise UserError("สามารถ Clearing PO ที่อยู่ใน status Documents Completed เท่านั้น ไม่สามารถดำเนินการต่อได้")
 
-        if self.balance_amount_usd != 0:
-            raise UserError("สามารถ Clearing PO ที่มียอดคงเหลือเป็น 0 เท่านั้น ไม่สามารถดำเนินการต่อได้")
+        if float_compare(self.amount_recorded_usd, self.total_amount_usd, precision_digits=2) != 0:
+            raise UserError(
+                "ต้องบันทึก Payment ให้ครบยอดรวม Commercial Invoice ก่อน Clearing "
+                "(สามารถเป็น Pending ได้ ไม่จำเป็นต้อง Mark as Paid)"
+            )
 
         return {
             "type": "ir.actions.act_window",

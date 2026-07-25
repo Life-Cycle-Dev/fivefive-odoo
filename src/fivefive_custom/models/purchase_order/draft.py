@@ -49,9 +49,16 @@ class PurchaseOrder(models.Model):
         readonly=True,
     )
     total_amount_usd = fields.Float(string="Total Amount (USD)", compute="_compute_total_amount", store=True)
+    amount_recorded_usd = fields.Float(string="Amount Recorded (USD)", default=0.0)
+    amount_recorded_thb = fields.Float(string="Amount Recorded (THB)", default=0.0)
     amount_paid_usd = fields.Float(string="Amount Paid (USD)", default=0.0)
     amount_paid_thb = fields.Float(string="Amount Paid (THB)", default=0.0)
     balance_amount_usd = fields.Float(string="Balance Amount (USD)", compute="_compute_balance_amount", store=True)
+    is_payment_recorded_complete = fields.Boolean(
+        string="Payment Recorded Complete",
+        compute="_compute_payment_completion_flags",
+        store=True,
+    )
     exchange_rate_thb_per_usd = fields.Float(
         string="Rate (THB/USD)",
         compute="_compute_exchange_rate_thb_per_usd",
@@ -159,19 +166,37 @@ class PurchaseOrder(models.Model):
         for record in self:
             record.balance_amount_usd = record.total_amount_usd - record.amount_paid_usd
 
-    @api.depends("amount_paid_thb", "amount_paid_usd")
+    @api.depends("total_amount_usd", "amount_recorded_usd")
+    def _compute_payment_completion_flags(self):
+        for record in self:
+            record.is_payment_recorded_complete = (
+                float_compare(
+                    record.amount_recorded_usd,
+                    record.total_amount_usd,
+                    precision_digits=2,
+                )
+                == 0
+                and float_compare(record.total_amount_usd, 0, precision_digits=2) > 0
+            )
+
+    @api.depends("amount_recorded_thb", "amount_recorded_usd")
     def _compute_exchange_rate_thb_per_usd(self):
         for record in self:
-            if record.amount_paid_usd:
-                record.exchange_rate_thb_per_usd = record.amount_paid_thb / record.amount_paid_usd
+            if record.amount_recorded_usd:
+                record.exchange_rate_thb_per_usd = record.amount_recorded_thb / record.amount_recorded_usd
             else:
                 record.exchange_rate_thb_per_usd = 0.0
 
-    @api.constrains("total_amount_usd", "amount_paid_usd", "commercial_invoice_line_ids", "commercial_invoice_line_ids.total_price_usd")
+    @api.constrains(
+        "total_amount_usd",
+        "amount_recorded_usd",
+        "commercial_invoice_line_ids",
+        "commercial_invoice_line_ids.total_price_usd",
+    )
     def _check_total_amount_not_less_than_amount_paid(self):
         for record in self:
-            if float_compare(record.total_amount_usd, record.amount_paid_usd, precision_digits=2) < 0:
-                raise UserError("ไม่สามารถอัปเดต Commercial Invoice Lines ได้ เพราะยอดรวมจะน้อยกว่า Amount Paid")
+            if float_compare(record.total_amount_usd, record.amount_recorded_usd, precision_digits=2) < 0:
+                raise UserError("ไม่สามารถอัปเดต Commercial Invoice Lines ได้ เพราะยอดรวมจะน้อยกว่า Amount Recorded")
 
     def action_po_issue(self):
         for record in self:
@@ -193,8 +218,8 @@ class PurchaseOrder(models.Model):
         if self.state != "draft":
             raise UserError("สามารถ Cancel PO ที่อยู่ใน status Draft เท่านั้น ไม่สามารถดำเนินการต่อได้")
 
-        if self.amount_paid_usd > 0:
-            raise UserError("ไม่สามารถ Cancel PO ที่มีการจ่ายเงินแล้วได้ กรุณาดำเนินการยกเลิกการจ่ายก่อนดำเนินการต่อ")
+        if self.amount_recorded_usd > 0:
+            raise UserError("ไม่สามารถ Cancel PO ที่มีการบันทึก Payment แล้วได้ กรุณาดำเนินการยกเลิกการจ่ายก่อนดำเนินการต่อ")
 
         return {
             "type": "ir.actions.act_window",

@@ -1,5 +1,6 @@
 from odoo import fields, models
 from odoo.exceptions import UserError
+from odoo.tools.float_utils import float_compare
 
 
 class PurchaseOrderClearingWizard(models.TransientModel):
@@ -38,8 +39,15 @@ class PurchaseOrderClearingWizard(models.TransientModel):
         if self.purchase_order_id.state != "documents_completed":
             raise UserError("สามารถ Clearing PO ที่อยู่ใน status Documents Completed เท่านั้น ไม่สามารถดำเนินการต่อได้")
 
-        if self.purchase_order_id.balance_amount_usd != 0:
-            raise UserError("สามารถ Clearing PO ที่มียอดคงเหลือเป็น 0 เท่านั้น ไม่สามารถดำเนินการต่อได้")
+        if float_compare(
+            self.purchase_order_id.amount_recorded_usd,
+            self.purchase_order_id.total_amount_usd,
+            precision_digits=2,
+        ) != 0:
+            raise UserError(
+                "ต้องบันทึก Payment ให้ครบยอดรวม Commercial Invoice ก่อน Clearing "
+                "(สามารถเป็น Pending ได้ ไม่จำเป็นต้อง Mark as Paid)"
+            )
 
         if not self.do_attachment:
             raise UserError("กรุณาอัปโหลดเอกสาร DO ก่อนยืนยัน")

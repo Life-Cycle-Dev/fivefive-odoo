@@ -9,9 +9,9 @@
 						<button name="action_po_issue" string="Issue" type="object" class="btn-primary" invisible="state != 'draft'"/>
 						<button name="action_cancel" string="Cancel" type="object" class="btn-danger" invisible="state != 'draft'"/>
 						<button name="action_post" string="Post" type="object" class="btn-primary" invisible="state != 'po_issued'"/>
-						<button name="action_clearing" string="Clearing" type="object" class="btn-primary" invisible="state not in ['documents_completed'] or balance_amount_usd != 0"/>
+						<button name="action_clearing" string="Clearing" type="object" class="btn-primary" invisible="state not in ['documents_completed'] or not is_payment_recorded_complete"/>
 						<button name="action_close" string="Close" type="object" class="btn-primary" invisible="state != 'clearing'"/>
-						<button name="action_pay" string="Pay" type="object" class="btn-primary" invisible="state not in ['po_issued', 'documents_completed', 'clearing'] or balance_amount_usd == 0"/>
+						<button name="action_pay" string="Pay" type="object" class="btn-primary" invisible="state not in ['po_issued', 'documents_completed', 'clearing'] or is_payment_recorded_complete"/>
 						<button name="action_cancel_clearing" string="Cancel Clearing" type="object" class="btn-secondary" invisible="state not in ['clearing']"/>
 						<button name="action_reset_to_draft" string="Reset to draft" type="object" class="btn-secondary" invisible="state not in ['documents_completed', 'po_issued']"/>
 						<field name="state" widget="statusbar" statusbar_visible="draft,po_issued,documents_completed,clearing,closed,cancelled"/>
@@ -94,13 +94,22 @@
 						</page>
 							<page string="Payment">
 								<field name="payment_ids" readonly="1">
-									<list editable="bottom" decoration-danger="is_cancel" decoration-success="not is_cancel">
-										<field name="pay_at" width="200px"/>
-										<field name="amount_usd" width="100px"/>
-										<field name="amount_thb" width="100px"/>
-										<field name="note" width="200px"/>
-										<field name="cancel_reason" width="200px"/>
-										<field name="attachment" width="200px"/>
+									<list editable="bottom" decoration-danger="is_cancel" decoration-muted="payment_status == 'pending' and not is_cancel">
+										<field name="pay_at" width="120px"/>
+										<field name="payment_status" widget="badge" decoration-info="payment_status == 'pending'" decoration-success="payment_status == 'paid'" width="100px"/>
+										<field name="amount_usd" width="120px"/>
+										<field name="amount_thb" width="120px"/>
+										<field name="note" width="180px"/>
+										<field name="cancel_reason" width="180px"/>
+										<field name="attachment" width="120px"/>
+										<button
+											name="action_mark_as_paid"
+											type="object"
+											string="Mark as Paid"
+											class="btn-link text-success"
+											icon="fa-check"
+											invisible="payment_status != 'pending' or is_cancel or is_reversed or amount_usd &lt;= 0"
+										/>
 										<button
 											name="action_open_cancel_payment_wizard"
 											type="object"
@@ -132,7 +141,10 @@
 
 						</group>
 						<group class="ms-auto ff_po_totals">
+							<field name="is_payment_recorded_complete" invisible="1"/>
 							<field name="total_amount_usd" readonly="1" class="text-end"/>
+							<field name="amount_recorded_usd" readonly="1" class="text-end"/>
+							<field name="amount_recorded_thb" readonly="1" class="text-end"/>
 							<field name="amount_paid_usd" readonly="1" class="text-end"/>
 							<field name="amount_paid_thb" readonly="1" class="text-end"/>
 							<field name="balance_amount_usd" readonly="1" class="text-end"/>

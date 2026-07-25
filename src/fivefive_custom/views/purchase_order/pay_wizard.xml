@@ -10,6 +10,7 @@
 					<field name="amount_usd"/>
 					<field name="amount_thb"/>
 					<field name="pay_at"/>
+					<field name="payment_status"/>
 					<field name="note"/>
 					<field name="attachment"/>
 				</group>
