@@ -1407,6 +1407,41 @@ body.pos-drawer-open {
     display: none !important;
 }
 
+.pos-drawer-footer {
+    margin-top: auto;
+    padding: 12px 0 16px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.pos-drawer-logout {
+    border: none;
+    background: transparent;
+    text-align: left;
+    width: 100%;
+    padding: 16px 20px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #b91c1c;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.pos-drawer-logout:hover {
+    background: #fef2f2;
+}
+
+.pos-auth-floating-menu {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
 .pos-drawer-item:hover,
 .pos-drawer-item.active {
     background: #eef2ff;

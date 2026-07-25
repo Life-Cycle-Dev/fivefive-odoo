@@ -9,7 +9,7 @@
                 <link rel="preconnect" href="https://fonts.googleapis.com"/>
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin"/>
                 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&amp;family=Noto+Sans+Thai:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-                <link rel="stylesheet" href="/fivefive_custom/static/src/pos/pos.css?v=1.0.38"/>
+                <link rel="stylesheet" href="/fivefive_custom/static/src/pos/pos.css?v=1.0.39"/>
             </head>
             <body>
                 <div id="pos-app">
@@ -37,6 +37,9 @@
 
                     <!-- เปิดกะ -->
                     <section id="screen-open-session" class="pos-screen pos-auth-screen">
+                        <button class="pos-auth-floating-menu pos-icon-btn pos-menu-btn" type="button" title="เมนู" aria-label="เมนู">
+                            <svg class="pos-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                        </button>
                         <div class="pos-auth-card">
                             <div class="pos-brand">
                                 <div class="pos-brand-badge">฿</div>
@@ -474,6 +477,12 @@
                                 <span>ปิดกะ</span>
                             </button>
                         </nav>
+                        <div class="pos-drawer-footer">
+                            <button id="logout-btn" class="pos-drawer-logout" type="button">
+                                <span class="pos-drawer-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></span>
+                                <span>ออกจากระบบ</span>
+                            </button>
+                        </div>
                     </aside>
                 </div>
 
@@ -538,7 +547,7 @@
                 </div>
 
                 <script type="text/javascript" src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-                <script type="text/javascript" src="/fivefive_custom/static/src/pos/pos.js?v=1.0.39"></script>
+                <script type="text/javascript" src="/fivefive_custom/static/src/pos/pos.js?v=1.0.40"></script>
             </body>
         </html>
     </template>

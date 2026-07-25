@@ -138,6 +138,15 @@ class StorePosController(http.Controller):
     def pos_logout(self, token):
         try:
             user = self._get_pos_user(token)
+            open_session = request.env["five.five.store.pos.session"].sudo().search(
+                [
+                    ("pos_user_id", "=", user.id),
+                    ("state", "=", "open"),
+                ],
+                limit=1,
+            )
+            if open_session:
+                raise UserError("กรุณาปิดกะก่อนออกจากระบบ")
             user.action_logout_token()
             return self._json_response(ok=True)
         except UserError as exc:

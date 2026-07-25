@@ -1520,6 +1520,26 @@
         document.body.classList.remove("pos-drawer-open");
     }
 
+    async function logout() {
+        closeDrawer();
+        if (state.session) {
+            showAlert("กรุณาปิดกะก่อนออกจากระบบ");
+            return;
+        }
+        try {
+            if (state.token) {
+                await rpc("/pos/api/logout", { token: state.token });
+            }
+        } catch (error) {
+            if (!isAuthError(error.message)) {
+                showAlert(error.message);
+                return;
+            }
+        }
+        clearAuth();
+        showScreen("login");
+    }
+
     async function handleMenuAction(action) {
         if (!hasTabAccess(action)) {
             showAlert("คุณไม่มีสิทธิ์เข้าใช้งานเมนูนี้");
@@ -2155,6 +2175,13 @@
             });
         }
         on("close-drawer-btn", "click", closeDrawer);
+        on("logout-btn", "click", async () => {
+            try {
+                await logout();
+            } catch (error) {
+                showAlert(error.message);
+            }
+        });
         const drawerBackdrop = document.getElementById("pos-drawer-backdrop");
         if (drawerBackdrop) {
             drawerBackdrop.addEventListener("click", (event) => {
