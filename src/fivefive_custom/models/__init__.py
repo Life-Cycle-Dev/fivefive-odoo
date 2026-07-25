@@ -4,3 +4,4 @@ from . import product
 from . import store
 from . import purchase_order
 from . import inventory
+from . import pos

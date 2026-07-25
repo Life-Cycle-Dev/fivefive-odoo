@@ -39,6 +39,7 @@
                                 <field name="name"/>
                                 <field name="sku"/>
                                 <field name="barcode"/>
+                                <field name="sell_price_thb"/>
 <!--                                <field name="barcode_image" width="180" widget="image" readonly="1" options="{'size': [180, 120]}"/>-->
                                 <button name="action_open_form" width="80" type="object" string="Open" icon="fa-external-link"/>
                             </list>
@@ -84,6 +85,7 @@
                         <field name="size_id"/>
                         <field name="grade_id"/>
                         <field name="barcode"/>
+                        <field name="sell_price_thb"/>
                         <field name="barcode_image" widget="image" readonly="1" options="{'size': [260, 110]}"/>
                     </group>
                 </sheet>

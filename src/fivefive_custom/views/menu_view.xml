@@ -2,58 +2,63 @@
 <odoo>
     <menuitem id="menu_five_five_root" name="Purchase Order"/>
 
-    <!-- start main menu-->
+    <!-- Top-level sections -->
     <menuitem
-        id="menu_five_five_purchase_order_model"
-        name="Purchase Orders"
+        id="menu_five_five_orders_model"
+        name="Orders"
         parent="menu_five_five_root"
-        sequence="1"
+        sequence="10"
     />
 
     <menuitem
         id="menu_five_five_supplier_model"
         name="Supplier"
         parent="menu_five_five_root"
-        sequence="2"
+        sequence="20"
     />
 
     <menuitem
         id="menu_five_five_product_model"
         name="Product"
         parent="menu_five_five_root"
-        sequence="3"
+        sequence="30"
     />
 
-     <menuitem
+    <menuitem
         id="menu_five_five_inventory_model"
         name="Inventory"
         parent="menu_five_five_root"
-        sequence="3"
+        sequence="40"
     />
-    <!-- end main menu-->
 
-    <!--  start purchase order submenu  -->
     <menuitem
-        id="menu_five_five_purchase_order_sub_menu"
-        name="Purchase Order"
-        parent="menu_five_five_purchase_order_model"
+        id="menu_five_five_store_pos_model"
+        name="POS"
+        parent="menu_five_five_root"
+        sequence="50"
+    />
+
+    <!-- Orders -->
+    <menuitem
+        id="menu_five_five_purchase_order_model"
+        name="Purchase Orders"
+        parent="menu_five_five_orders_model"
         action="action_five_five_purchase_order_model"
         sequence="1"
     />
 
     <menuitem
         id="menu_five_five_purchase_order_document_sub_menu"
-        name="Purchase Order Document"
-        parent="menu_five_five_purchase_order_model"
+        name="Purchase Order Documents"
+        parent="menu_five_five_orders_model"
         action="action_five_five_purchase_order_document_model"
         sequence="2"
     />
-    <!--  end purchase order submenu  -->
 
-    <!--  start supplier submenu  -->
+    <!-- Supplier -->
     <menuitem
         id="menu_five_five_supplier_sub_menu"
-        name="Supplier"
+        name="Suppliers"
         parent="menu_five_five_supplier_model"
         action="action_five_five_supplier_model"
         sequence="1"
@@ -61,7 +66,7 @@
 
     <menuitem
         id="menu_five_five_logistic_model"
-        name="Logistic"
+        name="Logistics"
         parent="menu_five_five_supplier_model"
         action="action_five_five_logistic_model"
         sequence="2"
@@ -69,17 +74,16 @@
 
     <menuitem
         id="menu_five_five_store_model"
-        name="Store"
+        name="Stores"
         parent="menu_five_five_supplier_model"
         action="action_five_five_store_model"
         sequence="3"
     />
-    <!--  end supplier submenu  -->
 
-    <!--  start product submenu  -->
+    <!-- Product -->
     <menuitem
         id="menu_five_five_product_product_model"
-        name="Product"
+        name="Products"
         parent="menu_five_five_product_model"
         action="action_five_five_product_model"
         sequence="1"
@@ -87,7 +91,7 @@
 
     <menuitem
         id="menu_five_five_product_variant_model"
-        name="Product Variant"
+        name="Product Variants"
         parent="menu_five_five_product_model"
         action="action_five_five_product_variant_model"
         sequence="2"
@@ -95,7 +99,7 @@
 
     <menuitem
         id="menu_five_five_product_unit_model"
-        name="Product Unit"
+        name="Product Units"
         parent="menu_five_five_product_model"
         action="action_five_five_product_unit_model"
         sequence="3"
@@ -103,7 +107,7 @@
 
     <menuitem
         id="menu_five_five_product_grade_model"
-        name="Product Grade"
+        name="Product Grades"
         parent="menu_five_five_product_model"
         action="action_five_five_product_grade_model"
         sequence="4"
@@ -111,17 +115,16 @@
 
     <menuitem
         id="menu_five_five_product_size_model"
-        name="Product Size"
+        name="Product Sizes"
         parent="menu_five_five_product_model"
         action="action_five_five_product_size_model"
-        sequence="4"
+        sequence="5"
     />
-    <!--  end product submenu  -->
 
-    <!--  start inventory submenu  -->
+    <!-- Inventory -->
     <menuitem
         id="menu_five_five_invemtory_sub_menu"
-        name="Inventory"
+        name="Warehouse Inventory"
         parent="menu_five_five_inventory_model"
         action="action_five_five_inventory_model"
         sequence="1"
@@ -129,10 +132,58 @@
 
     <menuitem
         id="menu_five_five_warehouse_sub_menu"
-        name="Warehouse"
+        name="Warehouses"
         parent="menu_five_five_inventory_model"
         action="action_five_five_warehouse_model"
         sequence="2"
     />
-    <!--  end inventory submenu -->
+
+    <menuitem
+        id="menu_five_five_inventory_movement_sub_menu"
+        name="Inventory Movements"
+        parent="menu_five_five_inventory_model"
+        action="action_five_five_inventory_movement"
+        sequence="3"
+    />
+
+    <!-- POS -->
+    <menuitem
+        id="menu_five_five_store_pos_open_sub_menu"
+        name="Open POS"
+        parent="menu_five_five_store_pos_model"
+        action="action_open_store_pos"
+        sequence="1"
+    />
+
+    <menuitem
+        id="menu_five_five_store_pos_order_sub_menu"
+        name="POS Orders"
+        parent="menu_five_five_store_pos_model"
+        action="action_five_five_store_pos_order"
+        sequence="2"
+    />
+
+    <menuitem
+        id="menu_five_five_store_pos_session_sub_menu"
+        name="POS Sessions"
+        parent="menu_five_five_store_pos_model"
+        action="action_five_five_store_pos_session"
+        sequence="3"
+    />
+
+    <menuitem
+        id="menu_five_five_store_pos_user_sub_menu"
+        name="POS Users"
+        parent="menu_five_five_store_pos_model"
+        action="action_five_five_store_pos_user"
+        sequence="4"
+    />
+
+    <menuitem
+        id="menu_five_five_store_requisition_sub_menu"
+        name="Stock Requisitions"
+        parent="menu_five_five_store_pos_model"
+        action="action_five_five_store_requisition"
+        sequence="5"
+    />
 </odoo>

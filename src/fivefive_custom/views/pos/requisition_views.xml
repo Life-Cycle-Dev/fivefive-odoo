@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_five_five_store_requisition_list" model="ir.ui.view">
+        <field name="name">five.five.store.requisition.list</field>
+        <field name="model">five.five.store.requisition</field>
+        <field name="arch" type="xml">
+            <list default_order="requested_at desc">
+                <field name="number"/>
+                <field name="requested_at"/>
+                <field name="store_id"/>
+                <field name="warehouse_id"/>
+                <field name="pos_user_id"/>
+                <field name="state" widget="badge"
+                    decoration-info="state == 'submitted'"
+                    decoration-warning="state == 'prepared'"
+                    decoration-primary="state == 'received'"
+                    decoration-success="state == 'done'"
+                    decoration-muted="state == 'cancelled'"/>
+                <field name="movement_count"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_five_five_store_requisition_form" model="ir.ui.view">
+        <field name="name">five.five.store.requisition.form</field>
+        <field name="model">five.five.store.requisition</field>
+        <field name="arch" type="xml">
+            <form string="Stock Requisition">
+                <header>
+                    <button name="action_open_allocate_wizard" type="object" string="Allocate Stock" class="btn-primary" invisible="state != 'submitted'"/>
+                    <button name="action_mark_done" type="object" string="Complete &amp; Deduct Stock" class="btn-primary" invisible="state not in ['prepared', 'received']"/>
+                    <button name="action_mark_received" type="object" string="Mark Received" class="btn-secondary" invisible="state != 'prepared'"/>
+                    <button name="action_cancel" type="object" string="Cancel" class="btn-secondary" invisible="state in ['done', 'cancelled']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="submitted,prepared,received,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="number" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="store_id" readonly="1"/>
+                            <field name="warehouse_id" readonly="1"/>
+                            <field name="pos_user_id" readonly="1"/>
+                            <field name="session_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="requested_at" readonly="1"/>
+                            <field name="prepared_at" readonly="1"/>
+                            <field name="received_at" readonly="1"/>
+                            <field name="done_at" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="note" readonly="1"/>
+                    <notebook>
+                        <page string="Requested Items">
+                            <field name="line_ids" readonly="1">
+                                <list>
+                                    <field name="product_variant_id"/>
+                                    <field name="requested_qty"/>
+                                    <field name="allocated_qty"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Inventory Movements">
+                            <field name="movement_ids" readonly="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="warehouse_id"/>
+                                    <field name="lot_number"/>
+                                    <field name="product_variant_id"/>
+                                    <field name="quantity"/>
+                                    <field name="transfer_cost_thb"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="prepared_at"/>
+                                    <field name="done_at"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_five_five_store_requisition_allocate_wizard_form" model="ir.ui.view">
+        <field name="name">five.five.store.requisition.allocate.wizard.form</field>
+        <field name="model">five.five.store.requisition.allocate.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Allocate Stock">
+                <group>
+                    <field name="requisition_id" readonly="1"/>
+                    <field name="store_id" readonly="1"/>
+                    <field name="warehouse_id"/>
+                </group>
+                <group string="Lot Allocations" invisible="not warehouse_id">
+                    <field name="line_ids" nolabel="1">
+                        <list editable="bottom" create="0" delete="0">
+                            <field name="requisition_line_id" column_invisible="1"/>
+                            <field name="product_variant_id" string="Product Variant" readonly="1"/>
+                            <field name="requested_qty" string="Requested" readonly="1"/>
+                            <field name="warehouse_inventory_id" column_invisible="1"/>
+                            <field name="lot_number" string="Lot Number" readonly="1"/>
+                            <field name="quality_note" string="Quality Note" readonly="1"/>
+                            <field name="available_quantity" string="Available" readonly="1"/>
+                            <field name="quantity" string="Allocate Qty"/>
+                        </list>
+                    </field>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object" string="Create Movements" class="btn-primary"/>
+                    <button special="cancel" string="Cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_five_five_inventory_movement_list" model="ir.ui.view">
+        <field name="name">five.five.inventory.movement.list</field>
+        <field name="model">five.five.inventory.movement</field>
+        <field name="arch" type="xml">
+            <list default_order="id desc">
+                <field name="name"/>
+                <field name="requisition_id"/>
+                <field name="warehouse_id"/>
+                <field name="store_id"/>
+                <field name="product_variant_id"/>
+                <field name="lot_number"/>
+                <field name="quantity"/>
+                <field name="transfer_cost_thb"/>
+                <field name="state" widget="badge"/>
+                <field name="prepared_at"/>
+                <field name="done_at"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_five_five_inventory_movement_form" model="ir.ui.view">
+        <field name="name">five.five.inventory.movement.form</field>
+        <field name="model">five.five.inventory.movement</field>
+        <field name="arch" type="xml">
+            <form string="Inventory Movement">
+                <header>
+                    <button name="action_done" type="object" string="Done" class="btn-primary" invisible="state != 'prepared'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="prepared,done"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name" readonly="1"/>
+                        <field name="requisition_id" readonly="1"/>
+                        <field name="warehouse_id" readonly="1"/>
+                        <field name="store_id" readonly="1"/>
+                        <field name="product_variant_id" readonly="1"/>
+                        <field name="lot_number" readonly="1"/>
+                        <field name="quality_note" readonly="1"/>
+                        <field name="quantity" readonly="1"/>
+                        <field name="transfer_cost_thb" readonly="1"/>
+                        <field name="prepared_at" readonly="1"/>
+                        <field name="done_at" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_five_five_store_requisition" model="ir.actions.act_window">
+        <field name="name">Stock Requisitions</field>
+        <field name="res_model">five.five.store.requisition</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_five_five_inventory_movement" model="ir.actions.act_window">
+        <field name="name">Inventory Movements</field>
+        <field name="res_model">five.five.inventory.movement</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

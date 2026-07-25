@@ -67,6 +67,12 @@ class ProductVariant(models.Model):
     )
 
     active = fields.Boolean(string="Active", default=True, tracking=True)
+    sell_price_thb = fields.Float(
+        string="Sell Price (THB)",
+        digits=(16, 2),
+        tracking=True,
+        help="ราคาขายต่อหน่วยที่หน้า POS",
+    )
 
     def _generate_unique_sku(self):
         for _ in range(200):

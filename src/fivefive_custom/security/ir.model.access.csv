@@ -30,3 +30,14 @@ access_five_five_commercial_invoice_line_convert_wizard_line_user,access.five.fi
 access_five_five_product_convert_cost_wizard_user,access.five.five.product.convert.cost.wizard.user,model_five_five_product_convert_cost_wizard,,1,1,1,1
 access_five_five_product_convert_cost_wizard_line_user,access.five.five.product.convert.cost.wizard.line.user,model_five_five_product_convert_cost_wizard_line,,1,1,1,1
 access_five_five_commercial_invoice_line_convert_add_line_wizard_user,access.five.five.commercial.invoice.line.convert.add.line.wizard.user,model_five_five_commercial_invoice_line_convert_add_line_wizard,,1,1,1,1
+access_five_five_store_pos_user_user,access.five.five.store.pos.user.user,model_five_five_store_pos_user,,1,1,1,1
+access_five_five_store_pos_user_credential_wizard_user,access.five.five.store.pos.user.credential.wizard.user,model_five_five_store_pos_user_credential_wizard,,1,1,1,1
+access_five_five_store_pos_session_user,access.five.five.store.pos.session.user,model_five_five_store_pos_session,,1,1,1,1
+access_five_five_store_pos_order_user,access.five.five.store.pos.order.user,model_five_five_store_pos_order,,1,1,1,1
+access_five_five_store_pos_order_line_user,access.five.five.store.pos.order.line.user,model_five_five_store_pos_order_line,,1,1,1,1
+access_five_five_store_pos_order_line_deduction_user,access.five.five.store.pos.order.line.deduction.user,model_five_five_store_pos_order_line_deduction,,1,1,1,1
+access_five_five_store_requisition_user,access.five.five.store.requisition.user,model_five_five_store_requisition,,1,1,1,1
+access_five_five_store_requisition_line_user,access.five.five.store.requisition.line.user,model_five_five_store_requisition_line,,1,1,1,1
+access_five_five_store_requisition_allocate_wizard_user,access.five.five.store.requisition.allocate.wizard.user,model_five_five_store_requisition_allocate_wizard,,1,1,1,1
+access_five_five_store_requisition_allocate_wizard_line_user,access.five.five.store.requisition.allocate.wizard.line.user,model_five_five_store_requisition_allocate_wizard_line,,1,1,1,1
+access_five_five_inventory_movement_user,access.five.five.inventory.movement.user,model_five_five_inventory_movement,,1,1,1,1

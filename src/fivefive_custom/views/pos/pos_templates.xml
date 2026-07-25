@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="store_pos_app" name="Store POS App">
+        <html>
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+                <title>ระบบขายหน้าร้าน</title>
+                <link rel="stylesheet" href="/fivefive_custom/static/src/pos/pos.css?v=1.0.2"/>
+            </head>
+            <body>
+                <div id="pos-app">
+                    <!-- เข้าสู่ระบบ -->
+                    <section id="screen-login" class="pos-screen pos-auth-screen active">
+                        <div class="pos-auth-card">
+                            <div class="pos-brand">
+                                <div class="pos-brand-badge">POS</div>
+                                <h1>ระบบขายหน้าร้าน</h1>
+                                <p>เข้าสู่ระบบเพื่อเริ่มขาย</p>
+                            </div>
+                            <div id="login-error" class="pos-error" hidden="hidden"></div>
+                            <form id="login-form">
+                                <div class="pos-field">
+                                    <label class="pos-label" for="login-username">ชื่อผู้ใช้</label>
+                                    <input id="login-username" class="pos-input" type="text" autocomplete="username" required="required"/>
+                                </div>
+                                <div class="pos-field">
+                                    <label class="pos-label" for="login-password">รหัสผ่าน</label>
+                                    <input id="login-password" class="pos-input" type="password" autocomplete="current-password" required="required"/>
+                                </div>
+                                <button class="pos-btn pos-btn-primary pos-btn-block" type="submit">เข้าสู่ระบบ</button>
+                            </form>
+                        </div>
+                    </section>
+
+                    <!-- เปิดกะ -->
+                    <section id="screen-open-session" class="pos-screen pos-auth-screen">
+                        <div class="pos-auth-card">
+                            <div class="pos-brand">
+                                <div class="pos-brand-badge">฿</div>
+                                <h1>เปิดกะขาย</h1>
+                                <p>กรอกเงินทอนเริ่มต้นในลิ้นชัก</p>
+                            </div>
+                            <div id="open-session-error" class="pos-error" hidden="hidden"></div>
+                            <form id="open-session-form">
+                                <div class="pos-field">
+                                    <label class="pos-label" for="opening-cash">เงินสดเริ่มต้น (บาท)</label>
+                                    <input id="opening-cash" class="pos-input" type="number" min="0" step="0.01" value="0"/>
+                                </div>
+                                <button class="pos-btn pos-btn-primary pos-btn-block" type="submit">เปิดกะ</button>
+                            </form>
+                        </div>
+                    </section>
+
+                    <!-- 1. ตะกร้าสินค้า -->
+                    <section id="screen-pos" class="pos-screen">
+                        <div class="pos-header-bar">
+                            <div class="pos-header-left">
+                                <button id="pos-menu-btn" class="pos-icon-btn" type="button" title="เมนู">☰</button>
+                                <div>
+                                    <div class="pos-header-title" id="pos-store-name">ร้านค้า</div>
+                                    <small><span id="pos-user-name">พนักงาน</span> · กะ <span id="pos-session-badge">-</span></small>
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:8px;">
+                                <button id="close-session-btn" class="pos-header-action" type="button">ปิดกะ</button>
+                            </div>
+                        </div>
+                        <div class="pos-workspace">
+                            <div class="pos-left-panel">
+                                <div class="pos-search-box">
+                                    <input id="product-search" class="pos-search-input" type="search" placeholder="ค้นหาสินค้า รหัส หรือบาร์โค้ด"/>
+                                </div>
+                                <div class="pos-product-area">
+                                    <div id="product-grid" class="pos-product-grid"></div>
+                                </div>
+                                <div class="pos-barcode-bar">
+                                    <input id="barcode-input" type="text" placeholder="สแกนบาร์โค้ด"/>
+                                    <button id="barcode-add-btn" type="button">เพิ่ม</button>
+                                </div>
+                            </div>
+                            <div class="pos-right-panel">
+                                <div class="pos-cart-head">
+                                    <span>จำนวน</span>
+                                    <span>รายการ</span>
+                                    <span style="text-align:right;">ราคา</span>
+                                </div>
+                                <div id="cart-list" class="pos-cart-body js-cart-table-body"></div>
+                                <div class="pos-summary-box">
+                                    <div class="pos-summary-row">
+                                        <span>รายการ (<span class="js-summary-items">0</span>)</span>
+                                        <span class="js-summary-subtotal">0.00</span>
+                                    </div>
+                                    <div class="pos-summary-row grand">
+                                        <span>ยอดรวม</span>
+                                        <span class="js-summary-total">0.00</span>
+                                    </div>
+                                </div>
+                                <button id="checkout-btn" class="pos-primary-btn" type="button" disabled="disabled">ต่อไป</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 2. เงื่อนไขการชำระ -->
+                    <section id="screen-discount" class="pos-screen">
+                        <div class="pos-header-bar">
+                            <div class="pos-header-left">
+                                <button id="back-to-pos-btn" class="pos-icon-btn" type="button">←</button>
+                                <div class="pos-header-title">2. เงื่อนไขการชำระ</div>
+                            </div>
+                        </div>
+                        <div class="pos-workspace">
+                            <div class="pos-left-panel">
+                                <div class="pos-panel-section">
+                                    <label class="pos-label" for="discount-type">ประเภทส่วนลด</label>
+                                    <select id="discount-type" class="pos-select">
+                                        <option value="percent">ส่วนลด (%)</option>
+                                        <option value="fixed">ส่วนลด (บาท)</option>
+                                    </select>
+                                </div>
+                                <div class="pos-panel-section">
+                                    <label class="pos-label" for="discount-value">จำนวนส่วนลด</label>
+                                    <input id="discount-value" class="pos-input" type="number" min="0" step="0.01" value="0" placeholder="0"/>
+                                </div>
+                                <div class="pos-panel-section">
+                                    <label class="pos-label" for="order-note">หมายเหตุ</label>
+                                    <input id="order-note" class="pos-input" type="text" placeholder="หมายเหตุ (ถ้ามี)"/>
+                                </div>
+                                <div class="pos-panel-section">
+                                    <div class="pos-inline-actions">
+                                        <button id="clear-discount-btn" class="pos-secondary-btn" type="button">ล้างส่วนลด</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pos-right-panel">
+                                <div class="pos-cart-head">
+                                    <span>จำนวน</span>
+                                    <span>รายการ</span>
+                                    <span style="text-align:right;">ราคา</span>
+                                </div>
+                                <div class="js-cart-table-body pos-cart-body"></div>
+                                <div class="pos-summary-box">
+                                    <div class="pos-summary-row">
+                                        <span>ยอดรวม</span>
+                                        <span class="js-summary-subtotal">0.00</span>
+                                    </div>
+                                    <div class="pos-summary-row">
+                                        <span>ส่วนลด</span>
+                                        <span class="js-summary-discount">0.00</span>
+                                    </div>
+                                    <div class="pos-summary-row grand">
+                                        <span>ยอดชำระ</span>
+                                        <span class="js-summary-total">0.00</span>
+                                    </div>
+                                </div>
+                                <button id="to-payment-btn" class="pos-primary-btn" type="button">ต่อไป</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 3. ชำระเงิน -->
+                    <section id="screen-payment" class="pos-screen">
+                        <div class="pos-header-bar">
+                            <div class="pos-header-left">
+                                <button id="back-to-discount-btn" class="pos-icon-btn" type="button">←</button>
+                                <div class="pos-header-title">3. ชำระเงิน</div>
+                            </div>
+                        </div>
+                        <div class="pos-workspace">
+                            <div class="pos-left-panel">
+                                <div class="pos-pay-tabs">
+                                    <button class="pos-pay-tab active" type="button" data-pay-tab="cash">เงินสด</button>
+                                    <button class="pos-pay-tab" type="button" data-pay-tab="card" disabled="disabled">บัตร</button>
+                                    <button class="pos-pay-tab" type="button" data-pay-tab="transfer" disabled="disabled">โอน</button>
+                                </div>
+                                <div id="amount-paid-display" class="pos-amount-display">0</div>
+                                <div class="pos-numpad" id="numpad">
+                                    <button type="button" data-key="7">7</button>
+                                    <button type="button" data-key="8">8</button>
+                                    <button type="button" data-key="9">9</button>
+                                    <button type="button" data-key="4">4</button>
+                                    <button type="button" data-key="5">5</button>
+                                    <button type="button" data-key="6">6</button>
+                                    <button type="button" data-key="1">1</button>
+                                    <button type="button" data-key="2">2</button>
+                                    <button type="button" data-key="3">3</button>
+                                    <button type="button" class="ac" data-key="clear">AC</button>
+                                    <button type="button" data-key="0">0</button>
+                                    <button type="button" data-key="exact">พอดี</button>
+                                </div>
+                                <div id="checkout-error" class="pos-error" hidden="hidden"></div>
+                            </div>
+                            <div class="pos-right-panel">
+                                <div class="pos-cart-head">
+                                    <span>จำนวน</span>
+                                    <span>รายการ</span>
+                                    <span style="text-align:right;">ราคา</span>
+                                </div>
+                                <div class="js-cart-table-body pos-cart-body"></div>
+                                <div class="pos-summary-box">
+                                    <div class="pos-summary-row">
+                                        <span>ยอดรวม</span>
+                                        <span class="js-summary-subtotal">0.00</span>
+                                    </div>
+                                    <div class="pos-summary-row">
+                                        <span>ส่วนลด</span>
+                                        <span class="js-summary-discount">0.00</span>
+                                    </div>
+                                    <div class="pos-summary-row grand">
+                                        <span>ยอดชำระ</span>
+                                        <span class="js-summary-total">0.00</span>
+                                    </div>
+                                </div>
+                                <button id="pay-btn" class="pos-primary-btn" type="button">ชำระเงิน</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 4. สรุปเงินทอน -->
+                    <section id="screen-success" class="pos-screen">
+                        <div class="pos-header-bar">
+                            <div class="pos-header-left">
+                                <div class="pos-header-title">4. สรุปเงินทอน</div>
+                            </div>
+                        </div>
+                        <div class="pos-success-layout">
+                            <div class="pos-success-left">
+                                <div class="pos-info-row"><span>เลขที่บิล</span><strong id="success-order-number">-</strong></div>
+                                <div class="pos-info-row"><span>ยอดรวม</span><strong id="success-subtotal">0.00</strong></div>
+                                <div class="pos-info-row"><span>ส่วนลด</span><strong id="success-discount">0.00</strong></div>
+                                <div class="pos-info-row"><span>ยอดชำระ</span><strong id="success-total">0.00</strong></div>
+                                <div class="pos-info-row"><span>รับเงิน</span><strong id="success-paid">0.00</strong></div>
+                            </div>
+                            <div class="pos-success-right">
+                                <div class="pos-success-card">
+                                    <h2>เงินทอน</h2>
+                                    <div class="pos-change-amount" id="success-change">0.00</div>
+                                    <small>บาท</small>
+                                </div>
+                                <div style="margin-top:20px;display:flex;gap:10px;">
+                                    <button id="new-order-btn" class="pos-btn pos-btn-primary" type="button">ทำรายการใหม่</button>
+                                    <button id="logout-btn" class="pos-btn pos-btn-secondary" type="button">ออกจากระบบ</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ปิดกะ -->
+                    <section id="screen-close-session" class="pos-screen pos-auth-screen">
+                        <div class="pos-auth-card">
+                            <div class="pos-brand">
+                                <h1>ปิดกะขาย</h1>
+                                <p>นับเงินสดในลิ้นชัก</p>
+                            </div>
+                            <div id="close-session-error" class="pos-error" hidden="hidden"></div>
+                            <form id="close-session-form">
+                                <div class="pos-field">
+                                    <label class="pos-label" for="closing-cash">เงินสดปิดกะ (บาท)</label>
+                                    <input id="closing-cash" class="pos-input" type="number" min="0" step="0.01" required="required"/>
+                                </div>
+                                <button class="pos-btn pos-btn-primary pos-btn-block" type="submit">ปิดกะ</button>
+                                <button id="cancel-close-btn" class="pos-btn pos-btn-secondary pos-btn-block" type="button" style="margin-top:10px;">ยกเลิก</button>
+                            </form>
+                        </div>
+                    </section>
+
+                    <!-- เบิกสินค้า -->
+                    <section id="screen-requisition" class="pos-screen">
+                        <div class="pos-header-bar">
+                            <div class="pos-header-left">
+                                <button id="back-from-requisition-btn" class="pos-icon-btn" type="button">←</button>
+                                <div class="pos-header-title">เบิกสินค้า</div>
+                            </div>
+                            <button id="requisition-list-btn" class="pos-header-action" type="button">รายการเบิก</button>
+                        </div>
+                        <div class="pos-content" style="flex:1;overflow:auto;padding:12px;">
+                            <div id="requisition-error" class="pos-error" hidden="hidden"></div>
+                            <div id="requisition-success" class="pos-success-msg" hidden="hidden"></div>
+                            <div class="pos-search-box" style="padding:0 0 10px;">
+                                <input id="requisition-search" class="pos-search-input" type="search" placeholder="ค้นหาสินค้า"/>
+                            </div>
+                            <div id="requisition-product-grid" class="pos-product-grid" style="margin-bottom:12px;"></div>
+                            <div class="pos-summary-box">
+                                <h3 style="margin:0 0 10px;font-size:0.95rem;">รายการเบิก</h3>
+                                <div id="requisition-cart-list"></div>
+                                <div class="pos-field" style="margin-top:10px;">
+                                    <label class="pos-label" for="requisition-note">หมายเหตุ</label>
+                                    <input id="requisition-note" class="pos-input" type="text" placeholder="หมายเหตุ (ถ้ามี)"/>
+                                </div>
+                                <button id="submit-requisition-btn" class="pos-primary-btn" style="margin:10px 0 0;" type="button" disabled="disabled">ส่งคำขอเบิก</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- รายการเบิก -->
+                    <section id="screen-requisition-list" class="pos-screen">
+                        <div class="pos-header-bar">
+                            <div class="pos-header-left">
+                                <button id="back-from-requisition-list-btn" class="pos-icon-btn" type="button">←</button>
+                                <div class="pos-header-title">รายการเบิกของฉัน</div>
+                            </div>
+                        </div>
+                        <div class="pos-content" style="flex:1;overflow:auto;padding:12px;">
+                            <div id="requisition-list-container"></div>
+                        </div>
+                    </section>
+
+                    <!-- สต็อกสินค้า -->
+                    <section id="screen-stock" class="pos-screen">
+                        <div class="pos-header-bar">
+                            <div class="pos-header-left">
+                                <button id="back-from-stock-btn" class="pos-icon-btn" type="button">←</button>
+                                <div class="pos-header-title">สต็อกสินค้า</div>
+                            </div>
+                        </div>
+                        <div class="pos-content" style="flex:1;overflow:auto;padding:12px;">
+                            <div class="pos-search-box" style="padding:0 0 10px;">
+                                <input id="stock-search" class="pos-search-input" type="search" placeholder="ค้นหาสินค้าหรือ Lot"/>
+                            </div>
+                            <div id="stock-summary" class="pos-summary-box" style="margin:0 0 12px;"></div>
+                            <div id="stock-list-container"></div>
+                        </div>
+                    </section>
+
+                    <!-- ประวัติการขาย -->
+                    <section id="screen-sales-history" class="pos-screen">
+                        <div class="pos-header-bar">
+                            <div class="pos-header-left">
+                                <button id="back-from-sales-btn" class="pos-icon-btn" type="button">←</button>
+                                <div class="pos-header-title">ประวัติการขาย</div>
+                            </div>
+                        </div>
+                        <div class="pos-content" style="flex:1;overflow:auto;padding:12px;">
+                            <div id="sales-history-error" class="pos-error" hidden="hidden"></div>
+                            <div id="sales-history-container"></div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- เมนูด้านข้าง -->
+                <div id="pos-drawer-backdrop" class="pos-drawer-backdrop">
+                    <aside id="pos-drawer" class="pos-drawer">
+                        <div class="pos-drawer-header">
+                            <div>
+                                <div class="pos-drawer-store" id="drawer-store-name">ร้านค้า</div>
+                                <div class="pos-drawer-user" id="drawer-user-name">พนักงาน</div>
+                            </div>
+                            <button id="close-drawer-btn" class="pos-icon-btn" type="button">×</button>
+                        </div>
+                        <nav class="pos-drawer-nav">
+                            <button class="pos-drawer-item" type="button" data-menu="pos">
+                                <span class="pos-drawer-icon">🛒</span>
+                                <span>เข้าสู่การขาย</span>
+                            </button>
+                            <button class="pos-drawer-item" type="button" data-menu="requisition">
+                                <span class="pos-drawer-icon">📦</span>
+                                <span>เบิกสินค้า</span>
+                            </button>
+                            <button class="pos-drawer-item" type="button" data-menu="stock">
+                                <span class="pos-drawer-icon">📋</span>
+                                <span>สต็อกสินค้า</span>
+                            </button>
+                            <button class="pos-drawer-item" type="button" data-menu="sales">
+                                <span class="pos-drawer-icon">🧾</span>
+                                <span>ประวัติการขาย</span>
+                            </button>
+                            <button class="pos-drawer-item" type="button" data-menu="close-session">
+                                <span class="pos-drawer-icon">🔒</span>
+                                <span>ปิดกะ</span>
+                            </button>
+                        </nav>
+                    </aside>
+                </div>
+
+                <!-- Modal ยืนยันชำระเงิน -->
+                <div id="pay-confirm-modal" class="pos-modal-backdrop">
+                    <div class="pos-modal">
+                        <h3>ยืนยันการชำระเงิน</h3>
+                        <p>ยอดชำระ <strong id="modal-total">0.00</strong> บาท</p>
+                        <p>รับเงิน <strong id="modal-paid">0.00</strong> บาท</p>
+                        <p>เงินทอน <strong id="modal-change">0.00</strong> บาท</p>
+                        <div class="pos-modal-actions">
+                            <button id="modal-cancel-btn" class="pos-modal-cancel" type="button">ยกเลิก</button>
+                            <button id="modal-confirm-btn" class="pos-modal-confirm" type="button">ยืนยัน</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal ยกเลิกบิล -->
+                <div id="cancel-order-modal" class="pos-modal-backdrop">
+                    <div class="pos-modal pos-modal-wide">
+                        <h3>ยกเลิกรายการขาย</h3>
+                        <p>เลขที่บิล <strong id="cancel-order-number">-</strong></p>
+                        <p>ยอดชำระ <strong id="cancel-order-total">0.00</strong> บาท</p>
+                        <label class="pos-check-row">
+                            <input id="cancel-return-stock" type="checkbox" checked="checked"/>
+                            <span>คืนสินค้าเข้าสต็อกร้าน</span>
+                        </label>
+                        <div class="pos-field" id="cancel-reason-wrap" style="display:none;">
+                            <label class="pos-label" for="cancel-reason">เหตุผล (จำเป็นเมื่อไม่คืนสต็อก)</label>
+                            <textarea id="cancel-reason" class="pos-input" rows="3" placeholder="ระบุเหตุผล"></textarea>
+                        </div>
+                        <div id="cancel-order-error" class="pos-error" hidden="hidden"></div>
+                        <div class="pos-modal-actions">
+                            <button id="cancel-order-dismiss-btn" class="pos-modal-cancel" type="button">ปิด</button>
+                            <button id="cancel-order-confirm-btn" class="pos-modal-confirm pos-modal-danger" type="button">ยืนยันยกเลิก</button>
+                        </div>
+                    </div>
+                </div>
+
+                <script type="text/javascript" src="/fivefive_custom/static/src/pos/pos.js?v=1.0.2"></script>
+            </body>
+        </html>
+    </template>
+</odoo>

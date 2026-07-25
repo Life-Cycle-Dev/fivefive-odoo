@@ -21,6 +21,12 @@ class StoreInventory(models.Model):
         ondelete="cascade",
         tracking=True,
     )
+    sell_price_thb = fields.Float(
+        related="product_variant_id.sell_price_thb",
+        string="Sell Price (THB)",
+        readonly=False,
+        digits=(16, 2),
+    )
     lot_number = fields.Char(string="Lot Number", required=True, tracking=True)
     quantity = fields.Float(string="Quantity", tracking=True)
     quality_note = fields.Char(string="Quality Note", tracking=True)

@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "summary": "User for FiveFive company",
     "author": "FiveFive Developer",
-    "depends": ["base", "mail"],
+    "depends": ["base", "mail", "web"],
     "external_dependencies": {
         "python": ["Pillow", "python-barcode"],
     },
@@ -41,6 +41,9 @@
         "views/inventory/table_view.xml",
         "views/inventory/form_view.xml",
         "views/inventory/warehouse_transfer_wizard.xml",
+        "views/pos/pos_templates.xml",
+        "views/pos/pos_views.xml",
+        "views/pos/requisition_views.xml",
         "views/warehouse/table_view.xml",
         "views/warehouse/form_view.xml",
         "views/purchase_order_document/upload_wizard.xml",
