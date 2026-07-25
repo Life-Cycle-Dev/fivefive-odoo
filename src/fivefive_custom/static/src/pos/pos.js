@@ -194,22 +194,95 @@
             .replace(/"/g, "&quot;");
     }
 
-    function buildReceiptHtml(receipt) {
+    function formatReceiptDate(value) {
+        if (!value) return "-";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = String(date.getFullYear()).slice(-2);
+        return `${day}/${month}/${year}`;
+    }
+
+    function formatReceiptTime(value) {
+        if (!value) return "-";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+        return `${hours}:${minutes}`;
+    }
+
+    function mergeReceiptSettings(receipt) {
+        const settings = receipt.receipt_settings || state.user?.receipt_settings || {};
+        return {
+            ...receipt,
+            store_name: receipt.store_name || settings.store_name || "ร้านค้า",
+            branch_subtitle: receipt.branch_subtitle ?? settings.branch_subtitle ?? "",
+            company_name: receipt.company_name ?? settings.company_name ?? "",
+            branch_code: receipt.branch_code ?? settings.branch_code ?? "",
+            address: receipt.address ?? settings.address ?? "",
+            tax_id: receipt.tax_id ?? settings.tax_id ?? "",
+            vat_included: receipt.vat_included ?? settings.vat_included ?? false,
+            vat_percent: Number(receipt.vat_percent ?? settings.vat_percent ?? 0),
+        };
+    }
+
+    function buildReceiptHtml(receiptInput) {
+        const receipt = mergeReceiptSettings(receiptInput || {});
+        const settings = receipt;
+        const vatIncluded = Boolean(settings.vat_included);
+        const vatPercent = Number(settings.vat_percent || 0);
+        const total = Number(receipt.total || 0);
+        const beforeVat = vatIncluded && vatPercent > 0 ? total / (1 + vatPercent / 100) : total;
+        const vatAmount = vatIncluded ? total - beforeVat : 0;
+        const itemCount = (receipt.lines || []).reduce(
+            (sum, line) => sum + Number(line.quantity || 0),
+            0
+        );
+        const branchCode = settings.branch_code || "00000";
+
         const linesHtml = (receipt.lines || [])
             .map((line) => {
-                const name = escapeHtml(line.product_name);
                 const qty = formatQty(line.quantity);
-                const unitPrice = formatMoney(line.unit_price);
+                const name = escapeHtml(line.product_name);
                 const subtotal = formatMoney(line.subtotal);
-                return `
-                    <tr>
-                        <td class="item-name">${name}</td>
-                        <td class="item-qty">${qty}</td>
-                        <td class="item-price">${unitPrice}</td>
-                        <td class="item-total">${subtotal}</td>
-                    </tr>`;
+                return `<div class="line-item"><span class="line-qty">${qty}</span><span class="line-name">${name}</span><span class="line-price">${subtotal}</span></div>`;
             })
             .join("");
+
+        const subtitleHtml = settings.branch_subtitle
+            ? `<div class="center subtitle">${escapeHtml(settings.branch_subtitle)}</div>`
+            : "";
+        const companyHtml = settings.company_name
+            ? `<div class="center company">${escapeHtml(settings.company_name)}</div>`
+            : "";
+        const branchHtml = settings.branch_code
+            ? `<div class="center branch">No. Branch : ${escapeHtml(branchCode)}</div>`
+            : "";
+        const addressHtml = settings.address
+            ? `<div class="center address">${escapeHtml(settings.address)}</div>`
+            : "";
+        const taxIdHtml = settings.tax_id
+            ? `<div class="center tax-id">TAX ID : ${escapeHtml(settings.tax_id)}</div>`
+            : "";
+
+        const titleHtml = vatIncluded
+            ? `<div class="center title-en">Receipt / TAX Invoice (ABB)</div>
+               <div class="center vat-label">VAT Included</div>
+               <div class="divider"></div>`
+            : `<div class="center title">ใบเสร็จรับเงิน / Receipt</div>`;
+
+        const discountRow =
+            Number(receipt.discount_amount || 0) > 0
+                ? `<div class="summary-row"><span>ส่วนลด</span><span>${formatMoney(receipt.discount_amount)}</span></div>`
+                : "";
+
+        const vatRows = vatIncluded
+            ? `<div class="solid-divider"></div>
+               <div class="summary-row"><span>Before VAT</span><span>${formatMoney(beforeVat)}</span></div>
+               <div class="summary-row"><span>VAT ${formatQty(vatPercent)}%</span><span>${formatMoney(vatAmount)}</span></div>`
+            : "";
 
         const noteHtml = receipt.note
             ? `<div class="note">หมายเหตุ: ${escapeHtml(receipt.note)}</div>`
@@ -219,7 +292,7 @@
 <html lang="th">
 <head>
     <meta charset="utf-8"/>
-    <title>ใบเสร็จ ${escapeHtml(receipt.number)}</title>
+    <title>ใบเสร็จ ${escapeHtml(receipt.number || "")}</title>
     <style>
         @page { size: 80mm auto; margin: 4mm; }
         * { box-sizing: border-box; }
@@ -229,54 +302,63 @@
             font-family: "Noto Sans Thai", sans-serif;
             font-size: 12px;
             color: #000;
-            line-height: 1.35;
+            line-height: 1.6;
         }
         .center { text-align: center; }
-        .store { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
-        .title { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
-        .meta { margin-bottom: 8px; }
-        .meta-row { display: flex; justify-content: space-between; gap: 8px; }
-        .divider { border-top: 1px dashed #000; margin: 8px 0; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 2px 0; vertical-align: top; }
-        th { font-size: 11px; font-weight: 600; border-bottom: 1px solid #000; }
-        .item-name { width: 46%; padding-right: 4px; word-break: break-word; }
-        .item-qty { width: 14%; text-align: center; }
-        .item-price, .item-total { width: 20%; text-align: right; white-space: nowrap; }
-        .summary-row { display: flex; justify-content: space-between; gap: 8px; margin: 2px 0; }
-        .summary-row.grand { font-size: 14px; font-weight: 700; margin-top: 4px; }
-        .change { font-size: 16px; font-weight: 700; text-align: center; margin: 6px 0; }
-        .note { margin-top: 6px; font-size: 11px; }
-        .thanks { margin-top: 10px; text-align: center; font-weight: 600; }
+        .subtitle, .company, .branch, .address, .tax-id {
+            font-size: 11px;
+            margin: 4px 0;
+            line-height: 1.55;
+        }
+        .address { white-space: pre-line; }
+        .title { font-size: 13px; font-weight: 700; margin: 0 0 4px; line-height: 1.5; }
+        .title-en { font-size: 12px; font-weight: 700; margin: 0 0 4px; line-height: 1.5; }
+        .vat-label { font-size: 11px; font-weight: 600; margin: 0 0 6px; line-height: 1.5; }
+        .meta-row { display: flex; justify-content: space-between; gap: 8px; margin: 5px 0; line-height: 1.55; }
+        .date-time-row span:last-child { text-align: right; }
+        .divider { border-top: 1px dashed #000; margin: 10px 0; }
+        .solid-divider { border-top: 2px solid #000; margin: 8px 0 6px; }
+        .line-item { display: flex; gap: 8px; margin: 6px 0; align-items: flex-start; line-height: 1.55; }
+        .line-qty { width: 18px; flex-shrink: 0; text-align: left; }
+        .line-name { flex: 1; word-break: break-word; }
+        .line-price { white-space: nowrap; text-align: right; }
+        .items-count { margin: 6px 0 4px; font-size: 11px; line-height: 1.55; }
+        .summary-row { display: flex; justify-content: space-between; gap: 8px; margin: 5px 0; line-height: 1.55; }
+        .summary-row.grand {
+            font-size: 14px;
+            font-weight: 700;
+            margin: 8px 0;
+            border-bottom: 2px solid #000;
+            padding: 6px 0;
+            line-height: 1.5;
+        }
+        .note { margin-top: 8px; font-size: 11px; line-height: 1.55; }
+        .thanks { margin-top: 14px; text-align: center; font-weight: 600; line-height: 1.55; }
     </style>
 </head>
 <body>
-    <div class="center store">${escapeHtml(receipt.store_name || "ร้านค้า")}</div>
-    <div class="center title">ใบเสร็จรับเงิน / Receipt</div>
-    <div class="meta">
-        <div class="meta-row"><span>เลขที่</span><span>${escapeHtml(receipt.number)}</span></div>
-        <div class="meta-row"><span>วันที่</span><span>${escapeHtml(formatDateTime(receipt.order_date))}</span></div>
-        <div class="meta-row"><span>พนักงาน</span><span>${escapeHtml(receipt.cashier_name || "-")}</span></div>
-        <div class="meta-row"><span>ชำระโดย</span><span>${escapeHtml(paymentMethodLabels[receipt.payment_method] || "เงินสด")}</span></div>
+    ${titleHtml}
+    ${subtitleHtml}
+    ${companyHtml}
+    ${branchHtml}
+    ${addressHtml}
+    ${taxIdHtml}
+    <div class="divider"></div>
+    <div class="meta-row"><span>POS ID:</span><span>${escapeHtml(branchCode)}</span></div>
+    <div class="meta-row"><span>No. :</span><span>${escapeHtml(receipt.number || "-")}</span></div>
+    <div class="meta-row date-time-row">
+        <span>Date : ${escapeHtml(formatReceiptDate(receipt.order_date))}</span>
+        <span>Time : ${escapeHtml(formatReceiptTime(receipt.order_date))}</span>
     </div>
+    <div class="meta-row"><span>พนักงาน</span><span>${escapeHtml(receipt.cashier_name || "-")}</span></div>
     <div class="divider"></div>
-    <table>
-        <thead>
-            <tr>
-                <th class="item-name">สินค้า</th>
-                <th class="item-qty">จำนวน</th>
-                <th class="item-price">ราคา</th>
-                <th class="item-total">รวม</th>
-            </tr>
-        </thead>
-        <tbody>${linesHtml}</tbody>
-    </table>
+    ${linesHtml}
     <div class="divider"></div>
+    <div class="items-count">Items: ${formatQty(itemCount)}</div>
     <div class="summary-row"><span>รวม</span><span>${formatMoney(receipt.subtotal)}</span></div>
-    <div class="summary-row"><span>ส่วนลด</span><span>${formatMoney(receipt.discount_amount)}</span></div>
-    <div class="summary-row grand"><span>ยอดชำระ</span><span>${formatMoney(receipt.total)}</span></div>
-    <div class="summary-row"><span>รับเงิน</span><span>${formatMoney(receipt.amount_paid)}</span></div>
-    <div class="change">เงินทอน ${formatMoney(receipt.change_amount)} บาท</div>
+    ${discountRow}
+    ${vatRows}
+    <div class="summary-row grand"><span>Total</span><span>${formatMoney(receipt.total)}</span></div>
     ${noteHtml}
     <div class="thanks">ขอบคุณที่ใช้บริการ</div>
 </body>

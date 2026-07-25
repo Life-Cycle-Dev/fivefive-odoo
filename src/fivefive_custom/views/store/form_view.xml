@@ -47,8 +47,20 @@
                     
                     <group string="General Information">
                         <field name="name"/>
-                        <field name="address"/>
                         <field name="phone"/>
+                    </group>
+
+                    <group string="Receipt Header">
+                        <field name="branch_subtitle" placeholder="e.g. ซีคอนสแควร์ ศรีนครินทร์"/>
+                        <field name="receipt_company_name"/>
+                        <field name="branch_code" placeholder="00000"/>
+                        <field name="tax_id"/>
+                        <field name="address" placeholder="ที่อยู่สำหรับพิมพ์บนใบเสร็จ"/>
+                    </group>
+
+                    <group string="Receipt VAT">
+                        <field name="pos_vat_included"/>
+                        <field name="pos_vat_percent" invisible="not pos_vat_included"/>
                     </group>
 
                     <group string="Store Inventory">

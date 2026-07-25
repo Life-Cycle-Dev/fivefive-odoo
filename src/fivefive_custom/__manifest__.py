@@ -36,6 +36,7 @@
         "views/logistic/form_view.xml",
         "views/store/table_view.xml",
         "views/store/form_view.xml",
+        "views/res_company_views.xml",
         "views/product/table_view.xml",
         "views/product/form_view.xml",
         "views/inventory/table_view.xml",

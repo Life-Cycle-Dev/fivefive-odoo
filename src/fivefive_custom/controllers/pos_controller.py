@@ -106,6 +106,7 @@ class StorePosController(http.Controller):
                         "username": user.username,
                         "store_id": user.store_id.id,
                         "store_name": user.store_id.name,
+                        "receipt_settings": self._serialize_store_receipt_settings(user.store_id),
                     },
                     "open_session_id": open_session.id if open_session else False,
                     "open_session_opening_cash": open_session.opening_cash if open_session else 0.0,
@@ -298,11 +299,15 @@ class StorePosController(http.Controller):
                         **self._serialize_order(order),
                         "store_name": user.store_id.name,
                         "cashier_name": user.name,
+                        "receipt_settings": self._serialize_store_receipt_settings(user.store_id),
                     }
                 },
             )
         except UserError as exc:
             return self._json_response(ok=False, error=str(exc))
+
+    def _serialize_store_receipt_settings(self, store):
+        return store.get_pos_receipt_settings()
 
     def _serialize_order(self, order):
         return {
@@ -340,6 +345,7 @@ class StorePosController(http.Controller):
                 "discount_type": order.discount_type,
                 "discount_value": order.discount_value,
                 "cancelled_at": order.cancelled_at,
+                "receipt_settings": self._serialize_store_receipt_settings(order.store_id),
             }
         )
         return data
