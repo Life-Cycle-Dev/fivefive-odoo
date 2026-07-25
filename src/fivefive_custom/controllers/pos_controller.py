@@ -1,4 +1,8 @@
-from odoo import http
+from datetime import datetime, time
+
+import pytz
+
+from odoo import fields, http
 from odoo.exceptions import UserError
 from odoo.http import request
 
@@ -34,10 +38,21 @@ class StorePosController(http.Controller):
 
     def _date_range_domain(self, field_name, date_from=None, date_to=None):
         domain = []
+        tz_name = request.env.context.get("tz") or "Asia/Bangkok"
+        tz = pytz.timezone(tz_name)
+
+        def utc_bounds(date_str):
+            day = datetime.strptime(date_str, "%Y-%m-%d").date()
+            start = tz.localize(datetime.combine(day, time.min)).astimezone(pytz.UTC).replace(tzinfo=None)
+            end = tz.localize(datetime.combine(day, time.max)).astimezone(pytz.UTC).replace(tzinfo=None)
+            return start, end
+
         if date_from:
-            domain.append((field_name, ">=", f"{date_from} 00:00:00"))
+            start, _ = utc_bounds(date_from)
+            domain.append((field_name, ">=", fields.Datetime.to_string(start)))
         if date_to:
-            domain.append((field_name, "<=", f"{date_to} 23:59:59"))
+            _, end = utc_bounds(date_to)
+            domain.append((field_name, "<=", fields.Datetime.to_string(end)))
         return domain
 
     def _get_pos_user(self, token):
@@ -242,7 +257,17 @@ class StorePosController(http.Controller):
             return self._json_response(ok=False, error=str(exc))
 
     @http.route("/pos/api/order/create", type="json", auth="public", csrf=False, methods=["POST"])
-    def pos_create_order(self, token, lines, discount_type=None, discount_value=0, amount_paid=0):
+    def pos_create_order(
+        self,
+        token,
+        lines,
+        discount_type=None,
+        discount_value=0,
+        amount_paid=0,
+        payment_method="cash",
+        transfer_slip=None,
+        transfer_slip_filename=None,
+    ):
         try:
             user = self._get_pos_user(token)
             session = request.env["five.five.store.pos.session"].sudo().search(
@@ -262,6 +287,9 @@ class StorePosController(http.Controller):
                 discount_type=discount_type,
                 discount_value=float(discount_value or 0),
                 amount_paid=float(amount_paid or 0),
+                payment_method=payment_method or "cash",
+                transfer_slip=transfer_slip,
+                transfer_slip_filename=transfer_slip_filename,
             )
             return self._json_response(
                 ok=True,
@@ -287,6 +315,7 @@ class StorePosController(http.Controller):
             "total": order.total,
             "amount_paid": order.amount_paid,
             "change_amount": order.change_amount,
+            "payment_method": order.payment_method,
             "return_stock": order.return_stock,
             "cancel_reason": order.cancel_reason or "",
             "cancelled_at": order.cancelled_at,
@@ -301,6 +330,19 @@ class StorePosController(http.Controller):
                 for line in order.line_ids
             ],
         }
+
+    def _serialize_order_detail(self, order):
+        data = self._serialize_order(order)
+        data.update(
+            {
+                "store_name": order.store_id.name,
+                "cashier_name": order.pos_user_id.name,
+                "discount_type": order.discount_type,
+                "discount_value": order.discount_value,
+                "cancelled_at": order.cancelled_at,
+            }
+        )
+        return data
 
     @http.route("/pos/api/orders/list", type="json", auth="public", csrf=False, methods=["POST"])
     def pos_orders_list(self, token, page=1, page_size=None, date_from=None, date_to=None):
@@ -325,6 +367,17 @@ class StorePosController(http.Controller):
                     "pagination": meta,
                 },
             )
+        except UserError as exc:
+            return self._json_response(ok=False, error=str(exc))
+
+    @http.route("/pos/api/orders/detail", type="json", auth="public", csrf=False, methods=["POST"])
+    def pos_orders_detail(self, token, order_id):
+        try:
+            user = self._get_pos_user(token)
+            order = request.env["five.five.store.pos.order"].sudo().browse(int(order_id)).exists()
+            if not order or order.store_id.id != user.store_id.id:
+                raise UserError("Order not found.")
+            return self._json_response(ok=True, data={"order": self._serialize_order_detail(order)})
         except UserError as exc:
             return self._json_response(ok=False, error=str(exc))
 

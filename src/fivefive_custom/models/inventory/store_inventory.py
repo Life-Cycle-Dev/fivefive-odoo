@@ -1,4 +1,5 @@
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 
 class StoreInventory(models.Model):
@@ -86,6 +87,21 @@ class Store(models.Model):
             "type": "ir.actions.act_window",
             "name": "Transfer to Store",
             "res_model": "five.five.warehouse.transfer.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_store_id": self.id,
+            },
+        }
+
+    def action_open_inventory_adjust_wizard(self):
+        self.ensure_one()
+        if not self.store_inventory_ids:
+            raise UserError(_("No store inventory available to adjust."))
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Adjust Inventory"),
+            "res_model": "five.five.store.inventory.adjust.wizard",
             "view_mode": "form",
             "target": "new",
             "context": {

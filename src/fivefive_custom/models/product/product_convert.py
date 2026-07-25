@@ -1,4 +1,5 @@
-from odoo import api, models, fields
+from odoo import _, api, models, fields
+from odoo.exceptions import ValidationError
 
 
 class ProductConvert(models.Model):
@@ -8,8 +9,14 @@ class ProductConvert(models.Model):
     commercial_invoice_line_id = fields.Many2one(
         "five.five.commercial.invoice.line",
         string="Invoice Line",
-        required=True,
+        required=False,
         ondelete="cascade",
+    )
+
+    is_manual_receipt = fields.Boolean(
+        string="Manual Warehouse Receipt",
+        default=False,
+        index=True,
     )
 
     purchase_order_id = fields.Many2one(
@@ -75,29 +82,37 @@ class ProductConvert(models.Model):
     def unlink(self):
         ci_lines = self.mapped("commercial_invoice_line_id")
         res = super().unlink()
-        # If a CI line has no converts left, mark it as unconverted.
         for line in ci_lines:
             if line and not line.product_convert_ids:
                 line.with_context(skip_po_ci_line_state_check=True).write(
                     {"is_convert_to_product": False}
                 )
             else:
-                # Quantities changed: recompute auto costs for remaining converts
                 line._ff_recompute_auto_fixed_costs_for_converts()
         return res
+
+    @api.constrains("commercial_invoice_line_id", "is_manual_receipt")
+    def _check_manual_receipt_source(self):
+        for rec in self:
+            if rec.is_manual_receipt and rec.commercial_invoice_line_id:
+                raise ValidationError(_("Manual warehouse receipt cannot be linked to a commercial invoice line."))
+            if not rec.is_manual_receipt and not rec.commercial_invoice_line_id:
+                raise ValidationError(_("Converted product must be linked to a commercial invoice line."))
 
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
-        ci_lines = records.mapped("commercial_invoice_line_id")
+        ci_lines = records.filtered(lambda rec: not rec.is_manual_receipt).mapped("commercial_invoice_line_id")
         if ci_lines:
             ci_lines._ff_recompute_auto_fixed_costs_for_converts()
         return records
 
     def write(self, vals):
-        ci_lines_before = self.mapped("commercial_invoice_line_id")
+        manual_records = self.filtered("is_manual_receipt")
+        ci_records = self - manual_records
+        ci_lines_before = ci_records.mapped("commercial_invoice_line_id")
         res = super().write(vals)
-        ci_lines_after = self.mapped("commercial_invoice_line_id")
+        ci_lines_after = ci_records.mapped("commercial_invoice_line_id")
         ci_lines = ci_lines_before | ci_lines_after
         if ci_lines and any(k in vals for k in ("quantity", "commercial_invoice_line_id")):
             ci_lines._ff_recompute_auto_fixed_costs_for_converts()

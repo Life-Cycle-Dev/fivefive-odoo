@@ -76,6 +76,7 @@
         <field name="res_model">five.five.inventory</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_five_five_inventory_model_search"/>
+        <field name="context">{'create': False}</field>
     </record>
 
     <record id="action_five_five_inventory_transfer_to_store" model="ir.actions.server">

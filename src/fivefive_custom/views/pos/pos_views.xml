@@ -159,6 +159,7 @@
                 <field name="store_id"/>
                 <field name="pos_user_id"/>
                 <field name="total" sum="Total"/>
+                <field name="payment_method" optional="show"/>
                 <field name="state" widget="badge" decoration-success="state == 'done'" decoration-muted="state == 'cancelled'"/>
                 <field name="discount_amount" optional="hide"/>
                 <field name="session_id" optional="hide"/>
@@ -187,6 +188,7 @@
                             <field name="session_id" readonly="1"/>
                         </group>
                         <group string="Payment">
+                            <field name="payment_method" readonly="1"/>
                             <field name="subtotal" readonly="1"/>
                             <field name="discount_type" readonly="1" invisible="not discount_amount"/>
                             <field name="discount_value" readonly="1" invisible="not discount_amount"/>
@@ -194,6 +196,8 @@
                             <field name="total" readonly="1"/>
                             <field name="amount_paid" readonly="1"/>
                             <field name="change_amount" readonly="1"/>
+                            <field name="transfer_slip" readonly="1" widget="image" invisible="payment_method != 'transfer'"/>
+                            <field name="transfer_slip_filename" invisible="1"/>
                         </group>
                     </group>
                     <group string="Cancellation" invisible="state != 'cancelled'">

@@ -12,6 +12,8 @@
         discountType: "percent",
         discountValue: 0,
         amountPaidInput: "",
+        paymentMethod: "cash",
+        transferSlip: null,
         orderNote: "",
         search: "",
         requisitionProducts: [],
@@ -22,6 +24,7 @@
         stockSearch: "",
         cancelOrderId: null,
         salesOrders: [],
+        selectedSalesOrder: null,
         stockSummary: [],
         lastOrder: null,
         lastReceipt: null,
@@ -32,6 +35,8 @@
     let barcodeScannerMode = "pos";
 
     const PAGE_SIZE = 20;
+
+    let pendingPayAfterSlip = false;
 
     const listState = {
         products: { page: 1 },
@@ -50,9 +55,25 @@
     };
 
     const dateFilters = {
-        sales: { from: "", to: "" },
-        requisitions: { from: "", to: "" },
+        sales: { date: "" },
+        requisitions: { date: "" },
     };
+
+    function todayDateInputValue() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
+
+    function getDateFilterRange(key) {
+        const date = dateFilters[key].date;
+        if (!date) {
+            return { from: null, to: null };
+        }
+        return { from: date, to: date };
+    }
 
     function debounce(fn, delay = 300) {
         let timer;
@@ -109,6 +130,11 @@
         cancelled: "ยกเลิก",
     };
 
+    const paymentMethodLabels = {
+        cash: "เงินสด",
+        transfer: "โอนเงิน",
+    };
+
     const stateLabels = {
         submitted: "รอจัดเตรียม",
         prepared: "จัดเตรียมแล้ว (รอรับ)",
@@ -130,6 +156,7 @@
         requisitionDetail: document.getElementById("screen-requisition-detail"),
         stock: document.getElementById("screen-stock"),
         salesHistory: document.getElementById("screen-sales-history"),
+        salesDetail: document.getElementById("screen-sales-detail"),
     };
 
     function formatDateTime(value) {
@@ -230,6 +257,7 @@
         <div class="meta-row"><span>เลขที่</span><span>${escapeHtml(receipt.number)}</span></div>
         <div class="meta-row"><span>วันที่</span><span>${escapeHtml(formatDateTime(receipt.order_date))}</span></div>
         <div class="meta-row"><span>พนักงาน</span><span>${escapeHtml(receipt.cashier_name || "-")}</span></div>
+        <div class="meta-row"><span>ชำระโดย</span><span>${escapeHtml(paymentMethodLabels[receipt.payment_method] || "เงินสด")}</span></div>
     </div>
     <div class="divider"></div>
     <table>
@@ -350,6 +378,20 @@
         element.textContent = message;
     }
 
+    function showAlert(message, title = "แจ้งเตือน") {
+        const modal = document.getElementById("pos-alert-modal");
+        const titleEl = document.getElementById("pos-alert-title");
+        const messageEl = document.getElementById("pos-alert-message");
+        if (!modal || !messageEl) return;
+        if (titleEl) titleEl.textContent = title;
+        messageEl.textContent = message || "";
+        modal.classList.add("show");
+    }
+
+    function hideAlertModal() {
+        document.getElementById("pos-alert-modal")?.classList.remove("show");
+    }
+
     async function rpc(route, params = {}) {
         const response = await fetch(route, {
             method: "POST",
@@ -450,7 +492,7 @@
         }
         const normalized = Math.round(parsed * 100) / 100;
         if (normalized < basePrice) {
-            alert(`ราคาต้องไม่ต่ำกว่าราคาเริ่มต้น ${formatMoney(basePrice)} บาท`);
+            showAlert(`ราคาต้องไม่ต่ำกว่าราคาเริ่มต้น ${formatMoney(basePrice)} บาท`);
             line.unit_price = basePrice;
             renderCartPanel(true);
             return;
@@ -487,16 +529,26 @@
             </div>`;
     }
 
+    function parseRequisitionQty(rawValue) {
+        const parsed = Number(rawValue);
+        if (!rawValue || Number.isNaN(parsed) || parsed <= 0) {
+            return 1;
+        }
+        return Math.round(parsed);
+    }
+
+    function syncRequisitionQtyFromInput(productId) {
+        const line = state.requisitionCart.find((item) => item.id === productId);
+        if (!line) return;
+        const input = document.querySelector(`#requisition-cart-list [data-req-qty-id="${productId}"]`);
+        if (!input) return;
+        line.quantity = parseRequisitionQty(input.value);
+    }
+
     function updateRequisitionQty(productId, rawValue) {
         const line = state.requisitionCart.find((item) => item.id === productId);
         if (!line) return;
-        const parsed = Number(rawValue);
-        if (!rawValue || Number.isNaN(parsed) || parsed <= 0) {
-            line.quantity = 1;
-            renderRequisitionCart();
-            return;
-        }
-        const normalized = Math.round(parsed);
+        const normalized = parseRequisitionQty(rawValue);
         if (line.quantity === normalized) {
             return;
         }
@@ -536,7 +588,12 @@
         if (checkoutBtn) checkoutBtn.disabled = !state.cart.length || !state.session;
 
         updateSessionHeader();
-        updateAmountDisplay();
+        if (state.paymentMethod === "transfer") {
+            state.amountPaidInput = String(totals.total);
+            updateTransferAmountDisplay();
+        } else {
+            updateAmountDisplay();
+        }
     }
 
     function updateSessionHeader() {
@@ -552,7 +609,7 @@
 
     function requireOpenSession(message) {
         if (state.session) return true;
-        alert(message || "กรุณาเปิดกะก่อนทำรายการขาย");
+        showAlert(message || "กรุณาเปิดกะก่อนทำรายการขาย");
         showScreen("openSession");
         return false;
     }
@@ -583,7 +640,7 @@
             `;
             button.addEventListener("click", () => {
                 if (!product.can_sell) {
-                    alert("สินค้านี้ยังไม่ได้ตั้งราคาขาย กรุณาตั้ง Sell Price (THB) ที่ Product Variant");
+                    showAlert("สินค้านี้ยังไม่ได้ตั้งราคาขาย กรุณาตั้ง Sell Price (THB) ที่ Product Variant");
                     return;
                 }
                 addToCart(product);
@@ -641,20 +698,20 @@
                 product = data.product;
                 if (product) mergeProduct(product);
             } catch (error) {
-                alert(error.message || "ไม่พบสินค้าจากบาร์โค้ดนี้");
+                showAlert(error.message || "ไม่พบสินค้าจากบาร์โค้ดนี้");
                 return;
             }
         }
         if (!product) {
-            alert("ไม่พบสินค้าจากบาร์โค้ดนี้");
+            showAlert("ไม่พบสินค้าจากบาร์โค้ดนี้");
             return;
         }
         if (!product.can_sell) {
-            alert("สินค้านี้ยังไม่ได้ตั้งราคาขาย กรุณาตั้ง Sell Price (THB) ที่ Product Variant");
+            showAlert("สินค้านี้ยังไม่ได้ตั้งราคาขาย กรุณาตั้ง Sell Price (THB) ที่ Product Variant");
             return;
         }
         if (product.available_qty <= 0) {
-            alert("สินค้านี้ไม่มีในสต็อกร้าน");
+            showAlert("สินค้านี้ไม่มีในสต็อกร้าน");
             return;
         }
         addToCart(product);
@@ -692,7 +749,7 @@
             );
         }
         if (!product) {
-            alert("ไม่พบสินค้าจากบาร์โค้ดนี้");
+            showAlert("ไม่พบสินค้าจากบาร์โค้ดนี้");
             return;
         }
         addToRequisitionCart(product);
@@ -700,7 +757,7 @@
 
     async function openBarcodeScanner(mode = "pos") {
         if (typeof Html5Qrcode === "undefined") {
-            alert("ไม่สามารถโหลดตัวสแกนบาร์โค้ดได้ กรุณารีเฟรชหน้า");
+            showAlert("ไม่สามารถโหลดตัวสแกนบาร์โค้ดได้ กรุณารีเฟรชหน้า");
             return;
         }
         if (mode === "pos" && !requireOpenSession()) return;
@@ -735,7 +792,7 @@
                     closeBarcodeScanner();
                     if (barcodeScannerMode === "requisition") {
                         handleRequisitionBarcode(decodedText).catch((error) => {
-                            alert(error.message || "ไม่สามารถค้นหาสินค้าได้");
+                            showAlert(error.message || "ไม่สามารถค้นหาสินค้าได้");
                         });
                     } else {
                         handleBarcodeScanned(decodedText);
@@ -801,11 +858,8 @@
     }
 
     function numpadPress(key) {
-        const totals = computeTotals();
         if (key === "clear") {
             state.amountPaidInput = "";
-        } else if (key === "exact") {
-            state.amountPaidInput = String(Math.ceil(totals.total * 100) / 100);
         } else if (key === ".") {
             if (!state.amountPaidInput.includes(".")) {
                 state.amountPaidInput = state.amountPaidInput ? `${state.amountPaidInput}.` : "0.";
@@ -825,9 +879,93 @@
         updateAmountDisplay();
     }
 
+    function updateTransferAmountDisplay() {
+        const display = document.getElementById("transfer-amount-display");
+        if (!display) return;
+        display.textContent = formatMoney(computeTotals().total);
+    }
+
+    function clearTransferSlip() {
+        state.transferSlip = null;
+        const preview = document.getElementById("transfer-slip-preview");
+        const image = document.getElementById("transfer-slip-image");
+        const input = document.getElementById("transfer-slip-input");
+        const btn = document.getElementById("transfer-slip-btn");
+        if (preview) preview.hidden = true;
+        if (image) image.removeAttribute("src");
+        if (input) input.value = "";
+        if (btn) btn.hidden = true;
+    }
+
+    function openTransferSlipCapture(pendingPay = false) {
+        pendingPayAfterSlip = pendingPay;
+        document.getElementById("transfer-slip-input")?.click();
+    }
+
+    function renderTransferSlipPreview() {
+        const preview = document.getElementById("transfer-slip-preview");
+        const image = document.getElementById("transfer-slip-image");
+        const btn = document.getElementById("transfer-slip-btn");
+        if (!preview || !image || !state.transferSlip) return;
+        image.src = state.transferSlip.previewUrl;
+        preview.hidden = false;
+        if (btn) btn.hidden = true;
+    }
+
+    function handleTransferSlipFile(file) {
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+            showError("checkout-error", "กรุณาเลือกไฟล์รูปภาพ");
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+            const result = reader.result;
+            const base64 = String(result).split(",")[1];
+            state.transferSlip = {
+                base64,
+                filename: file.name || "transfer-slip.jpg",
+                previewUrl: result,
+            };
+            renderTransferSlipPreview();
+            showError("checkout-error", "");
+            if (pendingPayAfterSlip) {
+                pendingPayAfterSlip = false;
+                showPayConfirmModal();
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function setPaymentMethod(method) {
+        state.paymentMethod = method;
+        document.querySelectorAll(".pos-pay-tab").forEach((tab) => {
+            tab.classList.toggle("active", tab.dataset.payTab === method);
+        });
+        const cashPanel = document.getElementById("cash-payment-panel");
+        const transferPanel = document.getElementById("transfer-payment-panel");
+        if (cashPanel) cashPanel.hidden = method !== "cash";
+        if (transferPanel) transferPanel.hidden = method !== "transfer";
+        if (method === "transfer") {
+            const totals = computeTotals();
+            state.amountPaidInput = String(totals.total);
+            updateTransferAmountDisplay();
+        } else {
+            pendingPayAfterSlip = false;
+            clearTransferSlip();
+            showError("checkout-error", "");
+            updateAmountDisplay();
+        }
+    }
+
     function openPaymentScreen() {
         state.amountPaidInput = "";
+        state.paymentMethod = "cash";
+        state.transferSlip = null;
+        pendingPayAfterSlip = false;
         showError("checkout-error", "");
+        clearTransferSlip();
+        setPaymentMethod("cash");
         renderCartPanel(false);
         updateAmountDisplay();
         showScreen("payment");
@@ -848,13 +986,24 @@
     function showPayConfirmModal() {
         if (!requireOpenSession()) return;
         const totals = computeTotals();
-        if (totals.amountPaid < totals.total) {
+        if (state.paymentMethod === "transfer") {
+            if (!state.transferSlip?.base64) {
+                openTransferSlipCapture(true);
+                return;
+            }
+            state.amountPaidInput = String(totals.total);
+        } else if (totals.amountPaid < totals.total) {
             showError("checkout-error", "จำนวนเงินที่รับต้องไม่น้อยกว่ายอดชำระ");
             return;
         }
+        showError("checkout-error", "");
         document.getElementById("modal-total").textContent = formatMoney(totals.total);
-        document.getElementById("modal-paid").textContent = formatMoney(totals.amountPaid);
-        document.getElementById("modal-change").textContent = formatMoney(totals.changeAmount);
+        document.getElementById("modal-paid").textContent = formatMoney(
+            state.paymentMethod === "transfer" ? totals.total : totals.amountPaid
+        );
+        document.getElementById("modal-change").textContent = formatMoney(
+            state.paymentMethod === "transfer" ? 0 : totals.changeAmount
+        );
         document.getElementById("pay-confirm-modal").classList.add("show");
     }
 
@@ -943,6 +1092,9 @@
     function updateRequisitionCart(action, productId) {
         const line = state.requisitionCart.find((item) => item.id === productId);
         if (!line) return;
+        if (action === "inc" || action === "dec") {
+            syncRequisitionQtyFromInput(productId);
+        }
         if (action === "inc") {
             line.quantity += 1;
         } else if (action === "dec") {
@@ -976,6 +1128,7 @@
             success.hidden = true;
             success.textContent = "";
         }
+        state.requisitionCart.forEach((line) => syncRequisitionQtyFromInput(line.id));
         const lines = state.requisitionCart.map((line) => ({
             product_variant_id: line.id,
             quantity: line.quantity,
@@ -1015,9 +1168,11 @@
         const container = document.getElementById("requisition-list-container");
         if (!container) return;
         if (!state.requisitions.length) {
+            container.classList.add("pos-order-list--empty");
             container.innerHTML = '<div class="pos-empty">ยังไม่มีประวัติการเบิก</div>';
             return;
         }
+        container.classList.remove("pos-order-list--empty");
         container.innerHTML = state.requisitions
             .map((row) => {
                 const linesPreview = row.items_preview || (row.line_count ? `${row.line_count} รายการ` : "");
@@ -1123,12 +1278,13 @@
     }
 
     async function loadRequisitionList() {
+        const range = getDateFilterRange("requisitions");
         const data = await rpc("/pos/api/requisition/list", {
             token: state.token,
             page: listState.requisitions.page,
             page_size: PAGE_SIZE,
-            date_from: dateFilters.requisitions.from || null,
-            date_to: dateFilters.requisitions.to || null,
+            date_from: range.from,
+            date_to: range.to,
         });
         state.requisitions = data.requisitions || [];
         applyPaginationMeta("requisitions", data);
@@ -1150,11 +1306,9 @@
     async function openRequisitionHistoryScreen() {
         showError("requisition-list-error", "");
         listState.requisitions.page = 1;
-        dateFilters.requisitions = { from: "", to: "" };
-        const fromEl = document.getElementById("requisition-date-from");
-        const toEl = document.getElementById("requisition-date-to");
-        if (fromEl) fromEl.value = "";
-        if (toEl) toEl.value = "";
+        dateFilters.requisitions.date = todayDateInputValue();
+        const dateEl = document.getElementById("requisition-date");
+        if (dateEl) dateEl.value = dateFilters.requisitions.date;
         await loadRequisitionList();
         showScreen("requisitionList");
     }
@@ -1209,7 +1363,7 @@
         }
         if (action === "close-session") {
             if (!state.session) {
-                alert("ยังไม่มีกะที่เปิดอยู่");
+                showAlert("ยังไม่มีกะที่เปิดอยู่");
                 showScreen("openSession");
                 return;
             }
@@ -1281,12 +1435,13 @@
     }
 
     async function loadSalesHistory() {
+        const range = getDateFilterRange("sales");
         const data = await rpc("/pos/api/orders/list", {
             token: state.token,
             page: listState.sales.page,
             page_size: PAGE_SIZE,
-            date_from: dateFilters.sales.from || null,
-            date_to: dateFilters.sales.to || null,
+            date_from: range.from,
+            date_to: range.to,
         });
         state.salesOrders = data.orders || [];
         applyPaginationMeta("sales", data);
@@ -1298,60 +1453,151 @@
         const container = document.getElementById("sales-history-container");
         if (!container) return;
         if (!state.salesOrders.length) {
+            container.classList.add("pos-order-list--empty");
             container.innerHTML = '<div class="pos-empty">ยังไม่มีประวัติการขาย</div>';
             return;
         }
+        container.classList.remove("pos-order-list--empty");
         container.innerHTML = state.salesOrders
             .map((order) => {
                 const badgeClass = order.state === "cancelled" ? "pos-badge-cancelled" : "pos-badge-done";
-                const linesHtml = (order.lines || [])
+                const linesPreview = (order.lines || [])
+                    .slice(0, 3)
                     .map((line) => `${line.product_name} × ${formatQty(line.quantity)}`)
                     .join(" · ");
-                const cancelInfo =
+                const moreLines =
+                    (order.lines || []).length > 3 ? ` · +${order.lines.length - 3} รายการ` : "";
+                const cancelHint =
                     order.state === "cancelled"
                         ? `<div class="pos-row-extra">${
                               order.return_stock ? "คืนสต็อกแล้ว" : "ไม่คืนสต็อก"
                           }${order.cancel_reason ? ` · ${order.cancel_reason}` : ""}</div>`
                         : "";
                 return `
-                <div class="pos-row-item pos-row-static pos-row-item-block">
-                    <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;width:100%;">
+                <button type="button" class="pos-row-item pos-row-item-block pos-history-card" data-order-id="${order.id}">
+                    <div class="pos-history-card-top">
                         <div class="pos-row-main">
                             <div class="pos-row-title">${order.number}</div>
                             <div class="pos-row-meta">${formatDateTime(order.order_date)}</div>
                         </div>
-                        <div style="text-align:right;">
+                        <div class="pos-history-card-side">
                             <span class="pos-badge ${badgeClass}">${orderStateLabels[order.state] || order.state}</span>
-                            <div class="pos-row-price" style="margin-top:6px;">${formatMoney(order.total)} บาท</div>
+                            <div class="pos-row-price">${formatMoney(order.total)} บาท</div>
+                            <svg class="pos-row-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
                         </div>
                     </div>
-                    ${linesHtml ? `<div class="pos-row-extra">${linesHtml}</div>` : ""}
-                    ${cancelInfo}
-                    ${
-                        order.can_cancel
-                            ? `<button type="button" class="pos-btn pos-btn-danger pos-btn-sm" style="margin-top:10px;" data-cancel-order-id="${order.id}">ยกเลิกรายการ</button>`
-                            : ""
-                    }
-                </div>`;
+                    ${linesPreview ? `<div class="pos-row-extra">${linesPreview}${moreLines}</div>` : ""}
+                    ${cancelHint}
+                    <div class="pos-row-hint">แตะเพื่อดูรายละเอียด</div>
+                </button>`;
             })
             .join("");
+    }
 
-        container.querySelectorAll("[data-cancel-order-id]").forEach((button) => {
-            button.addEventListener("click", () => {
-                const order = state.salesOrders.find((row) => row.id === Number(button.dataset.cancelOrderId));
-                if (order) openCancelOrderModal(order);
-            });
+    function salesOrderBadgeClass(orderState) {
+        return orderState === "cancelled" ? "pos-badge-cancelled" : "pos-badge-done";
+    }
+
+    function renderSalesOrderDetail() {
+        const container = document.getElementById("sales-detail-container");
+        const order = state.selectedSalesOrder;
+        if (!container || !order) return;
+
+        const linesHtml = (order.lines || [])
+            .map(
+                (line) => `
+                <div class="pos-detail-line">
+                    <div class="pos-detail-line-head">
+                        <div class="pos-detail-line-name">${line.product_name}</div>
+                        <div class="pos-detail-line-qty">${formatQty(line.quantity)} × ${formatMoney(line.unit_price)}</div>
+                    </div>
+                    <div class="pos-detail-line-meta">${formatMoney(line.subtotal)} บาท</div>
+                </div>`
+            )
+            .join("");
+
+        const paymentRows = [
+            ["ชำระโดย", paymentMethodLabels[order.payment_method] || "เงินสด"],
+            ["รวม", formatMoney(order.subtotal)],
+            ["ส่วนลด", formatMoney(order.discount_amount)],
+            ["ยอดชำระ", formatMoney(order.total)],
+            ["รับเงิน", formatMoney(order.amount_paid)],
+            ["เงินทอน", formatMoney(order.change_amount)],
+        ]
+            .map(
+                ([label, value]) =>
+                    `<div class="pos-detail-row${label === "ยอดชำระ" ? " pos-detail-row--strong" : ""}"><span>${label}</span><span>${label === "ชำระโดย" ? value : `${value} บาท`}</span></div>`
+            )
+            .join("");
+
+        const cancelBlock =
+            order.state === "cancelled"
+                ? `<div class="pos-detail-section">
+                    <div class="pos-detail-section-title">การยกเลิก</div>
+                    <div class="pos-detail-row"><span>ยกเลิกเมื่อ</span><span>${formatDateTime(order.cancelled_at)}</span></div>
+                    <div class="pos-detail-row"><span>คืนสต็อก</span><span>${order.return_stock ? "คืนแล้ว" : "ไม่คืน"}</span></div>
+                    ${
+                        order.cancel_reason
+                            ? `<div class="pos-detail-note">${order.cancel_reason}</div>`
+                            : ""
+                    }
+                </div>`
+                : "";
+
+        container.innerHTML = `
+            <div class="pos-detail-card">
+                <div class="pos-detail-head">
+                    <div>
+                        <div class="pos-detail-number">${order.number}</div>
+                        <div class="pos-row-meta">${formatDateTime(order.order_date)}</div>
+                        <div class="pos-row-meta">พนักงาน: ${order.cashier_name || "-"}</div>
+                    </div>
+                    <span class="pos-badge ${salesOrderBadgeClass(order.state)}">${orderStateLabels[order.state] || order.state}</span>
+                </div>
+                <div class="pos-detail-section">
+                    <div class="pos-detail-section-title">รายการสินค้า</div>
+                    ${linesHtml || '<div class="pos-empty">ไม่มีรายการ</div>'}
+                </div>
+                <div class="pos-detail-section">
+                    <div class="pos-detail-section-title">สรุปยอด</div>
+                    ${paymentRows}
+                </div>
+                ${cancelBlock}
+                <div class="pos-detail-actions">
+                    <button type="button" id="sales-detail-print-btn" class="pos-primary-btn pos-btn-block">พิมพ์ใบเสร็จ</button>
+                    ${
+                        order.can_cancel
+                            ? `<button type="button" id="sales-detail-cancel-btn" class="pos-btn pos-btn-danger pos-btn-block">ยกเลิกรายการ</button>`
+                            : ""
+                    }
+                </div>
+            </div>`;
+
+        document.getElementById("sales-detail-print-btn")?.addEventListener("click", () => {
+            printReceipt(order);
         });
+        document.getElementById("sales-detail-cancel-btn")?.addEventListener("click", () => {
+            openCancelOrderModal(order);
+        });
+    }
+
+    async function openSalesOrderDetail(orderId) {
+        showError("sales-detail-error", "");
+        const data = await rpc("/pos/api/orders/detail", {
+            token: state.token,
+            order_id: orderId,
+        });
+        state.selectedSalesOrder = data.order;
+        renderSalesOrderDetail();
+        showScreen("salesDetail");
     }
 
     async function openSalesHistoryScreen() {
         showError("sales-history-error", "");
         listState.sales.page = 1;
-        dateFilters.sales = { from: "", to: "" };
-        const fromEl = document.getElementById("sales-date-from");
-        const toEl = document.getElementById("sales-date-to");
-        if (fromEl) fromEl.value = "";
-        if (toEl) toEl.value = "";
+        dateFilters.sales.date = todayDateInputValue();
+        const dateEl = document.getElementById("sales-date");
+        if (dateEl) dateEl.value = dateFilters.sales.date;
         await loadSalesHistory();
         showScreen("salesHistory");
     }
@@ -1396,8 +1642,12 @@
             return_stock: returnStock,
             cancel_reason: cancelReason,
         });
+        const cancelledOrderId = state.cancelOrderId;
         closeCancelOrderModal();
         await loadSalesHistory();
+        if (state.selectedSalesOrder?.id === cancelledOrderId) {
+            await openSalesOrderDetail(cancelledOrderId);
+        }
         await loadProducts();
     }
 
@@ -1443,7 +1693,12 @@
     async function submitOrder() {
         showError("checkout-error", "");
         const totals = computeTotals();
-        if (totals.amountPaid < totals.total) {
+        if (state.paymentMethod === "transfer") {
+            if (!state.transferSlip?.base64) {
+                showError("checkout-error", "กรุณาแนบสลิปโอนเงิน");
+                return;
+            }
+        } else if (totals.amountPaid < totals.total) {
             showError("checkout-error", "จำนวนเงินที่รับต้องไม่น้อยกว่ายอดชำระ");
             return;
         }
@@ -1452,13 +1707,19 @@
             quantity: line.quantity,
             unit_price: line.unit_price,
         }));
-        const result = await rpc("/pos/api/order/create", {
+        const payload = {
             token: state.token,
             lines,
             discount_type: state.discountValue > 0 ? state.discountType : null,
             discount_value: state.discountValue,
-            amount_paid: totals.amountPaid,
-        });
+            amount_paid: state.paymentMethod === "transfer" ? totals.total : totals.amountPaid,
+            payment_method: state.paymentMethod,
+        };
+        if (state.paymentMethod === "transfer") {
+            payload.transfer_slip = state.transferSlip.base64;
+            payload.transfer_slip_filename = state.transferSlip.filename;
+        }
+        const result = await rpc("/pos/api/order/create", payload);
         state.lastOrder = result.order;
         state.lastReceipt = {
             ...result.order,
@@ -1470,10 +1731,21 @@
         document.getElementById("success-total").textContent = formatMoney(result.order.total);
         document.getElementById("success-paid").textContent = formatMoney(result.order.amount_paid);
         document.getElementById("success-change").textContent = formatMoney(result.order.change_amount);
+        const successChangeCard = document.querySelector(".pos-success-card h2");
+        const successChangeNote = document.querySelector(".pos-success-card small");
+        if (successChangeCard) {
+            successChangeCard.textContent = result.order.payment_method === "transfer" ? "ชำระโดยโอน" : "เงินทอน";
+        }
+        if (successChangeNote) {
+            successChangeNote.textContent = result.order.payment_method === "transfer" ? paymentMethodLabels.transfer : "บาท";
+        }
         state.cart = [];
         state.discountValue = 0;
         state.discountType = "percent";
         state.amountPaidInput = "";
+        state.paymentMethod = "cash";
+        state.transferSlip = null;
+        clearTransferSlip();
         state.orderNote = "";
         hidePayConfirmModal();
         await loadProducts();
@@ -1491,6 +1763,11 @@
             element.addEventListener(event, handler);
             return element;
         };
+
+        on("pos-alert-ok-btn", "click", hideAlertModal);
+        document.getElementById("pos-alert-modal")?.addEventListener("click", (event) => {
+            if (event.target.id === "pos-alert-modal") hideAlertModal();
+        });
 
         document.addEventListener("click", (event) => {
             if (event.target.closest(".pos-menu-btn")) {
@@ -1604,6 +1881,26 @@
             numpadPress(button.dataset.key);
         });
 
+        document.querySelectorAll(".pos-pay-tab").forEach((tab) => {
+            tab.addEventListener("click", () => {
+                if (tab.disabled) return;
+                setPaymentMethod(tab.dataset.payTab);
+                showError("checkout-error", "");
+            });
+        });
+
+        on("transfer-slip-input", "change", (event) => {
+            const file = event.target.files?.[0];
+            if (!file) {
+                pendingPayAfterSlip = false;
+                return;
+            }
+            handleTransferSlipFile(file);
+        });
+        on("transfer-slip-remove-btn", "click", () => {
+            clearTransferSlip();
+        });
+
         document.getElementById("pay-btn").addEventListener("click", showPayConfirmModal);
         document.getElementById("modal-cancel-btn").addEventListener("click", hidePayConfirmModal);
         document.getElementById("modal-confirm-btn").addEventListener("click", async () => {
@@ -1616,6 +1913,10 @@
         });
 
         on("new-order-btn", "click", async () => {
+            const successChangeCard = document.querySelector(".pos-success-card h2");
+            const successChangeNote = document.querySelector(".pos-success-card small");
+            if (successChangeCard) successChangeCard.textContent = "เงินทอน";
+            if (successChangeNote) successChangeNote.textContent = "บาท";
             renderCartPanel(true);
             await loadProducts();
             showScreen("pos");
@@ -1634,8 +1935,9 @@
                     token: state.token,
                     closing_cash: closingCash,
                 });
-                alert(
-                    `ปิดกะเรียบร้อย\nเงินที่คาดหวัง: ${formatMoney(state.session?.expected_cash || data.expected_cash)} บาท\nส่วนต่าง: ${formatMoney(data.cash_difference)} บาท`
+                showAlert(
+                    `ปิดกะเรียบร้อย\nเงินที่คาดหวัง: ${formatMoney(state.session?.expected_cash || data.expected_cash)} บาท\nส่วนต่าง: ${formatMoney(data.cash_difference)} บาท`,
+                    "ปิดกะสำเร็จ"
                 );
                 state.session = null;
                 saveAuth();
@@ -1676,7 +1978,7 @@
                 try {
                     await handleMenuAction(button.dataset.menu);
                 } catch (error) {
-                    alert(error.message);
+                    showAlert(error.message);
                 }
             });
         });
@@ -1693,25 +1995,43 @@
             try {
                 await changePage(button.dataset.pageKey, button.dataset.pageAction === "next" ? 1 : -1);
             } catch (error) {
-                alert(error.message);
+                showAlert(error.message);
             }
         });
 
-        on("sales-filter-btn", "click", async () => {
-            dateFilters.sales.from = document.getElementById("sales-date-from")?.value || "";
-            dateFilters.sales.to = document.getElementById("sales-date-to")?.value || "";
+        async function applySalesDateFilter() {
+            dateFilters.sales.date = document.getElementById("sales-date")?.value || "";
             listState.sales.page = 1;
             showError("sales-history-error", "");
             await loadSalesHistory();
+        }
+
+        on("sales-filter-btn", "click", applySalesDateFilter);
+        on("sales-date", "change", applySalesDateFilter);
+
+        on("sales-history-container", "click", async (event) => {
+            const card = event.target.closest("[data-order-id]");
+            if (!card) return;
+            try {
+                await openSalesOrderDetail(Number(card.dataset.orderId));
+            } catch (error) {
+                showError("sales-history-error", error.message);
+            }
+        });
+        on("sales-detail-back-btn", "click", () => {
+            showError("sales-detail-error", "");
+            showScreen("salesHistory");
         });
 
-        on("requisition-filter-btn", "click", async () => {
-            dateFilters.requisitions.from = document.getElementById("requisition-date-from")?.value || "";
-            dateFilters.requisitions.to = document.getElementById("requisition-date-to")?.value || "";
+        async function applyRequisitionDateFilter() {
+            dateFilters.requisitions.date = document.getElementById("requisition-date")?.value || "";
             listState.requisitions.page = 1;
             showError("requisition-list-error", "");
             await loadRequisitionList();
-        });
+        }
+
+        on("requisition-filter-btn", "click", applyRequisitionDateFilter);
+        on("requisition-date", "change", applyRequisitionDateFilter);
 
         on("cancel-return-stock", "change", toggleCancelReasonField);
         on("cancel-order-dismiss-btn", "click", closeCancelOrderModal);
@@ -1750,6 +2070,11 @@
         }));
         on("requisition-scan-btn", "click", () => {
             openBarcodeScanner("requisition");
+        });
+        on("requisition-cart-list", "mousedown", (event) => {
+            const button = event.target.closest("[data-req-action='inc'], [data-req-action='dec']");
+            if (!button) return;
+            event.preventDefault();
         });
         on("requisition-cart-list", "click", (event) => {
             const button = event.target.closest("[data-req-action]");

@@ -13,6 +13,7 @@
     --pos-danger: #dc2626;
     --pos-red-bar: #b42318;
     --pos-font-base: 17px;
+    --pos-font: "IBM Plex Sans Thai", "Noto Sans Thai", "Segoe UI", system-ui, sans-serif;
 }
 
 * {
@@ -23,13 +24,21 @@
 html, body {
     margin: 0;
     padding: 0;
-    font-family: "Noto Sans Thai", "Segoe UI", system-ui, sans-serif;
+    font-family: var(--pos-font);
     font-size: var(--pos-font-base);
     background: var(--pos-bg);
     color: var(--pos-text);
     height: 100vh;
     overflow: hidden;
     -webkit-font-smoothing: antialiased;
+}
+
+#pos-app,
+#pos-app button,
+#pos-app input,
+#pos-app select,
+#pos-app textarea {
+    font-family: var(--pos-font);
 }
 
 #pos-app, .pos-screen {
@@ -708,6 +717,93 @@ textarea.pos-input {
     color: var(--pos-danger);
 }
 
+.pos-transfer-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: auto;
+}
+
+#cash-payment-panel[hidden],
+#transfer-payment-panel[hidden] {
+    display: none !important;
+}
+
+.pos-transfer-summary {
+    margin: 12px;
+    padding: 16px;
+    background: #fff;
+    border: 2px solid var(--pos-border);
+    border-radius: 8px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pos-transfer-label {
+    font-size: 0.92rem;
+    color: var(--pos-muted);
+    font-weight: 600;
+}
+
+.pos-transfer-amount {
+    margin-top: 8px;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--pos-navy);
+}
+
+.pos-transfer-note {
+    margin-top: 0;
+    font-size: 0.85rem;
+    color: var(--pos-muted);
+}
+
+.pos-transfer-slip-action {
+    margin-top: 4px;
+    width: 100%;
+    border: none;
+    border-radius: 8px;
+    background: var(--pos-blue);
+    color: #fff;
+    padding: 14px 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.pos-transfer-slip-action[hidden] {
+    display: none !important;
+}
+
+.pos-slip-preview {
+    border: 1px solid var(--pos-border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.pos-slip-preview img {
+    display: block;
+    width: 100%;
+    max-height: 220px;
+    object-fit: contain;
+    background: #f8fafc;
+}
+
+.pos-slip-remove {
+    width: 100%;
+    border: none;
+    border-top: 1px solid var(--pos-border);
+    background: #fff5f5;
+    color: var(--pos-danger);
+    padding: 10px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 /* Success */
 .pos-success-layout {
     flex: 1;
@@ -811,6 +907,31 @@ textarea.pos-input {
     color: #fff;
 }
 
+.pos-alert-backdrop {
+    z-index: 10050;
+}
+
+.pos-alert-modal {
+    max-width: 400px;
+}
+
+.pos-alert-message {
+    margin: 12px 0 0;
+    color: var(--pos-text);
+    font-size: 1rem;
+    line-height: 1.55;
+    white-space: pre-line;
+    text-align: center;
+}
+
+.pos-alert-actions {
+    justify-content: center;
+}
+
+.pos-alert-actions .pos-modal-confirm {
+    min-width: 140px;
+}
+
 .pos-error,
 .pos-success,
 .pos-empty {
@@ -885,41 +1006,85 @@ textarea.pos-input {
     padding: 12px;
 }
 
-/* Requisition page */
+/* Requisition page — สองคอลัมน์: ซ้ายเลือกสินค้า / ขวารายการเบิก */
 .pos-requisition-content {
     display: flex;
     flex-direction: column;
     gap: 0;
-    padding: 12px;
+    min-height: 0;
+    overflow: hidden;
+    padding: 12px 0 0;
+}
+
+.pos-requisition-content > .pos-error,
+.pos-requisition-content > .pos-success-msg {
+    flex-shrink: 0;
+    margin: 8px 12px 0;
 }
 
 .pos-requisition-page {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .pos-requisition-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
     background: #fff;
     border: none;
-    border-radius: 12px;
+    border-radius: 0;
     overflow: hidden;
-    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+    box-shadow: none;
+}
+
+.pos-requisition-panel--catalog {
+    border-right: 1px solid var(--pos-border);
+    background: #f8fafc;
+}
+
+.pos-requisition-panel--cart {
+    background: #fff;
 }
 
 .pos-requisition-panel .pos-panel-heading {
-    border-bottom: none;
-    padding-bottom: 4px;
+    margin: 0;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--pos-navy);
+    background: #f8fafc;
+    border-bottom: 1px solid var(--pos-border);
+    padding-bottom: 12px;
+    flex-shrink: 0;
+}
+
+.pos-requisition-panel--catalog .pos-panel-heading {
+    background: #f1f5f9;
+}
+
+.pos-search-inline {
+    padding: 12px;
+    border-bottom: 1px solid var(--pos-border);
 }
 
 .pos-requisition-panel .pos-search-box.pos-search-inline {
-    border-bottom: none;
-    padding-top: 0;
+    border-bottom: 1px solid var(--pos-border);
+    padding-top: 12px;
+    flex-shrink: 0;
 }
 
 .pos-requisition-panel .pos-requisition-catalog.pos-row-list {
     border: none;
     background: transparent;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 .pos-requisition-panel .pos-row-item {
@@ -930,29 +1095,24 @@ textarea.pos-input {
     border-bottom: none;
 }
 
-.pos-panel-heading {
-    margin: 0;
-    padding: 12px 16px;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--pos-navy);
-    background: #f8fafc;
-    border-bottom: 1px solid var(--pos-border);
-}
-
-.pos-search-inline {
-    padding: 12px;
-    border-bottom: 1px solid var(--pos-border);
+.pos-requisition-panel--catalog .pos-pagination {
+    flex-shrink: 0;
+    border-top: 1px solid var(--pos-border);
+    border-radius: 0;
 }
 
 .pos-requisition-catalog {
-    max-height: 42vh;
+    max-height: none;
     overflow: auto;
     border: none;
     border-radius: 0;
 }
 
 .pos-requisition-cart-lines {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 0 12px;
 }
 
@@ -970,17 +1130,29 @@ textarea.pos-input {
 }
 
 .pos-requisition-note {
-    padding: 12px;
+    padding: 0;
     margin-bottom: 0;
+    border-top: none;
+    flex-shrink: 0;
+}
+
+.pos-requisition-cart-footer {
+    flex-shrink: 0;
+    padding: 12px;
     border-top: 1px solid #eef2f7;
+    background: #fff;
 }
 
 .pos-requisition-submit {
-    margin: 0 12px 12px !important;
+    margin: 10px 0 0 !important;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 700;
     padding: 12px 16px;
     letter-spacing: 0;
+    flex-shrink: 0;
 }
 
 /* Row lists (stock, requisition, sales) */
@@ -1007,10 +1179,79 @@ textarea.pos-input {
     border: 1px solid var(--pos-border);
     border-radius: 10px;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    border-bottom: 1px solid var(--pos-border);
 }
 
 .pos-order-list .pos-row-item:last-child {
     border-bottom: 1px solid var(--pos-border);
+}
+
+.pos-order-list .pos-empty {
+    flex: 1;
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+    border: 1px solid var(--pos-border);
+    border-radius: 10px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+}
+
+.pos-order-list--empty {
+    overflow: hidden !important;
+}
+
+.pos-history-card {
+    text-align: left;
+}
+
+.pos-history-card-top,
+.pos-requisition-card-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.pos-history-card-side,
+.pos-requisition-card-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.pos-history-card-side .pos-row-price {
+    font-size: 0.95rem;
+}
+
+.pos-detail-row--strong {
+    font-weight: 700;
+    color: var(--pos-navy);
+}
+
+.pos-detail-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.pos-detail-actions .pos-primary-btn,
+.pos-detail-actions .pos-btn {
+    margin: 0;
+    width: 100%;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 14px 16px;
+    border-radius: 8px;
 }
 
 .pos-row-item {
@@ -1313,22 +1554,6 @@ body.pos-drawer-open {
     text-align: left;
 }
 
-.pos-requisition-card-top {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    align-items: flex-start;
-    width: 100%;
-}
-
-.pos-requisition-card-side {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 8px;
-    flex-shrink: 0;
-}
-
 .pos-row-chevron {
     width: 20px;
     height: 20px;
@@ -1446,6 +1671,40 @@ body.pos-drawer-open {
     flex-shrink: 0;
 }
 
+.pos-pagination[hidden] {
+    display: none !important;
+}
+
+/* Stock page */
+#screen-stock .pos-stock-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
+    min-height: 0;
+    padding: 12px;
+}
+
+#screen-stock .pos-stock-search {
+    flex-shrink: 0;
+    border: 1px solid var(--pos-border);
+    border-radius: 10px;
+    background: #fff;
+}
+
+#screen-stock .pos-stock-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+#screen-stock #stock-pagination {
+    border: 1px solid var(--pos-border);
+    border-radius: 10px;
+    border-top: 1px solid var(--pos-border);
+}
+
 .pos-page-btn {
     min-width: 40px;
     height: 40px;
@@ -1480,6 +1739,44 @@ body.pos-drawer-open {
     background: #fff;
 }
 
+/* หน้ารายการที่มี filter + การ์ด + pagination แยกกัน ไม่ให้ border ชิดทับกัน */
+#screen-requisition-list .pos-content,
+#screen-sales-history .pos-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
+    min-height: 0;
+}
+
+#screen-requisition-list .pos-filter-bar,
+#screen-sales-history .pos-filter-bar {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px 16px;
+    border: 1px solid var(--pos-border);
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+#screen-requisition-list .pos-order-list,
+#screen-sales-history .pos-order-list {
+    flex: 1;
+    width: 100%;
+    align-self: stretch;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+#screen-requisition-list .pos-pagination,
+#screen-sales-history .pos-pagination {
+    border: 1px solid var(--pos-border);
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
 .pos-filter-label {
     font-size: 0.88rem;
     font-weight: 600;
@@ -1512,6 +1809,16 @@ body.pos-drawer-open {
     .pos-success-layout {
         grid-template-columns: 1fr;
         grid-template-rows: 55% 45%;
+    }
+
+    .pos-requisition-page {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr;
+    }
+
+    .pos-requisition-panel--catalog {
+        border-right: none;
+        border-bottom: 1px solid var(--pos-border);
     }
 
     .pos-left-panel {

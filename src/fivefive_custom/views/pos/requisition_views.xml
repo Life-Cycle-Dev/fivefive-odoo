@@ -93,6 +93,9 @@
                     <field name="store_id" readonly="1"/>
                     <field name="warehouse_ids" widget="many2many_tags" options="{'no_create': True}"/>
                 </group>
+                <div class="alert alert-warning mb-3" role="alert" invisible="not allocation_warning_message">
+                    <field name="allocation_warning_message" nolabel="1" readonly="1" widget="text"/>
+                </div>
                 <group string="Lot Allocations" invisible="not warehouse_ids">
                     <field name="line_ids" nolabel="1">
                         <list editable="bottom" create="0" delete="0">
@@ -111,7 +114,20 @@
                     </field>
                 </group>
                 <footer>
-                    <button name="action_confirm" type="object" string="Create Movements" class="btn-primary"/>
+                    <button
+                        name="action_confirm"
+                        type="object"
+                        string="Create Movements"
+                        class="btn-primary"
+                        invisible="allocation_warning_message"
+                    />
+                    <button
+                        name="action_confirm"
+                        type="object"
+                        string="Continue Anyway"
+                        class="btn-primary"
+                        invisible="not allocation_warning_message"
+                    />
                     <button special="cancel" string="Cancel" class="btn-secondary"/>
                 </footer>
             </form>

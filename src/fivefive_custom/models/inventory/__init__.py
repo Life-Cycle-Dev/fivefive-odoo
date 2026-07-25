@@ -2,4 +2,7 @@ from . import warehouse
 from . import inventory
 from . import inventory_movement
 from . import store_inventory
+from . import store_inventory_adjustment
+from . import store_inventory_adjust_wizard
 from . import warehouse_transfer_wizard
+from . import warehouse_inventory_receipt_wizard

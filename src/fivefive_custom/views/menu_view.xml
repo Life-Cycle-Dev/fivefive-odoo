@@ -51,14 +51,6 @@
         sequence="2"
     />
 
-    <menuitem
-        id="menu_five_five_store_model"
-        name="Stores"
-        parent="menu_five_five_supplier_model"
-        action="action_five_five_store_model"
-        sequence="3"
-    />
-
     <!-- Product -->
     <menuitem
         id="menu_five_five_product_product_model"
@@ -124,6 +116,20 @@
         action="action_five_five_inventory_movement"
         sequence="3"
     />
+
+    <record id="menu_five_five_store_model" model="ir.ui.menu">
+        <field name="name">Stores</field>
+        <field name="parent_id" ref="menu_five_five_inventory_model"/>
+        <field name="action" ref="action_five_five_store_model"/>
+        <field name="sequence">4</field>
+    </record>
+
+    <record id="menu_five_five_store_inventory_adjustment_sub_menu" model="ir.ui.menu">
+        <field name="name">Store Inventory Adjustments</field>
+        <field name="parent_id" ref="menu_five_five_inventory_model"/>
+        <field name="action" ref="action_five_five_store_inventory_adjustment"/>
+        <field name="sequence">5</field>
+    </record>
 
     <!-- POS -->
     <menuitem

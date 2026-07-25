@@ -50,14 +50,15 @@ class StorePosSession(models.Model):
             opened = fields.Datetime.to_string(session.opened_at) if session.opened_at else ""
             session.name = f"{store_name} / {user_name} / {opened}"
 
-    @api.depends("opening_cash", "closing_cash", "order_ids.total", "order_ids.state")
+    @api.depends("opening_cash", "closing_cash", "order_ids.total", "order_ids.state", "order_ids.payment_method")
     def _compute_session_totals(self):
         for session in self:
             done_orders = session.order_ids.filtered(lambda order: order.state == "done")
             total_sales = sum(done_orders.mapped("total"))
+            cash_sales = sum(done_orders.filtered(lambda order: order.payment_method == "cash").mapped("total"))
             session.total_sales = total_sales
             session.order_count = len(done_orders)
-            session.expected_cash = session.opening_cash + total_sales
+            session.expected_cash = session.opening_cash + cash_sales
             if session.state == "closed":
                 session.cash_difference = session.closing_cash - session.expected_cash
             else:

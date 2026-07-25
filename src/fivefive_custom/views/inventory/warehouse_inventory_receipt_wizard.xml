@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <delete id="fivefive_backend_font_link" model="ir.ui.view"/>
+
+    <record id="view_five_five_warehouse_inventory_receipt_wizard_form" model="ir.ui.view">
+        <field name="name">five.five.warehouse.inventory.receipt.wizard.form</field>
+        <field name="model">five.five.warehouse.inventory.receipt.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Add Inventory">
+                <group>
+                    <field name="warehouse_id" readonly="1"/>
+                    <field name="as_of_date"/>
+                    <field name="total_cost_thb" readonly="1"/>
+                </group>
+                <group string="Products">
+                    <div class="text-muted mb-2">
+                        Add each product, then click the line to enter costs before confirming.
+                    </div>
+                    <field name="line_ids" nolabel="1" mode="list,form">
+                        <list>
+                            <field name="product_variant_id"/>
+                            <field name="quantity"/>
+                            <field name="lot_number"/>
+                            <field name="quality_note"/>
+                            <field name="cost_summary" readonly="1"/>
+                            <field name="total_cost_thb" readonly="1"/>
+                        </list>
+                        <form string="Product">
+                            <group>
+                                <field name="product_variant_id"/>
+                                <field name="quantity"/>
+                                <field name="lot_number"/>
+                                <field name="quality_note"/>
+                                <field name="cost_summary" readonly="1"/>
+                                <field name="total_cost_thb" readonly="1"/>
+                            </group>
+                            <group string="Costs">
+                                <field name="cost_line_ids" nolabel="1">
+                                    <list editable="bottom">
+                                        <field name="cost_name"/>
+                                        <field name="cost"/>
+                                        <field name="type"/>
+                                        <field name="start_calculate_cost"/>
+                                    </list>
+                                </field>
+                            </group>
+                        </form>
+                    </field>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object" string="Add Inventory" class="btn-primary"/>
+                    <button special="cancel" string="Cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

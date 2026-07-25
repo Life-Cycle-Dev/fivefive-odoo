@@ -7,10 +7,16 @@
             <form>
                 <header>
                     <button
+                        name="action_open_inventory_receipt_wizard"
+                        type="object"
+                        string="Add Inventory"
+                        class="btn-primary"
+                    />
+                    <button
                         name="action_open_transfer_wizard"
                         type="object"
                         string="Transfer to Store"
-                        class="btn-primary"
+                        class="btn-secondary"
                         invisible="not inventory_ids"
                     />
                 </header>
@@ -43,7 +49,7 @@
 
                     <group string="Inventory">
                         <field name="inventory_ids" nolabel="1" context="{'active_test': False}">
-                            <list create="0" edit="0" delete="0">
+                            <list create="0" edit="0" delete="0" no_open="1">
                                 <field name="purchase_order_id" string="Purchase Order" width="150px" readonly="1"/>
                                 <field name="product_variant_id" string="Product Variant" width="140px" readonly="1"/>
                                 <field name="quantity" string="Quantity" width="90px" readonly="1"/>

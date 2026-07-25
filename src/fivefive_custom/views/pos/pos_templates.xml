@@ -8,8 +8,8 @@
                 <title>ระบบขายหน้าร้าน</title>
                 <link rel="preconnect" href="https://fonts.googleapis.com"/>
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin"/>
-                <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-                <link rel="stylesheet" href="/fivefive_custom/static/src/pos/pos.css?v=1.0.17"/>
+                <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&amp;family=Noto+Sans+Thai:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+                <link rel="stylesheet" href="/fivefive_custom/static/src/pos/pos.css?v=1.0.29"/>
             </head>
             <body>
                 <div id="pos-app">
@@ -181,23 +181,37 @@
                             <div class="pos-left-panel">
                                 <div class="pos-pay-tabs">
                                     <button class="pos-pay-tab active" type="button" data-pay-tab="cash">เงินสด</button>
-                                    <button class="pos-pay-tab" type="button" data-pay-tab="card" disabled="disabled">บัตร</button>
-                                    <button class="pos-pay-tab" type="button" data-pay-tab="transfer" disabled="disabled">โอน</button>
+                                    <button class="pos-pay-tab" type="button" data-pay-tab="transfer">โอน</button>
                                 </div>
-                                <div id="amount-paid-display" class="pos-amount-display">0</div>
-                                <div class="pos-numpad" id="numpad">
-                                    <button type="button" data-key="7">7</button>
-                                    <button type="button" data-key="8">8</button>
-                                    <button type="button" data-key="9">9</button>
-                                    <button type="button" data-key="4">4</button>
-                                    <button type="button" data-key="5">5</button>
-                                    <button type="button" data-key="6">6</button>
-                                    <button type="button" data-key="1">1</button>
-                                    <button type="button" data-key="2">2</button>
-                                    <button type="button" data-key="3">3</button>
-                                    <button type="button" class="ac" data-key="clear">AC</button>
-                                    <button type="button" data-key="0">0</button>
-                                    <button type="button" data-key="exact">พอดี</button>
+                                <div id="cash-payment-panel">
+                                    <div id="amount-paid-display" class="pos-amount-display">0</div>
+                                    <div class="pos-numpad" id="numpad">
+                                        <button type="button" data-key="7">7</button>
+                                        <button type="button" data-key="8">8</button>
+                                        <button type="button" data-key="9">9</button>
+                                        <button type="button" data-key="4">4</button>
+                                        <button type="button" data-key="5">5</button>
+                                        <button type="button" data-key="6">6</button>
+                                        <button type="button" data-key="1">1</button>
+                                        <button type="button" data-key="2">2</button>
+                                        <button type="button" data-key="3">3</button>
+                                        <button type="button" class="ac" data-key="clear">AC</button>
+                                        <button type="button" data-key="0">0</button>
+                                        <button type="button" data-key=".">.</button>
+                                    </div>
+                                </div>
+                                <div id="transfer-payment-panel" class="pos-transfer-panel" hidden="hidden">
+                                    <div class="pos-transfer-summary">
+                                        <div class="pos-transfer-label">ยอดโอน</div>
+                                        <div id="transfer-amount-display" class="pos-transfer-amount">0.00</div>
+                                        <div class="pos-transfer-note">ยอดโอนต้องตรงกับยอดชำระ</div>
+                                        <input id="transfer-slip-input" type="file" accept="image/*" capture="environment" hidden="hidden"/>
+                                        <div id="transfer-slip-preview" class="pos-slip-preview" hidden="hidden">
+                                            <img id="transfer-slip-image" alt="สลิปโอนเงิน"/>
+                                            <button id="transfer-slip-remove-btn" class="pos-slip-remove" type="button">ลบรูป</button>
+                                        </div>
+                                        <button id="transfer-slip-btn" class="pos-transfer-slip-action" type="button" hidden="hidden">ถ่ายรูปสลิป</button>
+                                    </div>
                                 </div>
                                 <div id="checkout-error" class="pos-error" hidden="hidden"></div>
                             </div>
@@ -293,7 +307,7 @@
                             <div id="requisition-error" class="pos-error" hidden="hidden"></div>
                             <div id="requisition-success" class="pos-success-msg" hidden="hidden"></div>
                             <div class="pos-requisition-page">
-                                <section class="pos-requisition-panel">
+                                <section class="pos-requisition-panel pos-requisition-panel--catalog">
                                     <h2 class="pos-panel-heading">เลือกสินค้า</h2>
                                     <div class="pos-search-box pos-search-with-scan pos-search-inline">
                                         <input id="requisition-search" class="pos-search-input" type="search" placeholder="ค้นหาสินค้า รหัส หรือบาร์โค้ด"/>
@@ -307,11 +321,13 @@
                                 <section class="pos-requisition-panel pos-requisition-panel--cart">
                                     <h2 class="pos-panel-heading">รายการเบิก</h2>
                                     <div id="requisition-cart-list" class="pos-requisition-cart-lines"></div>
-                                    <div class="pos-field pos-requisition-note">
-                                        <label class="pos-label" for="requisition-note">หมายเหตุ</label>
-                                        <input id="requisition-note" class="pos-input" type="text" placeholder="หมายเหตุ (ถ้ามี)"/>
+                                    <div class="pos-requisition-cart-footer">
+                                        <div class="pos-field pos-requisition-note">
+                                            <label class="pos-label" for="requisition-note">หมายเหตุ</label>
+                                            <input id="requisition-note" class="pos-input" type="text" placeholder="หมายเหตุ (ถ้ามี)"/>
+                                        </div>
+                                        <button id="submit-requisition-btn" class="pos-primary-btn pos-btn-block pos-requisition-submit" type="button" disabled="disabled">ส่งคำขอเบิก</button>
                                     </div>
-                                    <button id="submit-requisition-btn" class="pos-primary-btn pos-btn-block pos-requisition-submit" type="button" disabled="disabled">ส่งคำขอเบิก</button>
                                 </section>
                             </div>
                         </div>
@@ -330,10 +346,8 @@
                         </div>
                         <div class="pos-content">
                             <div class="pos-filter-bar">
-                                <label class="pos-filter-label" for="requisition-date-from">จาก</label>
-                                <input id="requisition-date-from" class="pos-date-input" type="date"/>
-                                <label class="pos-filter-label" for="requisition-date-to">ถึง</label>
-                                <input id="requisition-date-to" class="pos-date-input" type="date"/>
+                                <label class="pos-filter-label" for="requisition-date">วันที่</label>
+                                <input id="requisition-date" class="pos-date-input" type="date"/>
                                 <button id="requisition-filter-btn" class="pos-filter-btn" type="button">ค้นหา</button>
                             </div>
                             <div id="requisition-list-error" class="pos-error" hidden="hidden"></div>
@@ -368,11 +382,11 @@
                                 <div class="pos-header-title">สต็อกสินค้า</div>
                             </div>
                         </div>
-                        <div class="pos-content">
-                            <div class="pos-search-box">
+                        <div class="pos-content pos-stock-content">
+                            <div class="pos-search-box pos-stock-search">
                                 <input id="stock-search" class="pos-search-input" type="search" placeholder="ค้นหาสินค้า"/>
                             </div>
-                            <div id="stock-list-container" class="pos-row-list"></div>
+                            <div id="stock-list-container" class="pos-row-list pos-stock-list"></div>
                             <div id="stock-pagination" class="pos-pagination" hidden="hidden"></div>
                         </div>
                     </section>
@@ -389,15 +403,29 @@
                         </div>
                         <div class="pos-content">
                             <div class="pos-filter-bar">
-                                <label class="pos-filter-label" for="sales-date-from">จาก</label>
-                                <input id="sales-date-from" class="pos-date-input" type="date"/>
-                                <label class="pos-filter-label" for="sales-date-to">ถึง</label>
-                                <input id="sales-date-to" class="pos-date-input" type="date"/>
+                                <label class="pos-filter-label" for="sales-date">วันที่</label>
+                                <input id="sales-date" class="pos-date-input" type="date"/>
                                 <button id="sales-filter-btn" class="pos-filter-btn" type="button">ค้นหา</button>
                             </div>
                             <div id="sales-history-error" class="pos-error" hidden="hidden"></div>
                             <div id="sales-history-container" class="pos-row-list pos-order-list"></div>
                             <div id="sales-pagination" class="pos-pagination" hidden="hidden"></div>
+                        </div>
+                    </section>
+
+                    <!-- รายละเอียดการขาย -->
+                    <section id="screen-sales-detail" class="pos-screen">
+                        <div class="pos-header-bar">
+                            <div class="pos-header-left">
+                                <button id="sales-detail-back-btn" class="pos-icon-btn" type="button" aria-label="กลับ">
+                                    <svg class="pos-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                                </button>
+                                <div class="pos-header-title">รายละเอียดการขาย</div>
+                            </div>
+                        </div>
+                        <div class="pos-content">
+                            <div id="sales-detail-error" class="pos-error" hidden="hidden"></div>
+                            <div id="sales-detail-container"></div>
                         </div>
                     </section>
                 </div>
@@ -441,6 +469,17 @@
                             </button>
                         </nav>
                     </aside>
+                </div>
+
+                <!-- Modal แจ้งเตือน -->
+                <div id="pos-alert-modal" class="pos-modal-backdrop pos-alert-backdrop">
+                    <div class="pos-modal pos-alert-modal" role="alertdialog" aria-modal="true" aria-labelledby="pos-alert-title">
+                        <h3 id="pos-alert-title">แจ้งเตือน</h3>
+                        <p id="pos-alert-message" class="pos-alert-message"></p>
+                        <div class="pos-modal-actions pos-alert-actions">
+                            <button id="pos-alert-ok-btn" class="pos-modal-confirm" type="button">ตกลง</button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Modal ยืนยันชำระเงิน -->
@@ -493,7 +532,7 @@
                 </div>
 
                 <script type="text/javascript" src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-                <script type="text/javascript" src="/fivefive_custom/static/src/pos/pos.js?v=1.0.17"></script>
+                <script type="text/javascript" src="/fivefive_custom/static/src/pos/pos.js?v=1.0.29"></script>
             </body>
         </html>
     </template>

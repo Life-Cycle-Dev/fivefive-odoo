@@ -49,3 +49,16 @@ class Warehouse(models.Model):
                 "default_warehouse_id": self.id,
             },
         }
+
+    def action_open_inventory_receipt_wizard(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Add Inventory"),
+            "res_model": "five.five.warehouse.inventory.receipt.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_warehouse_id": self.id,
+            },
+        }

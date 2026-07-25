@@ -13,8 +13,14 @@ access_five_five_purchase_order_document_user,access.five.five.purchase.order.do
 access_five_five_commercial_invoice_line_user,access.five.five.commercial.invoice.line.user,model_five_five_commercial_invoice_line,,1,1,1,1
 access_five_five_inventory_user,access.five.five.inventory.user,model_five_five_inventory,,1,1,1,1
 access_five_five_store_inventory_user,access.five.five.store.inventory.user,model_five_five_store_inventory,,1,1,1,1
+access_five_five_store_inventory_adjustment_user,access.five.five.store.inventory.adjustment.user,model_five_five_store_inventory_adjustment,,1,0,1,0
+access_five_five_store_inventory_adjust_wizard_user,access.five.five.store.inventory.adjust.wizard.user,model_five_five_store_inventory_adjust_wizard,,1,1,1,1
+access_five_five_store_inventory_adjust_wizard_line_user,access.five.five.store.inventory.adjust.wizard.line.user,model_five_five_store_inventory_adjust_wizard_line,,1,1,1,1
 access_five_five_warehouse_transfer_wizard_user,access.five.five.warehouse.transfer.wizard.user,model_five_five_warehouse_transfer_wizard,,1,1,1,1
 access_five_five_warehouse_transfer_wizard_line_user,access.five.five.warehouse.transfer.wizard.line.user,model_five_five_warehouse_transfer_wizard_line,,1,1,1,1
+access_five_five_warehouse_inventory_receipt_wizard_user,access.five.five.warehouse.inventory.receipt.wizard.user,model_five_five_warehouse_inventory_receipt_wizard,,1,1,1,1
+access_five_five_warehouse_inventory_receipt_wizard_line_user,access.five.five.warehouse.inventory.receipt.wizard.line.user,model_five_five_warehouse_inventory_receipt_wizard_line,,1,1,1,1
+access_five_five_warehouse_inventory_receipt_wizard_cost_line_user,access.five.five.warehouse.inventory.receipt.wizard.cost.line.user,model_five_five_warehouse_inventory_receipt_wizard_cost_line,,1,1,1,1
 access_five_five_warehouse_user,access.five.five.warehouse.user,model_five_five_warehouse,,1,1,1,1
 access_five_five_product_size_user,access.five.five.product.size.user,model_five_five_product_size,,1,1,1,1
 access_five_five_purchase_order_payment_user,access.five.five.purchase.order.payment.user,model_five_five_purchase_order_payment,,1,1,1,1

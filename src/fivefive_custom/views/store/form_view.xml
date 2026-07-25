@@ -13,6 +13,13 @@
                         class="btn-primary"
                     />
                     <button
+                        name="action_open_inventory_adjust_wizard"
+                        type="object"
+                        string="Adjust Inventory"
+                        class="btn-secondary"
+                        invisible="not store_inventory_ids"
+                    />
+                    <button
                         name="action_open_pos"
                         type="object"
                         string="Open POS"
@@ -46,7 +53,7 @@
 
                     <group string="Store Inventory">
                         <field name="store_inventory_ids" nolabel="1">
-                            <list create="0" edit="bottom" delete="0">
+                            <list create="0" edit="bottom" delete="0" no_open="1">
                                 <field name="product_variant_id" string="Product Variant" width="160px" readonly="1"/>
                                 <field name="sell_price_thb" string="Sell Price (THB)" width="120px"/>
                                 <field name="lot_number" string="Lot Number" width="150px" readonly="1"/>

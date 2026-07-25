@@ -53,6 +53,14 @@ class StorePosOrder(models.Model):
     total = fields.Float(string="Total (THB)", digits=(16, 2))
     amount_paid = fields.Float(string="Amount Paid (THB)", digits=(16, 2))
     change_amount = fields.Float(string="Change (THB)", digits=(16, 2))
+    payment_method = fields.Selection(
+        [("cash", "Cash"), ("transfer", "Transfer")],
+        string="Payment Method",
+        default="cash",
+        required=True,
+    )
+    transfer_slip = fields.Binary(string="Transfer Slip", attachment=True)
+    transfer_slip_filename = fields.Char(string="Transfer Slip Filename")
     return_stock = fields.Boolean(string="Returned Stock on Cancel", copy=False)
     cancel_reason = fields.Text(string="Cancel Reason", copy=False)
     cancelled_at = fields.Datetime(string="Cancelled At", copy=False)
@@ -91,7 +99,18 @@ class StorePosOrder(models.Model):
         return min(discount_value, subtotal)
 
     @api.model
-    def create_order(self, session, pos_user, lines, discount_type=False, discount_value=0.0, amount_paid=0.0):
+    def create_order(
+        self,
+        session,
+        pos_user,
+        lines,
+        discount_type=False,
+        discount_value=0.0,
+        amount_paid=0.0,
+        payment_method="cash",
+        transfer_slip=False,
+        transfer_slip_filename=False,
+    ):
         if session.state != "open":
             raise UserError(_("Session is not open."))
         if session.pos_user_id.id != pos_user.id:
@@ -156,10 +175,21 @@ class StorePosOrder(models.Model):
         total = subtotal - discount_amount
         if float_compare(total, 0, precision_digits=2) < 0:
             raise UserError(_("Total amount is invalid."))
-        if float_compare(amount_paid, total, precision_digits=2) < 0:
-            raise UserError(_("Amount paid is less than total."))
 
-        change_amount = amount_paid - total
+        payment_method = payment_method or "cash"
+        if payment_method not in ("cash", "transfer"):
+            raise UserError(_("Invalid payment method."))
+
+        if payment_method == "transfer":
+            if not transfer_slip:
+                raise UserError(_("Transfer slip photo is required."))
+            amount_paid = total
+            change_amount = 0.0
+        else:
+            if float_compare(amount_paid, total, precision_digits=2) < 0:
+                raise UserError(_("Amount paid is less than total."))
+            change_amount = amount_paid - total
+
         order = self.create(
             {
                 "number": self._generate_order_number(),
@@ -173,6 +203,9 @@ class StorePosOrder(models.Model):
                 "total": total,
                 "amount_paid": amount_paid,
                 "change_amount": change_amount,
+                "payment_method": payment_method,
+                "transfer_slip": transfer_slip if payment_method == "transfer" else False,
+                "transfer_slip_filename": transfer_slip_filename if payment_method == "transfer" else False,
                 "line_ids": [(0, 0, line_vals) for line_vals in order_lines],
             }
         )
