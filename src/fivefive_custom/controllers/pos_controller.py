@@ -64,6 +64,20 @@ class StorePosController(http.Controller):
             raise UserError("Invalid or expired session. Please login again.")
         return user
 
+    def _require_tab(self, user, tab_key):
+        user.check_tab_access(tab_key)
+
+    def _serialize_pos_user(self, user):
+        return {
+            "id": user.id,
+            "name": user.name,
+            "username": user.username,
+            "store_id": user.store_id.id,
+            "store_name": user.store_id.name,
+            "receipt_settings": self._serialize_store_receipt_settings(user.store_id),
+            "tab_permissions": user.get_tab_permissions(),
+        }
+
     def _serialize_product(self, variant, available_qty):
         sell_price = variant.sell_price_thb or 0.0
         return {
@@ -110,14 +124,7 @@ class StorePosController(http.Controller):
                 ok=True,
                 data={
                     "token": token,
-                    "user": {
-                        "id": user.id,
-                        "name": user.name,
-                        "username": user.username,
-                        "store_id": user.store_id.id,
-                        "store_name": user.store_id.name,
-                        "receipt_settings": self._serialize_store_receipt_settings(user.store_id),
-                    },
+                    "user": self._serialize_pos_user(user),
                     "open_session_id": open_session.id if open_session else False,
                     "open_session_opening_cash": open_session.opening_cash if open_session else 0.0,
                 },
@@ -140,6 +147,7 @@ class StorePosController(http.Controller):
     def pos_open_session(self, token, opening_cash):
         try:
             user = self._get_pos_user(token)
+            self._require_tab(user, "pos")
             Session = request.env["five.five.store.pos.session"].sudo()
             session = Session.open_session(user, float(opening_cash or 0))
             return self._json_response(
@@ -185,6 +193,7 @@ class StorePosController(http.Controller):
     def pos_close_session(self, token, closing_cash):
         try:
             user = self._get_pos_user(token)
+            self._require_tab(user, "close_session")
             session = request.env["five.five.store.pos.session"].sudo().search(
                 [
                     ("pos_user_id", "=", user.id),
@@ -209,6 +218,7 @@ class StorePosController(http.Controller):
     def pos_products(self, token, search="", page=1, page_size=None):
         try:
             user = self._get_pos_user(token)
+            self._require_tab(user, "pos")
             StoreInventory = request.env["five.five.store.inventory"].sudo()
             inventories = StoreInventory.search(
                 [
@@ -248,6 +258,7 @@ class StorePosController(http.Controller):
     def pos_product_barcode(self, token, barcode=""):
         try:
             user = self._get_pos_user(token)
+            self._require_tab(user, "pos")
             code = (barcode or "").strip()
             if not code:
                 raise UserError("Barcode is required.")
@@ -281,6 +292,7 @@ class StorePosController(http.Controller):
     ):
         try:
             user = self._get_pos_user(token)
+            self._require_tab(user, "pos")
             session = request.env["five.five.store.pos.session"].sudo().search(
                 [
                     ("pos_user_id", "=", user.id),
@@ -364,6 +376,7 @@ class StorePosController(http.Controller):
     def pos_orders_list(self, token, page=1, page_size=None, date_from=None, date_to=None, search=""):
         try:
             user = self._get_pos_user(token)
+            self._require_tab(user, "sales")
             Order = request.env["five.five.store.pos.order"].sudo()
             domain = [("store_id", "=", user.store_id.id)]
             search_text = (search or "").strip()
@@ -394,6 +407,7 @@ class StorePosController(http.Controller):
     def pos_orders_detail(self, token, order_id):
         try:
             user = self._get_pos_user(token)
+            self._require_tab(user, "sales")
             order = request.env["five.five.store.pos.order"].sudo().browse(int(order_id)).exists()
             if not order or order.store_id.id != user.store_id.id:
                 raise UserError("Order not found.")
@@ -405,6 +419,7 @@ class StorePosController(http.Controller):
     def pos_orders_cancel(self, token, order_id, return_stock=False, cancel_reason=""):
         try:
             user = self._get_pos_user(token)
+            self._require_tab(user, "sales")
             order = request.env["five.five.store.pos.order"].sudo().browse(int(order_id)).exists()
             if not order or order.store_id.id != user.store_id.id:
                 raise UserError("Order not found.")
@@ -417,6 +432,7 @@ class StorePosController(http.Controller):
     def pos_stock(self, token, search="", page=1, page_size=None):
         try:
             user = self._get_pos_user(token)
+            self._require_tab(user, "stock")
             StoreInventory = request.env["five.five.store.inventory"].sudo()
             inventories = StoreInventory.search(
                 [
@@ -490,7 +506,8 @@ class StorePosController(http.Controller):
     @http.route("/pos/api/requisition/products", type="json", auth="public", csrf=False, methods=["POST"])
     def pos_requisition_products(self, token, search="", page=1, page_size=None):
         try:
-            self._get_pos_user(token)
+            user = self._get_pos_user(token)
+            self._require_tab(user, "requisition")
             variants = request.env["five.five.product.variant"].sudo().search(
                 [("active", "=", True)],
                 order="name, id",
@@ -523,6 +540,7 @@ class StorePosController(http.Controller):
     def pos_requisition_create(self, token, lines, note=""):
         try:
             user = self._get_pos_user(token)
+            self._require_tab(user, "requisition")
             session = request.env["five.five.store.pos.session"].sudo().search(
                 [
                     ("pos_user_id", "=", user.id),
@@ -550,6 +568,7 @@ class StorePosController(http.Controller):
     def pos_requisition_list(self, token, page=1, page_size=None, date_from=None, date_to=None):
         try:
             user = self._get_pos_user(token)
+            self._require_tab(user, "requisition_history")
             domain = [("pos_user_id", "=", user.id)]
             domain.extend(self._date_range_domain("requested_at", date_from, date_to))
             Requisition = request.env["five.five.store.requisition"].sudo()
@@ -576,6 +595,7 @@ class StorePosController(http.Controller):
     def pos_requisition_detail(self, token, requisition_id):
         try:
             user = self._get_pos_user(token)
+            self._require_tab(user, "requisition_history")
             requisition = (
                 request.env["five.five.store.requisition"]
                 .sudo()
@@ -595,6 +615,7 @@ class StorePosController(http.Controller):
     def pos_requisition_received(self, token, requisition_id):
         try:
             user = self._get_pos_user(token)
+            self._require_tab(user, "requisition_history")
             requisition = request.env["five.five.store.requisition"].sudo().browse(int(requisition_id)).exists()
             if not requisition or requisition.pos_user_id.id != user.id:
                 raise UserError("Requisition not found.")

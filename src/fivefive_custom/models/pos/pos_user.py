@@ -29,6 +29,12 @@ class StorePosUser(models.Model):
     )
     access_token = fields.Char(string="Access Token", copy=False)
     active = fields.Boolean(default=True)
+    tab_pos = fields.Boolean(string="เข้าสู่การขาย", default=True)
+    tab_requisition = fields.Boolean(string="เบิกสินค้า", default=True)
+    tab_requisition_history = fields.Boolean(string="ประวัติการเบิก", default=True)
+    tab_stock = fields.Boolean(string="สต็อกสินค้า", default=True)
+    tab_sales = fields.Boolean(string="ประวัติการขาย", default=True)
+    tab_close_session = fields.Boolean(string="ปิดกะ", default=True)
 
     _sql_constraints = [
         (
@@ -59,6 +65,46 @@ class StorePosUser(models.Model):
         if not self.password:
             return False
         return check_password_hash(self.password, plain_password)
+
+    def get_tab_permissions(self):
+        self.ensure_one()
+        return {
+            "pos": self.tab_pos,
+            "requisition": self.tab_requisition,
+            "requisition_history": self.tab_requisition_history,
+            "stock": self.tab_stock,
+            "sales": self.tab_sales,
+            "close_session": self.tab_close_session,
+        }
+
+    def check_tab_access(self, tab_key):
+        self.ensure_one()
+        permissions = self.get_tab_permissions()
+        if tab_key not in permissions:
+            raise UserError(_("Unknown tab: %s") % tab_key)
+        if not permissions[tab_key]:
+            raise UserError(_("You do not have access to this feature."))
+
+    @api.constrains(
+        "tab_pos",
+        "tab_requisition",
+        "tab_requisition_history",
+        "tab_stock",
+        "tab_sales",
+        "tab_close_session",
+    )
+    def _check_at_least_one_tab(self):
+        tab_fields = (
+            "tab_pos",
+            "tab_requisition",
+            "tab_requisition_history",
+            "tab_stock",
+            "tab_sales",
+            "tab_close_session",
+        )
+        for user in self:
+            if not any(user[field] for field in tab_fields):
+                raise ValidationError(_("Please enable at least one menu tab."))
 
     def _generate_username(self):
         self.ensure_one()

@@ -70,6 +70,14 @@
                             <field name="password_plain" password="True" placeholder="Set login password"/>
                             <field name="active"/>
                         </group>
+                        <group string="Menu Permissions">
+                            <field name="tab_pos"/>
+                            <field name="tab_requisition"/>
+                            <field name="tab_requisition_history"/>
+                            <field name="tab_stock"/>
+                            <field name="tab_sales"/>
+                            <field name="tab_close_session"/>
+                        </group>
                     </group>
                 </sheet>
             </form>

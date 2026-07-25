@@ -143,6 +143,66 @@
         cancelled: "ยกเลิก",
     };
 
+    const DEFAULT_TAB_PERMISSIONS = {
+        pos: true,
+        requisition: true,
+        requisition_history: true,
+        stock: true,
+        sales: true,
+        close_session: true,
+    };
+
+    const MENU_TAB_KEYS = {
+        pos: "pos",
+        requisition: "requisition",
+        "requisition-history": "requisition_history",
+        stock: "stock",
+        sales: "sales",
+        "close-session": "close_session",
+    };
+
+    function getTabPermissions() {
+        return { ...DEFAULT_TAB_PERMISSIONS, ...(state.user?.tab_permissions || {}) };
+    }
+
+    function hasTabAccess(menuKey) {
+        const tabKey = MENU_TAB_KEYS[menuKey];
+        if (!tabKey) return true;
+        return !!getTabPermissions()[tabKey];
+    }
+
+    function applyTabPermissions() {
+        document.querySelectorAll("[data-menu]").forEach((button) => {
+            const allowed = hasTabAccess(button.dataset.menu);
+            button.hidden = !allowed;
+            button.disabled = !allowed;
+        });
+        const reqListBtn = document.getElementById("requisition-list-btn");
+        if (reqListBtn) {
+            reqListBtn.hidden = !getTabPermissions().requisition_history;
+        }
+    }
+
+    async function navigateToFirstAllowedScreen() {
+        const order = ["pos", "requisition", "requisition-history", "stock", "sales"];
+        for (const menu of order) {
+            if (!hasTabAccess(menu)) continue;
+            if (menu === "pos") {
+                if (state.session) {
+                    await enterPos({ skipSessionFetch: true });
+                } else {
+                    showScreen("openSession");
+                }
+                return;
+            }
+            await handleMenuAction(menu);
+            return;
+        }
+        showAlert("บัญชีนี้ไม่มีสิทธิ์เข้าใช้งานเมนูใดๆ กรุณาติดต่อผู้ดูแลระบบ");
+        clearAuth();
+        showScreen("login");
+    }
+
     const screens = {
         login: document.getElementById("screen-login"),
         openSession: document.getElementById("screen-open-session"),
@@ -1433,6 +1493,7 @@
 
     function openDrawer() {
         updateDrawerInfo();
+        applyTabPermissions();
         const backdrop = document.getElementById("pos-drawer-backdrop");
         if (!backdrop) return;
         backdrop.classList.add("show");
@@ -1446,6 +1507,10 @@
     }
 
     async function handleMenuAction(action) {
+        if (!hasTabAccess(action)) {
+            showAlert("คุณไม่มีสิทธิ์เข้าใช้งานเมนูนี้");
+            return;
+        }
         closeDrawer();
         if (action === "pos") {
             if (state.session) {
@@ -1756,19 +1821,28 @@
     async function bootstrapAfterLogin(data) {
         state.token = data.token;
         state.user = data.user;
+        applyTabPermissions();
         saveAuth();
-        if (data.open_session_id) {
-            state.session = {
-                id: data.open_session_id,
-                opening_cash: data.open_session_opening_cash,
-            };
-            await enterPos();
-        } else {
-            showScreen("openSession");
+        if (hasTabAccess("pos")) {
+            if (data.open_session_id) {
+                state.session = {
+                    id: data.open_session_id,
+                    opening_cash: data.open_session_opening_cash,
+                };
+                await enterPos();
+            } else {
+                showScreen("openSession");
+            }
+            return;
         }
+        await navigateToFirstAllowedScreen();
     }
 
     async function enterPos(options = {}) {
+        if (!hasTabAccess("pos")) {
+            await navigateToFirstAllowedScreen();
+            return;
+        }
         if (!options.skipSessionFetch) {
             const sessionData = await rpc("/pos/api/session/current", { token: state.token });
             state.session = sessionData.session;
@@ -1893,6 +1967,10 @@
 
         on("open-session-form", "submit", async (event) => {
             event.preventDefault();
+            if (!hasTabAccess("pos")) {
+                showAlert("คุณไม่มีสิทธิ์เข้าใช้งานเมนูนี้");
+                return;
+            }
             showError("open-session-error", "");
             try {
                 const openingCash = Number(document.getElementById("opening-cash").value || 0);
@@ -2154,6 +2232,10 @@
         });
 
         on("requisition-list-btn", "click", async () => {
+            if (!getTabPermissions().requisition_history) {
+                showAlert("คุณไม่มีสิทธิ์เข้าใช้งานเมนูนี้");
+                return;
+            }
             await openRequisitionHistoryScreen();
         });
         on("requisition-list-container", "click", async (event) => {
@@ -2222,15 +2304,20 @@
         state.token = saved.token;
         state.user = saved.user;
         state.session = saved.session || null;
+        applyTabPermissions();
         try {
             const sessionData = await rpc("/pos/api/session/current", { token: state.token });
             state.session = sessionData.session;
             saveAuth();
-            if (state.session) {
-                await enterPos({ skipSessionFetch: true });
+            if (hasTabAccess("pos")) {
+                if (state.session) {
+                    await enterPos({ skipSessionFetch: true });
+                    return;
+                }
+                showScreen("openSession");
                 return;
             }
-            showScreen("openSession");
+            await navigateToFirstAllowedScreen();
         } catch (error) {
             console.error("POS restore failed:", error);
             if (isAuthError(error.message)) {
@@ -2238,11 +2325,15 @@
                 showScreen("login");
                 return;
             }
-            if (state.session) {
+            if (hasTabAccess("pos") && state.session) {
                 await enterPos({ skipSessionFetch: true });
                 return;
             }
-            showScreen("openSession");
+            if (hasTabAccess("pos")) {
+                showScreen("openSession");
+                return;
+            }
+            await navigateToFirstAllowedScreen();
         }
     }
 

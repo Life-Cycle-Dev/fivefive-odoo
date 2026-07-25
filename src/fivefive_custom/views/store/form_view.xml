@@ -88,6 +88,12 @@
                                 <field name="name"/>
                                 <field name="username"/>
                                 <field name="password_plain" password="True" string="Password"/>
+                                <field name="tab_pos" optional="hide"/>
+                                <field name="tab_requisition" optional="hide"/>
+                                <field name="tab_requisition_history" optional="hide"/>
+                                <field name="tab_stock" optional="hide"/>
+                                <field name="tab_sales" optional="hide"/>
+                                <field name="tab_close_session" optional="hide"/>
                                 <field name="active"/>
                             </list>
                         </field>
