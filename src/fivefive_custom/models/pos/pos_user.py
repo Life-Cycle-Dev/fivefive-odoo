@@ -29,12 +29,12 @@ class StorePosUser(models.Model):
     )
     access_token = fields.Char(string="Access Token", copy=False)
     active = fields.Boolean(default=True)
-    tab_pos = fields.Boolean(string="เข้าสู่การขาย", default=True)
+    tab_pos = fields.Boolean(string="เข้าสู่การขาย", default=False)
     tab_requisition = fields.Boolean(string="เบิกสินค้า", default=True)
     tab_requisition_history = fields.Boolean(string="ประวัติการเบิก", default=True)
     tab_stock = fields.Boolean(string="สต็อกสินค้า", default=True)
-    tab_sales = fields.Boolean(string="ประวัติการขาย", default=True)
-    tab_close_session = fields.Boolean(string="ปิดกะ", default=True)
+    tab_sales = fields.Boolean(string="ประวัติการขาย", default=False)
+    tab_close_session = fields.Boolean(string="ปิดกะ", default=False)
 
     _sql_constraints = [
         (
