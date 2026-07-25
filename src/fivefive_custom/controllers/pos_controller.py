@@ -1,5 +1,7 @@
 from datetime import datetime, time
 
+from werkzeug.exceptions import NotFound
+
 import pytz
 
 from odoo import fields, http
@@ -80,6 +82,14 @@ class StorePosController(http.Controller):
     @http.route("/pos", type="http", auth="public", website=False, sitemap=False)
     def pos_app(self, **kwargs):
         return request.render("fivefive_custom.store_pos_app", {})
+
+    @http.route("/pos/receipt/<int:order_id>", type="http", auth="user", website=False)
+    def pos_receipt_print(self, order_id, **kwargs):
+        order = request.env["five.five.store.pos.order"].browse(order_id).exists()
+        if not order:
+            raise NotFound()
+        values = order._get_receipt_print_values()
+        return request.render("fivefive_custom.pos_receipt_print_page", values)
 
     @http.route("/pos/api/login", type="json", auth="public", csrf=False, methods=["POST"])
     def pos_login(self, username, password):

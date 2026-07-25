@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="pos_receipt_print_page" name="POS Receipt Print">
+        <html lang="th">
+            <head>
+                <meta charset="utf-8"/>
+                <title>ใบเสร็จ <t t-esc="order.number"/></title>
+                <style>
+                    @page { size: 80mm auto; margin: 4mm; }
+                    * { box-sizing: border-box; }
+                    body {
+                        width: 72mm;
+                        margin: 0 auto;
+                        font-family: "Noto Sans Thai", sans-serif;
+                        font-size: 12px;
+                        color: #000;
+                        line-height: 1.6;
+                    }
+                    .center { text-align: center; }
+                    .branch-name {
+                        font-size: 16px;
+                        font-weight: 700;
+                        margin: 0 0 6px;
+                        line-height: 1.45;
+                    }
+                    .subtitle, .company, .branch, .address, .tax-id {
+                        font-size: 11px;
+                        margin: 4px 0;
+                        line-height: 1.55;
+                    }
+                    .address { white-space: pre-line; }
+                    .title { font-size: 13px; font-weight: 700; margin: 0 0 4px; line-height: 1.5; }
+                    .title-en { font-size: 12px; font-weight: 700; margin: 8px 0 4px; line-height: 1.5; }
+                    .vat-label { font-size: 11px; font-weight: 600; margin: 0; line-height: 1.5; }
+                    .meta-row { display: flex; justify-content: space-between; gap: 8px; margin: 5px 0; line-height: 1.55; }
+                    .date-time-row span:last-child { text-align: right; }
+                    .divider { border-top: 1px dashed #000; margin: 10px 0; }
+                    .solid-divider { border-top: 2px solid #000; margin: 8px 0 6px; }
+                    .line-item { display: flex; gap: 8px; margin: 6px 0; align-items: flex-start; line-height: 1.55; }
+                    .line-qty { width: 18px; flex-shrink: 0; text-align: left; }
+                    .line-name { flex: 1; word-break: break-word; }
+                    .line-price { white-space: nowrap; text-align: right; }
+                    .items-count { margin: 6px 0 4px; font-size: 11px; line-height: 1.55; }
+                    .summary-row { display: flex; justify-content: space-between; gap: 8px; margin: 5px 0; line-height: 1.55; }
+                    .summary-row.grand {
+                        font-size: 14px;
+                        font-weight: 700;
+                        margin: 8px 0;
+                        border-bottom: 2px solid #000;
+                        padding: 6px 0;
+                        line-height: 1.5;
+                    }
+                    .thanks { margin-top: 14px; text-align: center; font-weight: 600; line-height: 1.55; }
+                </style>
+            </head>
+            <body onload="window.print()">
+                <t t-if="settings.get('store_name')">
+                    <div class="center branch-name" t-esc="settings['store_name']"/>
+                </t>
+                <t t-elif="settings.get('branch_subtitle')">
+                    <div class="center branch-name" t-esc="settings['branch_subtitle']"/>
+                </t>
+                <t t-if="settings.get('store_name') and settings.get('branch_subtitle')">
+                    <div class="center subtitle" t-esc="settings['branch_subtitle']"/>
+                </t>
+                <t t-if="settings.get('company_name')">
+                    <div class="center company" t-esc="settings['company_name']"/>
+                </t>
+                <t t-if="settings.get('branch_code')">
+                    <div class="center branch">No. Branch : <t t-esc="branch_code"/></div>
+                </t>
+                <t t-if="settings.get('address')">
+                    <div class="center address" t-esc="settings['address']"/>
+                </t>
+                <t t-if="settings.get('tax_id')">
+                    <div class="center tax-id">TAX ID : <t t-esc="settings['tax_id']"/></div>
+                </t>
+                <t t-if="vat_included">
+                    <div class="center title-en">Receipt / TAX Invoice (ABB)</div>
+                    <div class="center vat-label">VAT Included</div>
+                </t>
+                <t t-else="">
+                    <div class="center title">ใบเสร็จรับเงิน / Receipt</div>
+                </t>
+                <div class="divider"/>
+                <div class="meta-row"><span>POS ID:</span><span t-esc="branch_code"/></div>
+                <div class="meta-row"><span>No. :</span><span t-esc="order.number or '-'"/></div>
+                <div class="meta-row date-time-row">
+                    <span>Date : <t t-esc="order_date_str"/></span>
+                    <span>Time : <t t-esc="order_time_str"/></span>
+                </div>
+                <div class="meta-row"><span>พนักงาน</span><span t-esc="cashier_name"/></div>
+                <div class="divider"/>
+                <t t-foreach="order.line_ids" t-as="line">
+                    <div class="line-item">
+                        <span class="line-qty" t-esc="format_qty(line.quantity)"/>
+                        <span class="line-name" t-esc="line.product_variant_id.display_name"/>
+                        <span class="line-price" t-esc="format_money(line.subtotal)"/>
+                    </div>
+                </t>
+                <div class="divider"/>
+                <div class="items-count">Items: <t t-esc="format_qty(item_count)"/></div>
+                <div class="summary-row"><span>รวม</span><span t-esc="format_money(order.subtotal)"/></div>
+                <t t-if="order.discount_amount">
+                    <div class="summary-row"><span>ส่วนลด</span><span t-esc="format_money(order.discount_amount)"/></div>
+                </t>
+                <t t-if="vat_included">
+                    <div class="solid-divider"/>
+                    <div class="summary-row"><span>Before VAT</span><span t-esc="format_money(before_vat)"/></div>
+                    <div class="summary-row">
+                        <span>VAT <t t-esc="format_qty(vat_percent)"/>%</span>
+                        <span t-esc="format_money(vat_amount)"/>
+                    </div>
+                </t>
+                <div class="summary-row grand"><span>Total</span><span t-esc="format_money(order.total)"/></div>
+                <div class="thanks">ขอบคุณที่ใช้บริการ</div>
+            </body>
+        </html>
+    </template>
+</odoo>

@@ -251,9 +251,15 @@
             })
             .join("");
 
-        const subtitleHtml = settings.branch_subtitle
-            ? `<div class="center subtitle">${escapeHtml(settings.branch_subtitle)}</div>`
-            : "";
+        const branchNameHtml = settings.store_name
+            ? `<div class="center branch-name">${escapeHtml(settings.store_name)}</div>`
+            : settings.branch_subtitle
+              ? `<div class="center branch-name">${escapeHtml(settings.branch_subtitle)}</div>`
+              : "";
+        const subtitleHtml =
+            settings.store_name && settings.branch_subtitle
+                ? `<div class="center subtitle">${escapeHtml(settings.branch_subtitle)}</div>`
+                : "";
         const companyHtml = settings.company_name
             ? `<div class="center company">${escapeHtml(settings.company_name)}</div>`
             : "";
@@ -269,8 +275,7 @@
 
         const titleHtml = vatIncluded
             ? `<div class="center title-en">Receipt / TAX Invoice (ABB)</div>
-               <div class="center vat-label">VAT Included</div>
-               <div class="divider"></div>`
+               <div class="center vat-label">VAT Included</div>`
             : `<div class="center title">ใบเสร็จรับเงิน / Receipt</div>`;
 
         const discountRow =
@@ -305,6 +310,12 @@
             line-height: 1.6;
         }
         .center { text-align: center; }
+        .branch-name {
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0 0 6px;
+            line-height: 1.45;
+        }
         .subtitle, .company, .branch, .address, .tax-id {
             font-size: 11px;
             margin: 4px 0;
@@ -312,8 +323,8 @@
         }
         .address { white-space: pre-line; }
         .title { font-size: 13px; font-weight: 700; margin: 0 0 4px; line-height: 1.5; }
-        .title-en { font-size: 12px; font-weight: 700; margin: 0 0 4px; line-height: 1.5; }
-        .vat-label { font-size: 11px; font-weight: 600; margin: 0 0 6px; line-height: 1.5; }
+        .title-en { font-size: 12px; font-weight: 700; margin: 8px 0 4px; line-height: 1.5; }
+        .vat-label { font-size: 11px; font-weight: 600; margin: 0; line-height: 1.5; }
         .meta-row { display: flex; justify-content: space-between; gap: 8px; margin: 5px 0; line-height: 1.55; }
         .date-time-row span:last-child { text-align: right; }
         .divider { border-top: 1px dashed #000; margin: 10px 0; }
@@ -337,12 +348,13 @@
     </style>
 </head>
 <body>
-    ${titleHtml}
+    ${branchNameHtml}
     ${subtitleHtml}
     ${companyHtml}
     ${branchHtml}
     ${addressHtml}
     ${taxIdHtml}
+    ${titleHtml}
     <div class="divider"></div>
     <div class="meta-row"><span>POS ID:</span><span>${escapeHtml(branchCode)}</span></div>
     <div class="meta-row"><span>No. :</span><span>${escapeHtml(receipt.number || "-")}</span></div>

@@ -46,6 +46,7 @@
         "views/inventory/store_inventory_adjust_wizard.xml",
         "views/pos/pos_templates.xml",
         "views/pos/pos_views.xml",
+        "views/pos/pos_receipt_template.xml",
         "views/pos/requisition_views.xml",
         "views/warehouse/table_view.xml",
         "views/warehouse/form_view.xml",

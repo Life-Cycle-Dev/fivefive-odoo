@@ -9,7 +9,7 @@
                 <link rel="preconnect" href="https://fonts.googleapis.com"/>
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin"/>
                 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&amp;family=Noto+Sans+Thai:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-                <link rel="stylesheet" href="/fivefive_custom/static/src/pos/pos.css?v=1.0.34"/>
+                <link rel="stylesheet" href="/fivefive_custom/static/src/pos/pos.css?v=1.0.35"/>
             </head>
             <body>
                 <div id="pos-app">
@@ -532,7 +532,7 @@
                 </div>
 
                 <script type="text/javascript" src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-                <script type="text/javascript" src="/fivefive_custom/static/src/pos/pos.js?v=1.0.34"></script>
+                <script type="text/javascript" src="/fivefive_custom/static/src/pos/pos.js?v=1.0.35"></script>
             </body>
         </html>
     </template>

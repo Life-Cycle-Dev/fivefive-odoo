@@ -350,6 +350,54 @@ class StorePosOrder(models.Model):
         )
 
 
+    @api.model
+    def _format_receipt_money(self, amount):
+        return f"{(amount or 0.0):,.2f}"
+
+    @api.model
+    def _format_receipt_qty(self, qty):
+        return f"{int(round(qty or 0)):,}"
+
+    def _get_receipt_print_values(self):
+        self.ensure_one()
+        store = self.store_id
+        settings = store.get_pos_receipt_settings()
+        vat_included = bool(settings.get("vat_included"))
+        vat_percent = settings.get("vat_percent") or 0.0
+        total = self.total or 0.0
+        if vat_included and vat_percent:
+            before_vat = total / (1 + vat_percent / 100.0)
+            vat_amount = total - before_vat
+        else:
+            before_vat = total
+            vat_amount = 0.0
+        order_dt = fields.Datetime.context_timestamp(self, self.order_date)
+        branch_code = settings.get("branch_code") or "00000"
+        return {
+            "order": self,
+            "settings": settings,
+            "branch_code": branch_code,
+            "vat_included": vat_included,
+            "vat_percent": vat_percent,
+            "before_vat": before_vat,
+            "vat_amount": vat_amount,
+            "item_count": sum(self.line_ids.mapped("quantity")),
+            "order_date_str": order_dt.strftime("%d/%m/%y"),
+            "order_time_str": order_dt.strftime("%H:%M"),
+            "cashier_name": self.pos_user_id.name or "-",
+            "format_money": self._format_receipt_money,
+            "format_qty": self._format_receipt_qty,
+        }
+
+    def action_print_receipt(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_url",
+            "url": f"/pos/receipt/{self.id}",
+            "target": "new",
+        }
+
+
 class StorePosOrderLine(models.Model):
     _name = "five.five.store.pos.order.line"
     _description = "Store POS Order Line"
