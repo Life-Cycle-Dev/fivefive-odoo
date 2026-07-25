@@ -172,8 +172,15 @@ class StorePosController(http.Controller):
                 ],
                 limit=1,
             )
+            user_data = self._serialize_pos_user(user)
             if not session:
-                return self._json_response(ok=True, data={"session": False})
+                return self._json_response(
+                    ok=True,
+                    data={
+                        "session": False,
+                        "user": user_data,
+                    },
+                )
             return self._json_response(
                 ok=True,
                 data={
@@ -183,7 +190,8 @@ class StorePosController(http.Controller):
                         "total_sales": session.total_sales,
                         "order_count": session.order_count,
                         "opened_at": session.opened_at,
-                    }
+                    },
+                    "user": user_data,
                 },
             )
         except UserError as exc:

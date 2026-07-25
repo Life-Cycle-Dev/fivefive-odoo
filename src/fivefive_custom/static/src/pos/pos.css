@@ -1403,6 +1403,10 @@ body.pos-drawer-open {
     gap: 14px;
 }
 
+.pos-drawer-item[hidden] {
+    display: none !important;
+}
+
 .pos-drawer-item:hover,
 .pos-drawer-item.active {
     background: #eef2ff;

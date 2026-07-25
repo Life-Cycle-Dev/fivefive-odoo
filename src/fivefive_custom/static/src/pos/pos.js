@@ -162,7 +162,18 @@
     };
 
     function getTabPermissions() {
-        return { ...DEFAULT_TAB_PERMISSIONS, ...(state.user?.tab_permissions || {}) };
+        const permissions = state.user?.tab_permissions;
+        if (permissions) {
+            return { ...DEFAULT_TAB_PERMISSIONS, ...permissions };
+        }
+        return { ...DEFAULT_TAB_PERMISSIONS };
+    }
+
+    function applyUserProfile(user) {
+        if (!user) return;
+        state.user = { ...state.user, ...user };
+        applyTabPermissions();
+        saveAuth();
     }
 
     function hasTabAccess(menuKey) {
@@ -2311,7 +2322,7 @@
         try {
             const sessionData = await rpc("/pos/api/session/current", { token: state.token });
             state.session = sessionData.session;
-            saveAuth();
+            applyUserProfile(sessionData.user);
             if (hasTabAccess("pos")) {
                 if (state.session) {
                     await enterPos({ skipSessionFetch: true });
