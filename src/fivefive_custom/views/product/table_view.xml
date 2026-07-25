@@ -7,6 +7,7 @@
             <list>
                 <field nolabel="1" name="image" width="50" widget="image" options="{'size': [30, 30]}"/>
                 <field name="name"/>
+                <field name="country_id" width="120"/>
                 <field name="unit_id" width="120"/>
                 <field name="active" width="80"/>
             </list>

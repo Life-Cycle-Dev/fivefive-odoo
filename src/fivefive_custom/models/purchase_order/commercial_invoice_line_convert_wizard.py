@@ -189,12 +189,7 @@ class CommercialInvoiceLineConvertWizardLine(models.TransientModel):
                 if ctype in totals:
                     totals[ctype] += val
 
-            parts = []
-            for k in ["fixed", "daily", "weekly", "monthly", "yearly"]:
-                if totals[k]:
-                    # Costs in payload are already "per 1 qty"
-                    parts.append(f"{k}={totals[k]:.2f} per qty")
-            line.cost_summary = ", ".join(parts) if parts else _("No costs")
+            line.cost_summary = self.env["five.five.product.cost"].format_cost_type_summary(totals)
 
     def action_open_cost_wizard(self):
         self.ensure_one()

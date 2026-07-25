@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ir_cron_inventory_recalculate_daily_costs" model="ir.cron">
+        <field name="name">Inventory: Recalculate Daily Costs</field>
+        <field name="model_id" ref="model_five_five_inventory"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_recalculate_daily_costs()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+    </record>
+</odoo>

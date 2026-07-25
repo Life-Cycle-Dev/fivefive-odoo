@@ -10,15 +10,18 @@
     "assets": {
         "web.assets_backend": [
             "fivefive_custom/static/src/scss/fivefive_purchase_order_form.scss",
+            "fivefive_custom/static/src/scss/fivefive_inventory_form.scss",
             "fivefive_custom/static/src/js/list_confirm_delete.js",
         ],
     },
     "data": [
         "security/ir.model.access.csv",
         "data/purchase_order_sequence.xml",
+        "data/inventory_cron.xml",
         "views/purchase_order/table_view.xml",
         "views/purchase_order/pay_wizard.xml",
         "views/purchase_order/clearing_wizard.xml",
+        "views/purchase_order/close_wizard.xml",
         "views/purchase_order/cancel_clearing_wizard.xml",
         "views/purchase_order/payment_cancel_wizard.xml",
         "views/purchase_order/cancel_wizard.xml",
@@ -37,6 +40,7 @@
         "views/product/form_view.xml",
         "views/inventory/table_view.xml",
         "views/inventory/form_view.xml",
+        "views/inventory/warehouse_transfer_wizard.xml",
         "views/warehouse/table_view.xml",
         "views/warehouse/form_view.xml",
         "views/purchase_order_document/upload_wizard.xml",

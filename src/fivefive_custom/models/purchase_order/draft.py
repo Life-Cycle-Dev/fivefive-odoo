@@ -2,6 +2,8 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools.float_utils import float_compare
 
+from ..supplier import _default_country_id
+
 _SUPPLIER_SNAPSHOT_FIELDS = (
     "supplier_name",
     "supplier_tax_id",
@@ -20,6 +22,7 @@ class PurchaseOrder(models.Model):
     _description = "Purchase Order (PO)"
     _inherit = ["mail.thread", "mail.activity.mixin"]
     _rec_name = "number"
+    _order = "id desc"
 
     supplier_id = fields.Many2one(
         "five.five.supplier",
@@ -27,6 +30,12 @@ class PurchaseOrder(models.Model):
         required=True,
         tracking=True,
         domain=[("active", "=", True)],
+    )
+    country_id = fields.Many2one(
+        "res.country",
+        string="Country",
+        default=lambda self: _default_country_id(self.env),
+        tracking=True,
     )
     commercial_invoice_line_ids = fields.One2many(
         "five.five.commercial.invoice.line",
@@ -86,7 +95,10 @@ class PurchaseOrder(models.Model):
     @api.model
     def _prepare_supplier_snapshot_values_for_supplier(self, supplier):
         if not supplier:
-            return {name: "-" for name in _SUPPLIER_SNAPSHOT_FIELDS}
+            return {
+                **{name: "-" for name in _SUPPLIER_SNAPSHOT_FIELDS},
+                "country_id": _default_country_id(self.env),
+            }
         return {
             "supplier_name": supplier.name or "-",
             "supplier_tax_id": supplier.tax_id or "-",
@@ -97,6 +109,7 @@ class PurchaseOrder(models.Model):
             "supplier_account_bank_name": supplier.account_bank_name or "-",
             "supplier_account_bank_address": supplier.account_bank_address or "-",
             "supplier_account_bank_swift_code": supplier.account_bank_swift_code or "-",
+            "country_id": supplier.country_id.id or _default_country_id(self.env),
         }
 
     def _prepare_supplier_snapshot_values(self):
@@ -129,7 +142,12 @@ class PurchaseOrder(models.Model):
         if self.supplier_id:
             self.update(self._prepare_supplier_snapshot_values_for_supplier(self.supplier_id))
         else:
-            self.update({name: False for name in _SUPPLIER_SNAPSHOT_FIELDS})
+            self.update(
+                {
+                    **{name: False for name in _SUPPLIER_SNAPSHOT_FIELDS},
+                    "country_id": _default_country_id(self.env),
+                }
+            )
 
     @api.depends("commercial_invoice_line_ids.total_price_usd")
     def _compute_total_amount(self):

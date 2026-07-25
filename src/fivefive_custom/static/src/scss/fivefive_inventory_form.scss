@@ -1,0 +1,24 @@
+.o_form_view.ff_five_five_inventory_form {
+    .oe_title h1 {
+        margin-bottom: 0.5rem;
+    }
+
+    .o_group .o_inner_group > tbody > tr > td.o_td_label {
+        min-width: 8rem;
+        white-space: nowrap;
+    }
+}
+
+.o_list_view.ff_five_five_inventory_list .o_list_table {
+    th,
+    td {
+        white-space: nowrap;
+    }
+}
+
+.o_list_view.ff_five_five_transfer_wizard_list .o_list_table {
+    th,
+    td {
+        white-space: nowrap;
+    }
+}

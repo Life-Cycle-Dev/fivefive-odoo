@@ -27,6 +27,7 @@
                     <group>
                         <group string="General Information">
                             <field name="name"/>
+                            <field name="country_id"/>
                             <field name="tax_id"/>
                         </group>
                         <group string="Contact Information">

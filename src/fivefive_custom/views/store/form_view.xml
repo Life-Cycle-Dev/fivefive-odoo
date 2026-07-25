@@ -5,6 +5,14 @@
         <field name="model">five.five.store</field>
         <field name="arch" type="xml">
             <form>
+                <header>
+                    <button
+                        name="action_open_transfer_wizard"
+                        type="object"
+                        string="Transfer to Store"
+                        class="btn-primary"
+                    />
+                </header>
                 <sheet>
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
                     <group>
@@ -28,6 +36,24 @@
                         <field name="name"/>
                         <field name="address"/>
                         <field name="phone"/>
+                    </group>
+
+                    <group string="Store Inventory">
+                        <field name="store_inventory_ids" nolabel="1">
+                            <list create="0" edit="0" delete="0">
+                                <field name="product_variant_id" string="Product Variant" width="160px" readonly="1"/>
+                                <field name="lot_number" string="Lot Number" width="150px" readonly="1"/>
+                                <field name="quantity" string="Quantity" width="90px" readonly="1"/>
+                                <field name="quality_note" string="Quality Note" width="120px" readonly="1"/>
+                                <field name="cost_summary" string="Cost Summary" width="280px" readonly="1"/>
+                                <field name="total_cost_thb" string="Total Cost (THB)" width="150px" readonly="1"/>
+                                <field name="cost_as_of_date" string="Cost Frozen On" width="120px" readonly="1"/>
+                                <field name="purchase_order_id" string="Purchase Order" width="150px" readonly="1"/>
+                            </list>
+                        </field>
+                        <group class="mt-2">
+                            <field name="store_inventory_total_cost_thb" readonly="1"/>
+                        </group>
                     </group>
                 </sheet>
                 <chatter>

@@ -6,6 +6,7 @@
         <field name="arch" type="xml">
             <list>
                 <field name="name"/>
+                <field name="country_id"/>
                 <field name="tax_id"/>
                 <field name="phone"/>
                 <field name="active"/>

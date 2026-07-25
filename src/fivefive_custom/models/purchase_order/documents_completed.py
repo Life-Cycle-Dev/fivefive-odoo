@@ -128,3 +128,26 @@ class PurchaseOrderDocumentCompleted(models.Model):
                 "default_purchase_order_id": self.id,
             },
         }
+
+    def action_close(self):
+        self.ensure_one()
+
+        if self.state != "clearing":
+            raise UserError("สามารถ Close PO ที่อยู่ใน status Clearing เท่านั้น ไม่สามารถดำเนินการต่อได้")
+
+        if not self.warehouse_id:
+            raise UserError("กรุณาระบุ Warehouse ก่อนทำการ Close PO")
+
+        if not self.converted_product_ids:
+            raise UserError("กรุณา Convert Product ก่อนทำการ Close PO")
+
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Close PO",
+            "res_model": "five.five.purchase.order.close.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_purchase_order_id": self.id,
+            },
+        }

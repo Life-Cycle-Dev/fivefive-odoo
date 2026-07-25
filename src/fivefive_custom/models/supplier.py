@@ -2,6 +2,10 @@ from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
 
+def _default_country_id(env):
+    return env.ref("base.th", raise_if_not_found=False).id
+
+
 class Supplier(models.Model):
     _name = "five.five.supplier"
     _description = "Supplier"
@@ -10,6 +14,12 @@ class Supplier(models.Model):
     name = fields.Char(string="Name", required=True, tracking=True)
     contact = fields.Char(string="Contact", required=True, tracking=True)
     tax_id = fields.Char(string="Tax ID", tracking=True)
+    country_id = fields.Many2one(
+        "res.country",
+        string="Country",
+        default=lambda self: _default_country_id(self.env),
+        tracking=True,
+    )
     image = fields.Image(string="Image", max_width=1920, max_height=1920)
 
     phone = fields.Char(string="Phone", tracking=True)

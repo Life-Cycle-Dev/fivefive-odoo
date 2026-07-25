@@ -1,10 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+	<record id="view_five_five_purchase_order_model_search" model="ir.ui.view">
+		<field name="name">five.five.purchase.order.search</field>
+		<field name="model">five.five.purchase.order</field>
+		<field name="arch" type="xml">
+			<search>
+				<field name="number" string="Number"/>
+				<field name="bl_number" string="BL Number"/>
+				<field name="ci_number" string="CI Number"/>
+				<field name="supplier_id" string="Supplier"/>
+			</search>
+		</field>
+	</record>
+
 	<record id="view_five_five_purchase_order_model_list" model="ir.ui.view">
 		<field name="name">five.five.purchase.order.list</field>
 		<field name="model">five.five.purchase.order</field>
 		<field name="arch" type="xml">
-			<list duplicate="false" class="ff_five_five_purchase_order_list">
+			<list duplicate="false" class="ff_five_five_purchase_order_list" default_order="id desc">
 				<field name="number" width="180px"/>
 				<field
 					name="state"
@@ -19,6 +32,8 @@
 					decoration-danger="state == 'cancelled'"
 				/>
 				<field name="supplier_id"/>
+				<field name="bl_number" width="180px"/>
+				<field name="ci_number" width="180px"/>
 				<field name="total_amount_usd" width="250px"/>
 				<field name="balance_amount_usd" width="250px"/>
 			</list>

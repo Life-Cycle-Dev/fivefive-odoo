@@ -8,6 +8,11 @@ class ProductProduct(models.Model):
 
     name = fields.Char(string="Name", required=True, tracking=True)
     image = fields.Image(string="Image", max_width=1920, max_height=1920)
+    country_id = fields.Many2one(
+        "res.country",
+        string="Country",
+        tracking=True,
+    )
     unit_id = fields.Many2one(
         "five.five.product.unit",
         string="Unit",

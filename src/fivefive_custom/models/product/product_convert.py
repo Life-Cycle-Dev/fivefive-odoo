@@ -21,6 +21,14 @@ class ProductConvert(models.Model):
         readonly=True,
     )
 
+    country_id = fields.Many2one(
+        "res.country",
+        string="Country",
+        related="purchase_order_id.country_id",
+        store=True,
+        readonly=True,
+    )
+
     product_variant_id = fields.Many2one(
         "five.five.product.variant",
         string="Product Variant",
@@ -51,19 +59,18 @@ class ProductConvert(models.Model):
         store=False,
     )
 
-    @api.depends("product_cost_ids.cost", "product_cost_ids.type")
+    @api.depends(
+        "product_cost_ids.cost",
+        "product_cost_ids.type",
+        "product_cost_ids.start_calculate_cost",
+        "quantity",
+    )
     def _compute_cost_summary(self):
+        ProductCost = self.env["five.five.product.cost"]
+        as_of_date = fields.Date.context_today(self)
         for rec in self:
-            totals = {"fixed": 0.0, "daily": 0.0, "weekly": 0.0, "monthly": 0.0, "yearly": 0.0}
-            for c in rec.product_cost_ids:
-                if c.type in totals:
-                    totals[c.type] += c.cost or 0.0
-
-            parts = []
-            for k in ["fixed", "daily", "weekly", "monthly", "yearly"]:
-                if totals[k]:
-                    parts.append(f"{k}={totals[k]:.2f} per qty")
-            rec.cost_summary = ", ".join(parts) if parts else "No costs"
+            totals = ProductCost.compute_convert_cost_totals(rec, as_of_date=as_of_date)
+            rec.cost_summary = ProductCost.format_cost_amount_summary(totals)
 
     def unlink(self):
         ci_lines = self.mapped("commercial_invoice_line_id")
@@ -94,6 +101,14 @@ class ProductConvert(models.Model):
         ci_lines = ci_lines_before | ci_lines_after
         if ci_lines and any(k in vals for k in ("quantity", "commercial_invoice_line_id")):
             ci_lines._ff_recompute_auto_fixed_costs_for_converts()
+        if "quantity" in vals:
+            inventories = self.env["five.five.inventory"].search([("product_convert_id", "in", self.ids)])
+            for inventory in inventories:
+                recalc_vals = inventory._get_recalculate_cost_values(
+                    as_of_date=fields.Date.context_today(self)
+                )
+                if recalc_vals:
+                    inventory.write(recalc_vals)
         return res
 
     def action_open_form(self):

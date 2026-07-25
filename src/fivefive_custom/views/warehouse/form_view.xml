@@ -5,6 +5,15 @@
         <field name="model">five.five.warehouse</field>
         <field name="arch" type="xml">
             <form>
+                <header>
+                    <button
+                        name="action_open_transfer_wizard"
+                        type="object"
+                        string="Transfer to Store"
+                        class="btn-primary"
+                        invisible="not inventory_ids"
+                    />
+                </header>
                 <sheet>
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
                     <group>
@@ -34,13 +43,17 @@
 
                     <group string="Inventory">
                         <field name="inventory_ids" nolabel="1" context="{'active_test': False}">
-                            <list editable="bottom" class="ff_confirm_list_delete">
-                                <field name="product_variant_id"/>
-                                <field name="lot_number"/>
-                                <field name="quantity"/>
-                                <field name="quality_note"/>
+                            <list create="0" edit="0" delete="0">
+                                <field name="purchase_order_id" string="Purchase Order" width="150px" readonly="1"/>
+                                <field name="product_variant_id" string="Product Variant" width="140px" readonly="1"/>
+                                <field name="quantity" string="Quantity" width="90px" readonly="1"/>
+                                <field name="quality_note" string="Quality Note" width="120px" readonly="1"/>
+                                <field name="total_cost_thb" string="Total Cost (THB)" width="150px" readonly="1"/>
                             </list>
                         </field>
+                        <group class="mt-2">
+                            <field name="inventory_total_cost_thb" readonly="1"/>
+                        </group>
                     </group>
                 </sheet>
                 <chatter>
