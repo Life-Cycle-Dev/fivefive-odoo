@@ -55,7 +55,7 @@
     };
 
     const dateFilters = {
-        sales: { date: "" },
+        sales: { date: "", search: "" },
         requisitions: { date: "" },
     };
 
@@ -1529,13 +1529,15 @@
     }
 
     async function loadSalesHistory() {
-        const range = getDateFilterRange("sales");
+        const search = (dateFilters.sales.search || "").trim();
+        const range = search ? { from: null, to: null } : getDateFilterRange("sales");
         const data = await rpc("/pos/api/orders/list", {
             token: state.token,
             page: listState.sales.page,
             page_size: PAGE_SIZE,
             date_from: range.from,
             date_to: range.to,
+            search,
         });
         state.salesOrders = data.orders || [];
         applyPaginationMeta("sales", data);
@@ -1548,7 +1550,10 @@
         if (!container) return;
         if (!state.salesOrders.length) {
             container.classList.add("pos-order-list--empty");
-            container.innerHTML = '<div class="pos-empty">ยังไม่มีประวัติการขาย</div>';
+            const emptyMessage = dateFilters.sales.search
+                ? "ไม่พบใบเสร็จที่ค้นหา"
+                : "ยังไม่มีประวัติการขาย";
+            container.innerHTML = `<div class="pos-empty">${emptyMessage}</div>`;
             return;
         }
         container.classList.remove("pos-order-list--empty");
@@ -1690,8 +1695,11 @@
         showError("sales-history-error", "");
         listState.sales.page = 1;
         dateFilters.sales.date = todayDateInputValue();
+        dateFilters.sales.search = "";
         const dateEl = document.getElementById("sales-date");
         if (dateEl) dateEl.value = dateFilters.sales.date;
+        const searchEl = document.getElementById("sales-search");
+        if (searchEl) searchEl.value = "";
         await loadSalesHistory();
         showScreen("salesHistory");
     }
@@ -2093,15 +2101,23 @@
             }
         });
 
-        async function applySalesDateFilter() {
+        async function applySalesFilters() {
             dateFilters.sales.date = document.getElementById("sales-date")?.value || "";
+            dateFilters.sales.search = document.getElementById("sales-search")?.value.trim() || "";
             listState.sales.page = 1;
             showError("sales-history-error", "");
             await loadSalesHistory();
         }
 
-        on("sales-filter-btn", "click", applySalesDateFilter);
-        on("sales-date", "change", applySalesDateFilter);
+        on("sales-filter-btn", "click", applySalesFilters);
+        on("sales-date", "change", applySalesFilters);
+        on(
+            "sales-search",
+            "input",
+            debounce(() => {
+                applySalesFilters();
+            })
+        );
 
         on("sales-history-container", "click", async (event) => {
             const card = event.target.closest("[data-order-id]");

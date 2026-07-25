@@ -9,7 +9,7 @@
                 <link rel="preconnect" href="https://fonts.googleapis.com"/>
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin"/>
                 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&amp;family=Noto+Sans+Thai:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-                <link rel="stylesheet" href="/fivefive_custom/static/src/pos/pos.css?v=1.0.35"/>
+                <link rel="stylesheet" href="/fivefive_custom/static/src/pos/pos.css?v=1.0.36"/>
             </head>
             <body>
                 <div id="pos-app">
@@ -403,6 +403,12 @@
                         </div>
                         <div class="pos-content">
                             <div class="pos-filter-bar">
+                                <input
+                                    id="sales-search"
+                                    class="pos-search-input pos-sales-search"
+                                    type="search"
+                                    placeholder="ค้นหาเลขที่ใบเสร็จ"
+                                />
                                 <label class="pos-filter-label" for="sales-date">วันที่</label>
                                 <input id="sales-date" class="pos-date-input" type="date"/>
                                 <button id="sales-filter-btn" class="pos-filter-btn" type="button">ค้นหา</button>
@@ -532,7 +538,7 @@
                 </div>
 
                 <script type="text/javascript" src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-                <script type="text/javascript" src="/fivefive_custom/static/src/pos/pos.js?v=1.0.35"></script>
+                <script type="text/javascript" src="/fivefive_custom/static/src/pos/pos.js?v=1.0.36"></script>
             </body>
         </html>
     </template>

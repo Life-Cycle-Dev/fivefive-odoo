@@ -361,12 +361,16 @@ class StorePosController(http.Controller):
         return data
 
     @http.route("/pos/api/orders/list", type="json", auth="public", csrf=False, methods=["POST"])
-    def pos_orders_list(self, token, page=1, page_size=None, date_from=None, date_to=None):
+    def pos_orders_list(self, token, page=1, page_size=None, date_from=None, date_to=None, search=""):
         try:
             user = self._get_pos_user(token)
             Order = request.env["five.five.store.pos.order"].sudo()
             domain = [("store_id", "=", user.store_id.id)]
-            domain.extend(self._date_range_domain("order_date", date_from, date_to))
+            search_text = (search or "").strip()
+            if search_text:
+                domain.append(("number", "ilike", f"%{search_text}%"))
+            else:
+                domain.extend(self._date_range_domain("order_date", date_from, date_to))
             page, page_size = self._normalize_page(page, page_size or self.PAGE_SIZE_DEFAULT)
             total = Order.search_count(domain)
             meta = self._pagination_meta(total, page, page_size)

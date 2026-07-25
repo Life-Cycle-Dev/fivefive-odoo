@@ -1759,6 +1759,16 @@ body.pos-drawer-open {
     flex-shrink: 0;
 }
 
+#screen-sales-history .pos-sales-search {
+    flex: 1 1 100%;
+    min-width: 0;
+}
+
+#screen-sales-history .pos-date-input {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 #screen-requisition-list .pos-order-list,
 #screen-sales-history .pos-order-list {
     flex: 1;
