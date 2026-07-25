@@ -60,7 +60,7 @@
                 <t t-elif="settings.get('branch_subtitle')">
                     <div class="center branch-name" t-esc="settings['branch_subtitle']"/>
                 </t>
-                <t t-if="settings.get('store_name') and settings.get('branch_subtitle')">
+                <t t-if="settings.get('store_name') and settings.get('branch_subtitle') and settings.get('branch_subtitle', '').strip().lower() != settings.get('store_name', '').strip().lower()">
                     <div class="center subtitle" t-esc="settings['branch_subtitle']"/>
                 </t>
                 <t t-if="settings.get('company_name')">

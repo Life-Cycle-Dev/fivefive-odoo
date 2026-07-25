@@ -316,10 +316,13 @@
             : settings.branch_subtitle
               ? `<div class="center branch-name">${escapeHtml(settings.branch_subtitle)}</div>`
               : "";
-        const subtitleHtml =
-            settings.store_name && settings.branch_subtitle
-                ? `<div class="center subtitle">${escapeHtml(settings.branch_subtitle)}</div>`
-                : "";
+        const branchSubtitle = (settings.branch_subtitle || "").trim();
+        const storeName = (settings.store_name || "").trim();
+        const showBranchSubtitle =
+            branchSubtitle && branchSubtitle.toLowerCase() !== storeName.toLowerCase();
+        const subtitleHtml = showBranchSubtitle
+            ? `<div class="center subtitle">${escapeHtml(branchSubtitle)}</div>`
+            : "";
         const companyHtml = settings.company_name
             ? `<div class="center company">${escapeHtml(settings.company_name)}</div>`
             : "";

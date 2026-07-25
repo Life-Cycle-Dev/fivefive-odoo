@@ -538,7 +538,7 @@
                 </div>
 
                 <script type="text/javascript" src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-                <script type="text/javascript" src="/fivefive_custom/static/src/pos/pos.js?v=1.0.37"></script>
+                <script type="text/javascript" src="/fivefive_custom/static/src/pos/pos.js?v=1.0.38"></script>
             </body>
         </html>
     </template>
