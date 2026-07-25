@@ -28,6 +28,7 @@
 							<field name="supplier_id" placeholder="Select a supplier..." readonly="state not in ['draft', 'po_issued']"/>
 							<field name="country_id" readonly="state not in ['draft', 'po_issued']"/>
 							<field name="warehouse_id" invisible="state not in ['clearing', 'closed']" readonly="1"/>
+							<field name="lot_number" invisible="state not in ['clearing', 'closed']" readonly="state != 'clearing'"/>
 							<field name="logistic_id" invisible="state not in ['clearing', 'closed']" readonly="1"/>
 						</group>
 						<group>

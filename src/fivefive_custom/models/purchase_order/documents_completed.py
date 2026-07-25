@@ -10,6 +10,10 @@ class PurchaseOrderDocumentCompleted(models.Model):
         string="Warehouse",
         tracking=True,
     )
+    lot_number = fields.Char(
+        string="Lot Number",
+        tracking=True,
+    )
 
     logistic_id = fields.Many2one(
         "five.five.logistic",

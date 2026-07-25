@@ -6,9 +6,14 @@
         <field name="arch" type="xml">
             <form string="Close PO">
                 <group>
-                    <field name="purchase_order_id" readonly="1"/>
-                    <field name="warehouse_id" readonly="1"/>
-                    <field name="as_of_date" readonly="1"/>
+                    <group>
+                        <field name="purchase_order_id" readonly="1"/>
+                        <field name="warehouse_id" readonly="1"/>
+                        <field name="lot_number" placeholder="Enter lot number for all products..."/>
+                    </group>
+                    <group>
+                        <field name="as_of_date" readonly="1"/>
+                    </group>
                 </group>
                 <group string="Converted Products">
                     <field name="line_ids" nolabel="1" readonly="1">

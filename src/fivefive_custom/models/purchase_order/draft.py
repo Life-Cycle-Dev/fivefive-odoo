@@ -46,7 +46,6 @@ class PurchaseOrder(models.Model):
         "five.five.product.convert",
         "purchase_order_id",
         string="Converted Products",
-        readonly=True,
     )
     total_amount_usd = fields.Float(string="Total Amount (USD)", compute="_compute_total_amount", store=True)
     amount_recorded_usd = fields.Float(string="Amount Recorded (USD)", default=0.0)

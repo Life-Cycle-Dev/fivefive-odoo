@@ -19,6 +19,7 @@ class PurchaseOrderCloseWizard(models.TransientModel):
         related="purchase_order_id.warehouse_id",
         readonly=True,
     )
+    lot_number = fields.Char(string="Lot Number")
     as_of_date = fields.Date(
         string="Cost As Of",
         default=fields.Date.context_today,
@@ -61,6 +62,7 @@ class PurchaseOrderCloseWizard(models.TransientModel):
 
         po = self.env["five.five.purchase.order"].browse(po_id)
         res["purchase_order_id"] = po.id
+        res["lot_number"] = po.lot_number or ""
         res["line_ids"] = [
             (0, 0, {"product_convert_id": convert.id})
             for convert in po.converted_product_ids
@@ -81,11 +83,36 @@ class PurchaseOrderCloseWizard(models.TransientModel):
         if not self.line_ids:
             raise UserError(_("Please convert products before closing this PO."))
 
+        lot_number = (self.lot_number or "").strip()
+        if not lot_number:
+            raise UserError(_("Lot number is required before closing this PO."))
+
+        Inventory = self.env["five.five.inventory"]
         inventory_vals = []
         for line in self.line_ids:
             convert = line.product_convert_id
             if not convert:
                 continue
+
+            duplicate = Inventory.search_count(
+                [
+                    ("warehouse_id", "=", po.warehouse_id.id),
+                    ("lot_number", "=", lot_number),
+                    ("product_variant_id", "=", convert.product_variant_id.id),
+                ]
+            )
+            if duplicate:
+                raise UserError(
+                    _(
+                        "Lot number %(lot)s for product %(product)s already exists in warehouse %(warehouse)s."
+                    )
+                    % {
+                        "lot": lot_number,
+                        "product": convert.product_variant_id.display_name,
+                        "warehouse": po.warehouse_id.display_name,
+                    }
+                )
+
             totals = ProductCost.compute_convert_cost_totals(convert, as_of_date=self.as_of_date)
             inventory_vals.append(
                 {
@@ -93,7 +120,7 @@ class PurchaseOrderCloseWizard(models.TransientModel):
                     "product_variant_id": convert.product_variant_id.id,
                     "quantity": convert.quantity,
                     "quality_note": convert.quality_note,
-                    "lot_number": f"{po.number}-{convert.id}",
+                    "lot_number": lot_number,
                     "purchase_order_id": po.id,
                     "product_convert_id": convert.id,
                     "cost_summary": ProductCost.format_cost_amount_summary(totals),
@@ -105,16 +132,20 @@ class PurchaseOrderCloseWizard(models.TransientModel):
         if not inventory_vals:
             raise UserError(_("No converted products found to create inventory."))
 
+        if po.lot_number != lot_number:
+            po.write({"lot_number": lot_number})
+
         self.env["five.five.inventory"].create(inventory_vals)
         po.state = "closed"
         po.message_post(
             body=_(
-                "Closed PO and created %(count)s inventory record(s) at warehouse %(warehouse)s. "
-                "Total cost: %(total)s THB as of %(date)s."
+                "Closed PO and created %(count)s inventory record(s) at warehouse %(warehouse)s "
+                "with lot number %(lot)s. Total cost: %(total)s THB as of %(date)s."
             )
             % {
                 "count": len(inventory_vals),
                 "warehouse": po.warehouse_id.display_name,
+                "lot": lot_number,
                 "total": formatLang(self.env, self.total_cost_thb, digits=2),
                 "date": self.as_of_date.strftime("%d/%m/%Y") if self.as_of_date else "-",
             }
