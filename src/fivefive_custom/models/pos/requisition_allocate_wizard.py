@@ -1,7 +1,6 @@
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
-from odoo.tools.float_utils import float_compare, float_is_zero
-from odoo.tools.misc import formatLang
+from odoo.tools.float_utils import float_compare
 
 
 class StoreRequisitionAllocateWizard(models.TransientModel):
@@ -24,7 +23,6 @@ class StoreRequisitionAllocateWizard(models.TransientModel):
         "wizard_id",
         string="Allocations",
     )
-    allocation_warning_message = fields.Text(string="Allocation Warning", readonly=True)
 
     @api.model
     def default_get(self, fields_list):
@@ -39,9 +37,6 @@ class StoreRequisitionAllocateWizard(models.TransientModel):
             res["warehouse_ids"] = [(6, 0, requisition.warehouse_ids.ids)]
         elif requisition.warehouse_id:
             res["warehouse_ids"] = [(6, 0, [requisition.warehouse_id.id])]
-        warning_message = self.env.context.get("allocation_warning_message")
-        if warning_message and "allocation_warning_message" in fields_list:
-            res["allocation_warning_message"] = warning_message
         return res
 
     @api.onchange("warehouse_ids", "requisition_id")
@@ -82,66 +77,6 @@ class StoreRequisitionAllocateWizard(models.TransientModel):
         self.ensure_one()
         return self.line_ids.filtered(lambda line: line.warehouse_inventory_id and line.quantity > 0)
 
-    def _build_quantity_mismatch_message(self):
-        self.ensure_one()
-        allocation_lines = self._get_allocation_lines()
-        messages = []
-        for req_line in self.requisition_id.line_ids:
-            line_allocations = allocation_lines.filtered(
-                lambda line: line.requisition_line_id.id == req_line.id
-            )
-            allocated_qty = sum(line_allocations.mapped("quantity"))
-            requested_qty = req_line.requested_qty or 0.0
-            diff = allocated_qty - requested_qty
-            if float_is_zero(diff, precision_digits=6):
-                continue
-            product = req_line.product_variant_id.display_name
-            allocated_label = formatLang(self.env, allocated_qty, digits=2)
-            requested_label = formatLang(self.env, requested_qty, digits=2)
-            if diff > 0:
-                excess_label = formatLang(self.env, diff, digits=2)
-                messages.append(
-                    _("%(product)s: allocated %(allocated)s, requested %(requested)s (excess %(difference)s)")
-                    % {
-                        "product": product,
-                        "allocated": allocated_label,
-                        "requested": requested_label,
-                        "difference": excess_label,
-                    }
-                )
-            else:
-                short_label = formatLang(self.env, -diff, digits=2)
-                messages.append(
-                    _("%(product)s: allocated %(allocated)s, requested %(requested)s (short %(difference)s)")
-                    % {
-                        "product": product,
-                        "allocated": allocated_label,
-                        "requested": requested_label,
-                        "difference": short_label,
-                    }
-                )
-        if not messages:
-            return False
-        header = _("Allocated quantity does not match requested quantity:")
-        return header + "\n" + "\n".join(messages)
-
-    def _reopen_with_warning(self, warning_message):
-        self.ensure_one()
-        self.allocation_warning_message = warning_message
-        return {
-            "type": "ir.actions.act_window",
-            "name": _("Allocate Stock"),
-            "res_model": self._name,
-            "res_id": self.id,
-            "view_mode": "form",
-            "target": "new",
-            "context": {
-                **self.env.context,
-                "allocation_warning_confirmed": True,
-                "allocation_warning_message": warning_message,
-            },
-        }
-
     def action_confirm(self):
         self.ensure_one()
         if self.requisition_id.state != "submitted":
@@ -152,11 +87,6 @@ class StoreRequisitionAllocateWizard(models.TransientModel):
         allocation_lines = self._get_allocation_lines()
         if not allocation_lines:
             raise UserError(_("Please enter allocation quantity for at least one lot."))
-
-        if not self.env.context.get("allocation_warning_confirmed"):
-            warning_message = self._build_quantity_mismatch_message()
-            if warning_message:
-                return self._reopen_with_warning(warning_message)
 
         return self._action_confirm_apply(allocation_lines)
 

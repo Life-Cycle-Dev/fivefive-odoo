@@ -54,7 +54,7 @@
                                 <field name="product_variant_id" string="Product Variant" width="140px" readonly="1"/>
                                 <field name="quantity" string="Quantity" width="90px" readonly="1"/>
                                 <field name="quality_note" string="Quality Note" width="120px" readonly="1"/>
-                                <field name="total_cost_thb" string="Total Cost (THB)" width="150px" readonly="1"/>
+                                <field name="unit_cost_thb" string="Unit Cost (THB)" width="150px" readonly="1"/>
                             </list>
                         </field>
                         <group class="mt-2">

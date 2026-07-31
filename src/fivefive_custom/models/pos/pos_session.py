@@ -6,6 +6,7 @@ from odoo.tools.float_utils import float_compare
 class StorePosSession(models.Model):
     _name = "five.five.store.pos.session"
     _description = "Store POS Session"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "opened_at desc, id desc"
 
     name = fields.Char(string="Session", compute="_compute_name", store=True)

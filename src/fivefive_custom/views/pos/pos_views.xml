@@ -153,6 +153,11 @@
                         </page>
                     </notebook>
                 </sheet>
+                <chatter>
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids" options="{'post_refresh': 'recipients'}"/>
+                </chatter>
             </form>
         </field>
     </record>

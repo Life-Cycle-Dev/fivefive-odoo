@@ -37,7 +37,7 @@
                         </group>
                         <group string="Cost">
                             <field name="cost_as_of_date" readonly="1"/>
-                            <field name="total_cost_thb" readonly="1"/>
+                            <field name="unit_cost_thb" string="Unit Cost (THB)" readonly="1"/>
                             <field name="cost_summary" readonly="1" widget="text"/>
                         </group>
                     </group>

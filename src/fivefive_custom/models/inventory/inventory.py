@@ -1,5 +1,6 @@
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+from odoo.tools.float_utils import float_is_zero
 
 
 class Inventory(models.Model):
@@ -41,6 +42,11 @@ class Inventory(models.Model):
     )
     cost_summary = fields.Char(string="Cost Summary", tracking=True)
     total_cost_thb = fields.Float(string="Total Cost (THB)", digits=(16, 2), tracking=True)
+    unit_cost_thb = fields.Float(
+        string="Unit Cost (THB)",
+        compute="_compute_unit_cost_thb",
+        digits=(16, 2),
+    )
     cost_as_of_date = fields.Date(
         string="Cost As Of",
         default=fields.Date.context_today,
@@ -48,6 +54,49 @@ class Inventory(models.Model):
         help="วันที่ใช้คำนวณต้นทุนรวม (อัปเดตอัตโนมัติทุกวัน)",
         tracking=True,
     )
+
+    @api.depends("total_cost_thb", "quantity")
+    def _compute_unit_cost_thb(self):
+        for inventory in self:
+            if inventory.quantity > 0:
+                inventory.unit_cost_thb = inventory.total_cost_thb / inventory.quantity
+            else:
+                inventory.unit_cost_thb = 0.0
+
+    def _get_cost_values_for_quantity(self, quantity, as_of_date=None):
+        self.ensure_one()
+        ProductCost = self.env["five.five.product.cost"]
+        if not self.product_convert_id:
+            if float_is_zero(self.quantity, precision_digits=6):
+                return {
+                    "cost_summary": _("No costs"),
+                    "total_cost_thb": 0.0,
+                }
+            ratio = quantity / self.quantity
+            new_total = self.total_cost_thb * ratio
+            return {
+                "cost_summary": ProductCost.format_frozen_store_cost_summary(new_total),
+                "total_cost_thb": new_total,
+            }
+
+        as_of_date = (
+            ProductCost._normalize_date(as_of_date)
+            or ProductCost._normalize_date(self.cost_as_of_date)
+            or fields.Date.context_today(self)
+        )
+        convert = self.product_convert_id
+        convert.invalidate_recordset(["product_cost_ids"])
+        costs = ProductCost.search([("product_convert_id", "=", convert.id)])
+        costs.invalidate_recordset(["start_calculate_cost", "cost", "type"])
+
+        totals = ProductCost.compute_convert_cost_totals(convert, as_of_date=as_of_date)
+        convert_qty = convert.quantity or 0.0
+        ratio = quantity / convert_qty if convert_qty else 0.0
+        scaled_totals = {key: amount * ratio for key, amount in totals.items()}
+        return {
+            "cost_summary": ProductCost.format_cost_amount_summary(scaled_totals),
+            "total_cost_thb": sum(scaled_totals.values()),
+        }
 
     def _get_recalculate_cost_values(self, as_of_date=None):
         self.ensure_one()
@@ -59,18 +108,9 @@ class Inventory(models.Model):
             or self.env["five.five.product.cost"]._normalize_date(self.cost_as_of_date)
             or fields.Date.context_today(self)
         )
-        convert = self.env["five.five.product.convert"].browse(self.product_convert_id.id)
-        convert.invalidate_recordset(["product_cost_ids"])
-        costs = self.env["five.five.product.cost"].search(
-            [("product_convert_id", "=", convert.id)]
-        )
-        costs.invalidate_recordset(["start_calculate_cost", "cost", "type"])
-
-        ProductCost = self.env["five.five.product.cost"]
-        totals = ProductCost.compute_convert_cost_totals(convert, as_of_date=as_of_date)
+        cost_vals = self._get_cost_values_for_quantity(self.quantity, as_of_date=as_of_date)
         return {
-            "cost_summary": ProductCost.format_cost_amount_summary(totals),
-            "total_cost_thb": sum(totals.values()),
+            **cost_vals,
             "cost_as_of_date": as_of_date,
         }
 

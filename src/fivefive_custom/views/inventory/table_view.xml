@@ -29,7 +29,7 @@
                 <field name="lot_number" string="Lot Number" width="140px"/>
                 <field name="quantity" string="Quantity" width="100px"/>
                 <field name="quality_note" string="Quality Note" width="140px"/>
-                <field name="total_cost_thb" string="Total Cost (THB)" width="160px"/>
+                <field name="unit_cost_thb" string="Unit Cost (THB)" width="160px"/>
             </list>
         </field>
     </record>

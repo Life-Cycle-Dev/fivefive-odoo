@@ -146,9 +146,10 @@ class InventoryMovement(models.Model):
         if float_is_zero(remaining_qty, precision_digits=6):
             inventory.unlink()
         else:
+            cost_vals = inventory._get_cost_values_for_quantity(remaining_qty)
             inventory.write(
                 {
                     "quantity": remaining_qty,
-                    "total_cost_thb": inventory.total_cost_thb - transfer_cost,
+                    **cost_vals,
                 }
             )
