@@ -145,6 +145,18 @@ class WarehouseTransferWizard(models.TransientModel):
     def _onchange_product_variant_id(self):
         self._load_lines_for_product()
 
+    def _action_after_transfer(self, deleted_inventory_ids):
+        """Avoid reloading inventory records that were fully transferred."""
+        ctx = self.env.context
+        if (
+            ctx.get("active_model") == "five.five.inventory"
+            and ctx.get("active_id") in deleted_inventory_ids
+        ):
+            return self.env["ir.actions.actions"]._for_xml_id(
+                "fivefive_custom.action_five_five_inventory_model"
+            )
+        return {"type": "ir.actions.client", "tag": "soft_reload"}
+
     def action_confirm(self):
         self.ensure_one()
         if not self.warehouse_id:
@@ -168,8 +180,11 @@ class WarehouseTransferWizard(models.TransientModel):
 
         transfer_details = []
         total_cost = 0.0
+        deleted_inventory_ids = []
         for line in lines_to_transfer:
-            transfer_cost = line._apply_transfer()
+            transfer_cost, deleted_inventory_id = line._apply_transfer()
+            if deleted_inventory_id:
+                deleted_inventory_ids.append(deleted_inventory_id)
             total_cost += transfer_cost
             transfer_details.append(
                 _("- %(product)s (Lot %(lot)s): %(qty)s qty, %(cost)s THB")
@@ -207,7 +222,7 @@ class WarehouseTransferWizard(models.TransientModel):
                 "details": "\n".join(transfer_details),
             }
         )
-        return {"type": "ir.actions.act_window_close"}
+        return self._action_after_transfer(deleted_inventory_ids)
 
 
 class WarehouseTransferWizardLine(models.TransientModel):
@@ -360,7 +375,9 @@ class WarehouseTransferWizardLine(models.TransientModel):
             )
 
         remaining_qty = inventory.quantity - self.quantity
+        deleted_inventory_id = False
         if float_is_zero(remaining_qty, precision_digits=6):
+            deleted_inventory_id = inventory.id
             inventory.unlink()
         else:
             cost_vals = inventory._get_cost_values_for_quantity(remaining_qty)
@@ -370,4 +387,4 @@ class WarehouseTransferWizardLine(models.TransientModel):
                     **cost_vals,
                 }
             )
-        return transfer_cost
+        return transfer_cost, deleted_inventory_id
