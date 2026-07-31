@@ -2,6 +2,7 @@
 <odoo>
     <!-- ปิด root เดิม (Purchase Order รวมทุกอย่าง) -->
     <record id="menu_five_five_root" model="ir.ui.menu">
+        <field name="name">Purchase Order</field>
         <field name="active" eval="False"/>
     </record>
 
