@@ -1,6 +1,6 @@
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
-from odoo.tools.float_utils import float_is_zero
+from odoo.tools.float_utils import float_compare, float_is_zero
 
 
 class Inventory(models.Model):
@@ -113,6 +113,29 @@ class Inventory(models.Model):
             **cost_vals,
             "cost_as_of_date": as_of_date,
         }
+
+    def _consume_quantity(self, consumed_qty):
+        """Reduce on-hand quantity after a transfer or allocation."""
+        self.ensure_one()
+        if float_compare(consumed_qty, 0, precision_digits=6) <= 0:
+            raise UserError(_("Consumed quantity must be greater than zero."))
+        if float_compare(consumed_qty, self.quantity, precision_digits=6) > 0:
+            raise UserError(_("Consumed quantity exceeds available quantity."))
+
+        remaining_qty = self.quantity - consumed_qty
+        if float_is_zero(remaining_qty, precision_digits=6):
+            ProductCost = self.env["five.five.product.cost"]
+            self.write(
+                {
+                    "quantity": 0.0,
+                    "total_cost_thb": 0.0,
+                    "cost_summary": ProductCost.format_frozen_store_cost_summary(0.0),
+                }
+            )
+            return
+
+        cost_vals = self._get_cost_values_for_quantity(remaining_qty)
+        self.write({"quantity": remaining_qty, **cost_vals})
 
     def action_recalculate_cost(self):
         for record in self:

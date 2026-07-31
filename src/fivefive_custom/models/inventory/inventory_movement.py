@@ -1,6 +1,6 @@
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
-from odoo.tools.float_utils import float_compare, float_is_zero
+from odoo.tools.float_utils import float_compare
 
 
 class InventoryMovement(models.Model):
@@ -142,14 +142,4 @@ class InventoryMovement(models.Model):
                 }
             )
 
-        remaining_qty = inventory.quantity - self.quantity
-        if float_is_zero(remaining_qty, precision_digits=6):
-            inventory.unlink()
-        else:
-            cost_vals = inventory._get_cost_values_for_quantity(remaining_qty)
-            inventory.write(
-                {
-                    "quantity": remaining_qty,
-                    **cost_vals,
-                }
-            )
+        inventory._consume_quantity(self.quantity)

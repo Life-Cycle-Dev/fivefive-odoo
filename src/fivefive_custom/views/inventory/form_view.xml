@@ -58,6 +58,7 @@
         <field name="res_model">five.five.inventory</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_five_five_inventory_model_search"/>
+        <field name="domain">[('quantity', '>', 0)]</field>
         <field name="context">{'create': False}</field>
     </record>
 
