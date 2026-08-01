@@ -21,16 +21,17 @@
 		<field name="arch" type="xml">
 			<form string="Product Convert">
 				<sheet>
+					<field name="po_state" invisible="1"/>
 					<group>
 						<field name="commercial_invoice_line_id" readonly="1"/>
-						<field name="product_variant_id"/>
+						<field name="product_variant_id" readonly="po_state == 'closed'"/>
 						<field name="country_id" readonly="1"/>
-						<field name="quantity"/>
-						<field name="quality_note"/>
+						<field name="quantity" readonly="po_state == 'closed'"/>
+						<field name="quality_note" readonly="po_state == 'closed'"/>
 						<field name="cost_summary" readonly="1"/>
 					</group>
 					<group string="Costs">
-						<field name="product_cost_ids">
+						<field name="product_cost_ids" readonly="po_state == 'closed'">
 							<list editable="bottom">
 								<field name="cost_name"/>
 								<field name="cost" width="200px"/>

@@ -1,5 +1,5 @@
 from odoo import _, api, models, fields
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class ProductConvert(models.Model):
@@ -26,6 +26,12 @@ class ProductConvert(models.Model):
         store=True,
         index=True,
         readonly=True,
+    )
+
+    po_state = fields.Selection(
+        related="purchase_order_id.state",
+        string="PO State",
+        store=False,
     )
 
     country_id = fields.Many2one(
@@ -79,7 +85,18 @@ class ProductConvert(models.Model):
             totals = ProductCost.compute_convert_cost_totals(rec, as_of_date=as_of_date)
             rec.cost_summary = ProductCost.format_cost_amount_summary(totals)
 
+    def _ff_check_po_not_closed_for_convert_mutation(self):
+        if self.env.context.get("skip_po_closed_convert_check"):
+            return
+        for rec in self:
+            po = rec.purchase_order_id
+            if po and po.state == "closed":
+                raise UserError(
+                    _("Cannot modify converted products after the purchase order is closed.")
+                )
+
     def unlink(self):
+        self._ff_check_po_not_closed_for_convert_mutation()
         ci_lines = self.mapped("commercial_invoice_line_id")
         res = super().unlink()
         for line in ci_lines:
@@ -101,6 +118,22 @@ class ProductConvert(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        if not self.env.context.get("skip_po_closed_convert_check"):
+            ci_line_ids = [
+                vals["commercial_invoice_line_id"]
+                for vals in vals_list
+                if vals.get("commercial_invoice_line_id")
+            ]
+            if ci_line_ids:
+                po_states = (
+                    self.env["five.five.commercial.invoice.line"]
+                    .browse(ci_line_ids)
+                    .mapped("purchase_order_id.state")
+                )
+                if any(state == "closed" for state in po_states):
+                    raise UserError(
+                        _("Cannot modify converted products after the purchase order is closed.")
+                    )
         records = super().create(vals_list)
         ci_lines = records.filtered(lambda rec: not rec.is_manual_receipt).mapped("commercial_invoice_line_id")
         if ci_lines:
@@ -108,6 +141,7 @@ class ProductConvert(models.Model):
         return records
 
     def write(self, vals):
+        self._ff_check_po_not_closed_for_convert_mutation()
         manual_records = self.filtered("is_manual_receipt")
         ci_records = self - manual_records
         ci_lines_before = ci_records.mapped("commercial_invoice_line_id")
@@ -128,6 +162,7 @@ class ProductConvert(models.Model):
 
     def action_open_form(self):
         self.ensure_one()
+        self._ff_check_po_not_closed_for_convert_mutation()
         return {
             "type": "ir.actions.act_window",
             "name": "Product Convert",

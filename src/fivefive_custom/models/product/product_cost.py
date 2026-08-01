@@ -1,6 +1,7 @@
 from datetime import date, datetime
 
 from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 from odoo.tools.misc import formatLang
 
 COST_TYPE_ORDER = ["fixed", "daily", "weekly", "monthly", "yearly"]
@@ -146,19 +147,42 @@ class ProductCost(models.Model):
         formatted = formatLang(self.env, total_amount, digits=2)
         return _("Fixed: %(amount)s THB") % {"amount": formatted}
 
+    def _ff_check_po_not_closed_for_cost_mutation(self, product_convert_ids=None):
+        if self.env.context.get("skip_po_closed_convert_check"):
+            return
+        converts = self.env["five.five.product.convert"]
+        if product_convert_ids is not None:
+            converts = converts.browse(product_convert_ids)
+        else:
+            converts = self.mapped("product_convert_id")
+        for convert in converts:
+            po = convert.purchase_order_id
+            if po and po.state == "closed":
+                raise UserError(
+                    _("Cannot modify costs after the purchase order is closed.")
+                )
+
     @api.model_create_multi
     def create(self, vals_list):
+        convert_ids = [
+            vals["product_convert_id"]
+            for vals in vals_list
+            if vals.get("product_convert_id")
+        ]
+        self._ff_check_po_not_closed_for_cost_mutation(convert_ids)
         records = super().create(vals_list)
         records._sync_linked_inventory_costs()
         return records
 
     def write(self, vals):
+        self._ff_check_po_not_closed_for_cost_mutation()
         res = super().write(vals)
         if any(key in vals for key in ("cost", "type", "start_calculate_cost", "product_convert_id")):
             self._sync_linked_inventory_costs()
         return res
 
     def unlink(self):
+        self._ff_check_po_not_closed_for_cost_mutation()
         converts = self.mapped("product_convert_id")
         res = super().unlink()
         if converts:

@@ -66,8 +66,8 @@
 									<field name="unit_price_usd"/>
 									<field name="quantity"/>
 									<field name="total_price_usd" readonly="1"/>
-									<button name="action_unconvert_products" string="Unconvert" type="object" width="30px" class="btn-danger" confirm="Unconvert จะลบ Converted Products และ Costs ทั้งหมดของบรรทัดนี้ คุณแน่ใจหรือไม่?" invisible="not is_convert_to_product"/>
-									<button name="action_convert_to_product" string="Convert" type="object" width="30px" class="btn-primary me-1" invisible="is_convert_to_product or po_state not in ['clearing']"/>
+									<button name="action_unconvert_products" string="Unconvert" type="object" width="30px" class="btn-danger" confirm="Unconvert จะลบ Converted Products และ Costs ทั้งหมดของบรรทัดนี้ คุณแน่ใจหรือไม่?" invisible="not is_convert_to_product or po_state == 'closed'"/>
+									<button name="action_convert_to_product" string="Convert" type="object" width="30px" class="btn-primary me-1" invisible="is_convert_to_product or po_state not in ['clearing'] or po_state == 'closed'"/>
 								</list>
 							</field>
 						</page>
@@ -123,15 +123,16 @@
 								</field>
 							</page>
 							<page string="Converted Products">
-								<field name="converted_product_ids">
-									<list create="0" edit="0">
+								<field name="converted_product_ids" readonly="state == 'closed'">
+									<list create="0" edit="0" delete="0">
+										<field name="po_state" column_invisible="1"/>
 										<field name="commercial_invoice_line_id"/>
 										<field name="product_variant_id"/>
 										<field name="country_id"/>
 										<field name="quantity"/>
 										<field name="quality_note"/>
 										<field name="cost_summary" readonly="1"/>
-										<button name="action_open_form" type="object" string="Edit Costs" class="btn-secondary"/>
+										<button name="action_open_form" type="object" string="Edit Costs" class="btn-secondary" invisible="parent.state == 'closed'"/>
 									</list>
 								</field>
 							</page>

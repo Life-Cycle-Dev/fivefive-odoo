@@ -87,8 +87,17 @@ class CommercialInvoiceLine(models.Model):
         self._ff_po_states_allow_line_mutation(self.mapped("purchase_order_id"))
         return super().unlink()
 
+    def _ff_check_po_not_closed_for_convert_actions(self):
+        for line in self:
+            po = line.purchase_order_id
+            if po and po.state == "closed":
+                raise UserError(
+                    "ไม่สามารถ Convert/Unconvert ได้เมื่อ PO ถูก Close แล้ว"
+                )
+
     def action_convert_to_product(self):
         self.ensure_one()
+        self._ff_check_po_not_closed_for_convert_actions()
         if self.is_convert_to_product:
             raise UserError("รายการนี้ถูก Convert เป็น Product แล้ว")
 
@@ -141,7 +150,7 @@ class CommercialInvoiceLine(models.Model):
             total_qty = sum(converts.mapped("quantity")) or 0.0
             if float_is_zero(total_qty, precision_digits=6):
                 # Remove auto costs only; keep manual costs.
-                ProductCost.search(
+                ProductCost.with_context(skip_po_closed_convert_check=True).search(
                     [
                         ("product_convert_id", "in", converts.ids),
                         ("is_auto_from_ci", "=", True),
@@ -157,7 +166,7 @@ class CommercialInvoiceLine(models.Model):
             fixed_cost_thb_per_qty = per_qty_usd * exchange_rate
 
             # Remove old auto costs for all converts from this CI line.
-            ProductCost.search(
+            ProductCost.with_context(skip_po_closed_convert_check=True).search(
                 [
                     ("product_convert_id", "in", converts.ids),
                     ("is_auto_from_ci", "=", True),
@@ -165,7 +174,7 @@ class CommercialInvoiceLine(models.Model):
             ).unlink()
 
             # Re-create a single auto fixed cost line per convert.
-            ProductCost.create(
+            ProductCost.with_context(skip_po_closed_convert_check=True).create(
                 [
                     {
                         "product_convert_id": c.id,
@@ -179,6 +188,7 @@ class CommercialInvoiceLine(models.Model):
             )
 
     def action_unconvert_products(self):
+        self._ff_check_po_not_closed_for_convert_actions()
         for line in self:
             converts = line.product_convert_ids
             if converts:

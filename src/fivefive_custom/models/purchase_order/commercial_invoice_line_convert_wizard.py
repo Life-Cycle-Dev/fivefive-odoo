@@ -85,6 +85,10 @@ class CommercialInvoiceLineConvertWizard(models.TransientModel):
         if not cil:
             raise UserError("ไม่พบข้อมูล Commercial Invoice Line")
 
+        po = cil.purchase_order_id
+        if po and po.state == "closed":
+            raise UserError("ไม่สามารถ Convert ได้เมื่อ PO ถูก Close แล้ว")
+
         if not self.convert_line_ids:
             raise UserError("กรุณาเพิ่มรายการ Product ที่ต้องการ Convert อย่างน้อย 1 รายการ")
 
