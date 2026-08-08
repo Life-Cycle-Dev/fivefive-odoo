@@ -40,7 +40,7 @@ class StoreRequisitionCompleteWizard(models.TransientModel):
         line_vals = [
             {
                 "line_id": wizard_line.requisition_line_id.id,
-                "deduct_qty": wizard_line.deduct_qty,
+                "deduct_qty": int(round(wizard_line.deduct_qty)),
             }
             for wizard_line in self.line_ids
         ]

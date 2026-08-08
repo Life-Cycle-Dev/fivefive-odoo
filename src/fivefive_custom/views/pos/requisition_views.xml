@@ -60,7 +60,7 @@
                                     <field name="product_variant_id"/>
                                     <field name="requested_qty"/>
                                     <field name="allocated_qty"/>
-                                    <field name="received_qty"/>
+                                    <field name="received_qty" widget="integer"/>
                                     <field name="deducted_qty"/>
                                     <field name="qty_variance_reason"/>
                                 </list>
@@ -137,7 +137,7 @@
                         <field name="product_variant_id" readonly="1"/>
                         <field name="requested_qty" readonly="1"/>
                         <field name="allocated_qty" readonly="1"/>
-                        <field name="received_qty"/>
+                        <field name="received_qty" widget="integer"/>
                         <field name="qty_variance_reason" placeholder="Required if received qty differs from allocated qty"/>
                     </list>
                 </field>
@@ -164,7 +164,7 @@
                         <field name="requested_qty" readonly="1"/>
                         <field name="received_qty" readonly="1"/>
                         <field name="allocated_qty" readonly="1"/>
-                        <field name="deduct_qty"/>
+                        <field name="deduct_qty" widget="integer"/>
                         <field name="qty_variance_reason" readonly="1"/>
                     </list>
                 </field>

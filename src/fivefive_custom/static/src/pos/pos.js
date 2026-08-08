@@ -705,6 +705,22 @@
         return Math.round(parsed);
     }
 
+    function parseReceiveQty(rawValue) {
+        const parsed = Number(rawValue);
+        if (rawValue === "" || Number.isNaN(parsed) || parsed < 0) {
+            return 0;
+        }
+        return Math.round(parsed);
+    }
+
+    function normalizeReceiveQtyInput(input) {
+        if (!input) return;
+        const normalized = parseReceiveQty(input.value);
+        if (input.value !== "" && String(normalized) !== input.value) {
+            input.value = String(normalized);
+        }
+    }
+
     function syncRequisitionQtyFromInput(productId) {
         const line = state.requisitionCart.find((item) => item.id === productId);
         if (!line) return;
@@ -1432,23 +1448,23 @@
                                             type="number"
                                             class="pos-input pos-receive-qty-input"
                                             data-receive-line-id="${line.id}"
-                                            data-allocated-qty="${line.allocated_qty || 0}"
-                                            value="${formatQty(line.allocated_qty || 0)}"
+                                            data-allocated-qty="${Math.round(line.allocated_qty || 0)}"
+                                            value="${Math.round(line.allocated_qty || 0)}"
                                             min="0"
-                                            step="0.01"
-                                            inputmode="decimal"
-                                        />
-                                    </label>
-                                    <label class="pos-receive-reason-label" data-receive-reason-wrap="${line.id}" hidden>
-                                        <span>เหตุผล</span>
-                                        <input
-                                            type="text"
-                                            class="pos-input pos-receive-reason-input"
-                                            data-receive-reason-id="${line.id}"
-                                            placeholder="จำนวนที่รับไม่ตรงกับที่จัดให้"
+                                            step="1"
+                                            inputmode="numeric"
                                         />
                                     </label>
                                 </div>
+                                <label class="pos-receive-reason-label" data-receive-reason-wrap="${line.id}">
+                                    <span class="pos-receive-reason-title">เหตุผล <span class="pos-receive-reason-hint">(กรอกเมื่อจำนวนที่รับไม่ตรงกับที่จัดให้)</span></span>
+                                    <input
+                                        type="text"
+                                        class="pos-input pos-receive-reason-input"
+                                        data-receive-reason-id="${line.id}"
+                                        placeholder="เช่น สินค้าชำรุด / ขาด 1 ชิ้น"
+                                    />
+                                </label>
                             </div>`
                             )
                             .join("")}
@@ -1488,18 +1504,24 @@
 
         const receivedBtn = document.getElementById("requisition-mark-received-btn");
         if (receivedBtn) {
-            const syncReceiveReasonVisibility = (lineId) => {
+            const syncReceiveReasonRequired = (lineId) => {
                 const qtyInput = document.querySelector(`[data-receive-line-id="${lineId}"]`);
                 const reasonWrap = document.querySelector(`[data-receive-reason-wrap="${lineId}"]`);
                 if (!qtyInput || !reasonWrap) return;
-                const allocatedQty = Number(qtyInput.dataset.allocatedQty || 0);
-                const receivedQty = Number(qtyInput.value || 0);
-                const needsReason = Math.abs(receivedQty - allocatedQty) > 0.001;
-                reasonWrap.hidden = !needsReason;
+                const allocatedQty = parseReceiveQty(qtyInput.dataset.allocatedQty || 0);
+                const receivedQty = parseReceiveQty(qtyInput.value || 0);
+                const needsReason = receivedQty !== allocatedQty;
+                reasonWrap.classList.toggle("pos-receive-reason-label--required", needsReason);
             };
 
             document.querySelectorAll(".pos-receive-qty-input").forEach((input) => {
-                input.addEventListener("input", () => syncReceiveReasonVisibility(input.dataset.receiveLineId));
+                const handler = () => {
+                    normalizeReceiveQtyInput(input);
+                    syncReceiveReasonRequired(input.dataset.receiveLineId);
+                };
+                input.addEventListener("input", handler);
+                input.addEventListener("change", handler);
+                handler();
             });
 
             receivedBtn.addEventListener("click", async () => {
@@ -1508,10 +1530,10 @@
                     const lines = (req.lines || []).map((line) => {
                         const qtyInput = document.querySelector(`[data-receive-line-id="${line.id}"]`);
                         const reasonInput = document.querySelector(`[data-receive-reason-id="${line.id}"]`);
-                        const receivedQty = Number(qtyInput?.value || 0);
-                        const allocatedQty = Number(qtyInput?.dataset.allocatedQty || line.allocated_qty || 0);
+                        const receivedQty = parseReceiveQty(qtyInput?.value || 0);
+                        const allocatedQty = parseReceiveQty(qtyInput?.dataset.allocatedQty || line.allocated_qty || 0);
                         const reason = (reasonInput?.value || "").trim();
-                        if (Math.abs(receivedQty - allocatedQty) > 0.001 && !reason) {
+                        if (receivedQty !== allocatedQty && !reason) {
                             throw new Error(
                                 `กรุณาระบุเหตุผลสำหรับ ${line.product_name} เพราะจำนวนที่รับไม่ตรงกับที่จัดให้`
                             );

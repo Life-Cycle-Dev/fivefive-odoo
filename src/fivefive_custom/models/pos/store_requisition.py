@@ -156,8 +156,8 @@ class StoreRequisition(models.Model):
             vals = line_map.get(req_line.id)
             if not vals:
                 raise UserError(_("Missing deduct quantity for %s.") % req_line.product_variant_id.display_name)
-            deduct_qty = float(vals.get("deduct_qty") or 0.0)
-            if float_compare(deduct_qty, 0, precision_digits=2) < 0:
+            deduct_qty = int(round(float(vals.get("deduct_qty") or 0.0)))
+            if deduct_qty < 0:
                 raise UserError(_("Deduct quantity cannot be negative."))
 
             req_line.write({"deducted_qty": deduct_qty})
@@ -198,13 +198,13 @@ class StoreRequisition(models.Model):
 
             has_positive_qty = False
             for req_line in requisition.line_ids:
-                received_qty = float(line_map[req_line.id].get("received_qty") or 0.0)
+                received_qty = int(round(float(line_map[req_line.id].get("received_qty") or 0.0)))
                 reason = (line_map[req_line.id].get("qty_variance_reason") or "").strip()
-                if float_compare(received_qty, 0, precision_digits=2) < 0:
+                if received_qty < 0:
                     raise UserError(_("Received quantity cannot be negative."))
-                if float_compare(received_qty, 0, precision_digits=2) > 0:
+                if received_qty > 0:
                     has_positive_qty = True
-                if float_compare(received_qty, req_line.allocated_qty, precision_digits=2) != 0 and not reason:
+                if received_qty != int(round(req_line.allocated_qty)) and not reason:
                     raise UserError(
                         _(
                             "Please provide a reason for %(product)s because received qty "

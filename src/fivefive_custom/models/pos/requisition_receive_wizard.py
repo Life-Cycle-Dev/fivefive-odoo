@@ -35,7 +35,7 @@ class StoreRequisitionReceiveWizard(models.TransientModel):
         line_vals = []
         for wizard_line in self.line_ids:
             reason = (wizard_line.qty_variance_reason or "").strip()
-            if float_compare(wizard_line.received_qty, wizard_line.allocated_qty, precision_digits=2) != 0:
+            if int(round(wizard_line.received_qty)) != int(round(wizard_line.allocated_qty)):
                 if not reason:
                     raise UserError(
                         _(
@@ -51,7 +51,7 @@ class StoreRequisitionReceiveWizard(models.TransientModel):
             line_vals.append(
                 {
                     "line_id": wizard_line.requisition_line_id.id,
-                    "received_qty": wizard_line.received_qty,
+                    "received_qty": int(round(wizard_line.received_qty)),
                     "qty_variance_reason": reason or False,
                 }
             )

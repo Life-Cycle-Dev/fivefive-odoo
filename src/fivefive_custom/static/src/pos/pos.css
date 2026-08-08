@@ -1641,37 +1641,48 @@ body.pos-drawer-open {
 
 .pos-receive-line {
     display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    align-items: flex-start;
-    padding: 10px 12px;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
     border: 1px solid #e2e8f0;
     border-radius: 10px;
     background: #f8fafc;
 }
 
+.pos-receive-line-info {
+    min-width: 0;
+}
+
 .pos-receive-line-fields {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 8px;
-    min-width: 140px;
+    justify-content: flex-end;
 }
 
 .pos-receive-reason-label {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
+    gap: 6px;
     width: 100%;
     font-size: 0.82rem;
     font-weight: 600;
     color: var(--pos-muted);
 }
 
+.pos-receive-reason-label--required .pos-receive-reason-title {
+    color: #b45309;
+}
+
+.pos-receive-reason-hint {
+    font-weight: 500;
+    color: #94a3b8;
+}
+
+.pos-receive-reason-label--required .pos-receive-reason-hint {
+    color: #b45309;
+}
+
 .pos-receive-reason-input {
     width: 100%;
-    min-width: 160px;
 }
 
 .pos-receive-line-name {

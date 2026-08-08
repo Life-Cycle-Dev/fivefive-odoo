@@ -645,7 +645,7 @@ class StorePosController(http.Controller):
             line_vals = [
                 {
                     "line_id": int(item["line_id"]),
-                    "received_qty": float(item.get("received_qty") or 0.0),
+                    "received_qty": int(round(float(item.get("received_qty") or 0.0))),
                     "qty_variance_reason": (item.get("qty_variance_reason") or "").strip() or False,
                 }
                 for item in lines
