@@ -28,6 +28,13 @@ class PurchaseOrderPayment(models.Model):
     )
     attachment = fields.Binary(string="Attachment")
     note = fields.Char(string="Note")
+    supplier_credit_id = fields.Many2one(
+        "five.five.supplier.credit",
+        string="Supplier Credit",
+        ondelete="set null",
+        index=True,
+        readonly=True,
+    )
 
     is_cancel = fields.Boolean(string="Is Cancel?", default=False)
     cancel_reason = fields.Text(string="Cancel Reason")

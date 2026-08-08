@@ -1,6 +1,7 @@
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools.misc import formatLang
+from odoo.tools.float_utils import float_compare, float_is_zero
 
 
 class PurchaseOrderCloseWizard(models.TransientModel):
@@ -39,6 +40,42 @@ class PurchaseOrderCloseWizard(models.TransientModel):
         string="Total Cost Summary",
         compute="_compute_total_cost_thb",
     )
+    supplier_credit_amount_usd = fields.Float(
+        string="Supplier Credit (USD)",
+        digits=(16, 2),
+        help="Optional credit for the supplier when delivered quantity/value is less than paid. "
+        "This amount can be applied as a discount on the supplier's next PO.",
+    )
+    supplier_credit_amount_thb = fields.Float(
+        string="Supplier Credit (THB)",
+        compute="_compute_supplier_credit_amount_thb",
+        digits=(16, 2),
+    )
+    max_supplier_credit_usd = fields.Float(
+        string="Max Supplier Credit (USD)",
+        compute="_compute_max_supplier_credit_usd",
+        digits=(16, 2),
+    )
+
+    @api.depends("purchase_order_id.amount_paid_usd")
+    def _compute_max_supplier_credit_usd(self):
+        for wizard in self:
+            wizard.max_supplier_credit_usd = wizard.purchase_order_id.amount_paid_usd if wizard.purchase_order_id else 0.0
+
+    @api.depends("supplier_credit_amount_usd", "purchase_order_id.exchange_rate_thb_per_usd", "purchase_order_id.amount_recorded_usd", "purchase_order_id.amount_recorded_thb")
+    def _compute_supplier_credit_amount_thb(self):
+        for wizard in self:
+            po = wizard.purchase_order_id
+            amount_usd = wizard.supplier_credit_amount_usd or 0.0
+            if not po or float_is_zero(amount_usd, precision_digits=2):
+                wizard.supplier_credit_amount_thb = 0.0
+                continue
+            if po.exchange_rate_thb_per_usd:
+                wizard.supplier_credit_amount_thb = amount_usd * po.exchange_rate_thb_per_usd
+            elif po.amount_recorded_usd:
+                wizard.supplier_credit_amount_thb = amount_usd * (po.amount_recorded_thb / po.amount_recorded_usd)
+            else:
+                wizard.supplier_credit_amount_thb = 0.0
 
     @api.depends("line_ids.total_cost_thb", "as_of_date")
     def _compute_total_cost_thb(self):
@@ -132,24 +169,47 @@ class PurchaseOrderCloseWizard(models.TransientModel):
         if not inventory_vals:
             raise UserError(_("No converted products found to create inventory."))
 
+        credit_amount_usd = self.supplier_credit_amount_usd or 0.0
+        if float_compare(credit_amount_usd, 0, precision_digits=2) < 0:
+            raise UserError(_("Supplier credit amount cannot be negative."))
+        if float_compare(credit_amount_usd, po.amount_paid_usd, precision_digits=2) > 0:
+            raise UserError(_("Supplier credit amount cannot exceed the paid amount on this PO."))
+
         if po.lot_number != lot_number:
             po.write({"lot_number": lot_number})
 
         self.env["five.five.inventory"].create(inventory_vals)
-        po.state = "closed"
-        po.message_post(
-            body=_(
-                "Closed PO and created %(count)s inventory record(s) at warehouse %(warehouse)s "
-                "with lot number %(lot)s. Total cost: %(total)s THB as of %(date)s."
+        if float_compare(credit_amount_usd, 0, precision_digits=2) > 0:
+            self.env["five.five.supplier.credit"].create(
+                {
+                    "supplier_id": po.supplier_id.id,
+                    "source_purchase_order_id": po.id,
+                    "amount_usd": credit_amount_usd,
+                    "amount_thb": self.supplier_credit_amount_thb,
+                    "remaining_usd": credit_amount_usd,
+                    "remaining_thb": self.supplier_credit_amount_thb,
+                }
             )
-            % {
-                "count": len(inventory_vals),
-                "warehouse": po.warehouse_id.display_name,
-                "lot": lot_number,
-                "total": formatLang(self.env, self.total_cost_thb, digits=2),
-                "date": self.as_of_date.strftime("%d/%m/%Y") if self.as_of_date else "-",
+        po.state = "closed"
+        close_message = _(
+            "Closed PO and created %(count)s inventory record(s) at warehouse %(warehouse)s "
+            "with lot number %(lot)s. Total cost: %(total)s THB as of %(date)s."
+        ) % {
+            "count": len(inventory_vals),
+            "warehouse": po.warehouse_id.display_name,
+            "lot": lot_number,
+            "total": formatLang(self.env, self.total_cost_thb, digits=2),
+            "date": self.as_of_date.strftime("%d/%m/%Y") if self.as_of_date else "-",
+        }
+        if float_compare(credit_amount_usd, 0, precision_digits=2) > 0:
+            close_message += "\n" + _(
+                "Created supplier credit %(amount_usd)s USD (%(amount_thb)s THB) for %(supplier)s."
+            ) % {
+                "amount_usd": formatLang(self.env, credit_amount_usd, digits=2),
+                "amount_thb": formatLang(self.env, self.supplier_credit_amount_thb, digits=2),
+                "supplier": po.supplier_id.display_name,
             }
-        )
+        po.message_post(body=close_message)
         return {"type": "ir.actions.act_window_close"}
 
 

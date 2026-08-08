@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools.float_utils import float_compare
 
@@ -26,9 +26,20 @@ class PurchaseOrderClearingWizard(models.TransientModel):
         required=True,
     )
 
+    is_thailand_country = fields.Boolean(compute="_compute_is_thailand_country")
+
     do_attachment = fields.Binary(string="DO Document")
     do_attachment_number = fields.Char(string="DO NO.")
     do_attachment_name = fields.Char(string="DO Document Name")
+
+    @api.depends("purchase_order_id", "purchase_order_id.country_id")
+    def _compute_is_thailand_country(self):
+        for wizard in self:
+            wizard.is_thailand_country = (
+                wizard.purchase_order_id._ff_is_thailand_country()
+                if wizard.purchase_order_id
+                else False
+            )
 
     def action_confirm(self):
         self.ensure_one()
@@ -49,10 +60,8 @@ class PurchaseOrderClearingWizard(models.TransientModel):
                 "(สามารถเป็น Pending ได้ ไม่จำเป็นต้อง Mark as Paid)"
             )
 
-        if not self.do_attachment:
+        if not self.is_thailand_country and not self.do_attachment:
             raise UserError("กรุณาอัปโหลดเอกสาร DO ก่อนยืนยัน")
-
-        attachment_name = self.do_attachment_name or "do_document"
 
         self.purchase_order_id.write(
             {
@@ -61,17 +70,19 @@ class PurchaseOrderClearingWizard(models.TransientModel):
             }
         )
 
-        self.env["five.five.purchase.order.document"].with_context(
-            skip_po_document_state_check=True
-        ).create(
-            {
-                "purchase_order_id": self.purchase_order_id.id,
-                "type": "do",
-                "number": self.do_attachment_number,
-                "attachment_file": self.do_attachment,
-                "attachment_name": attachment_name,
-            }
-        )
+        if self.do_attachment:
+            attachment_name = self.do_attachment_name or "do_document"
+            self.env["five.five.purchase.order.document"].with_context(
+                skip_po_document_state_check=True
+            ).create(
+                {
+                    "purchase_order_id": self.purchase_order_id.id,
+                    "type": "do",
+                    "number": self.do_attachment_number,
+                    "attachment_file": self.do_attachment,
+                    "attachment_name": attachment_name,
+                }
+            )
 
         self.purchase_order_id.state = "clearing"
 

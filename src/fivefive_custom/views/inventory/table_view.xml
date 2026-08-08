@@ -27,7 +27,7 @@
                 <field name="product_variant_id" string="Product Variant" width="200px"/>
                 <field name="warehouse_id" string="Warehouse" width="160px"/>
                 <field name="lot_number" string="Lot Number" width="140px"/>
-                <field name="quantity" string="Quantity" width="100px"/>
+                <field name="quantity" string="Quantity" width="100px" sum="Total Quantity"/>
                 <field name="quality_note" string="Quality Note" width="140px"/>
                 <field name="unit_cost_thb" string="Unit Cost (THB)" width="160px"/>
             </list>

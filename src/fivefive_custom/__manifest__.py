@@ -12,6 +12,8 @@
             "fivefive_custom/static/src/scss/fivefive_purchase_order_form.scss",
             "fivefive_custom/static/src/scss/fivefive_inventory_form.scss",
             "fivefive_custom/static/src/js/list_confirm_delete.js",
+            "fivefive_custom/static/src/js/inventory_list_aggregate.js",
+            "fivefive_custom/static/src/js/purchase_order_supplier_credit.js",
         ],
     },
     "data": [
@@ -22,6 +24,7 @@
         "views/purchase_order/pay_wizard.xml",
         "views/purchase_order/clearing_wizard.xml",
         "views/purchase_order/close_wizard.xml",
+        "views/purchase_order/supplier_credit_apply_wizard.xml",
         "views/purchase_order/cancel_clearing_wizard.xml",
         "views/purchase_order/payment_cancel_wizard.xml",
         "views/purchase_order/cancel_wizard.xml",

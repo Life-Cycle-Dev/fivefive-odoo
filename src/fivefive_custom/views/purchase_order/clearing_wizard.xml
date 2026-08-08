@@ -7,13 +7,14 @@
             <form string="Clearing PO">
                 <group>
                     <field name="purchase_order_id" readonly="1"/>
+                    <field name="is_thailand_country" invisible="1"/>
                     <field name="warehouse_id"/>
                     <field name="logistic_id"/>
                 </group>
-                <group string="DO Document">
+                <group string="DO Document" invisible="is_thailand_country">
                     <field name="do_attachment_number"/>
                     <field name="do_attachment_name" readonly="1" invisible="1"/>
-                    <field name="do_attachment" filename="do_attachment_name" required="1"/>
+                    <field name="do_attachment" filename="do_attachment_name" required="not is_thailand_country"/>
                 </group>
                 <footer>
                     <button name="action_confirm" type="object" string="ยืนยัน" class="btn-primary"/>

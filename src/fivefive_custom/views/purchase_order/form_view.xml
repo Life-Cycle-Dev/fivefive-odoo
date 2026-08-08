@@ -7,6 +7,7 @@
 			<form duplicate="false" delete="false" class="ff_five_five_purchase_order">
 					<header>
 						<button name="action_po_issue" string="Issue" type="object" class="btn-primary" invisible="state != 'draft'"/>
+						<button name="action_open_supplier_credit_wizard" string="Apply Supplier Credit" type="object" class="btn-secondary" invisible="not has_supplier_credit_available"/>
 						<button name="action_cancel" string="Cancel" type="object" class="btn-danger" invisible="state != 'draft'"/>
 						<button name="action_post" string="Post" type="object" class="btn-primary" invisible="state != 'po_issued'"/>
 						<button name="action_clearing" string="Clearing" type="object" class="btn-primary" invisible="state not in ['documents_completed'] or not is_payment_recorded_complete"/>
@@ -27,6 +28,9 @@
 							<field name="reason_cancel" class="text-danger" placeholder="Reason for Cancel" readonly="1" invisible="state != 'cancelled'"/>
 							<field name="supplier_id" placeholder="Select a supplier..." readonly="state not in ['draft', 'po_issued']"/>
 							<field name="country_id" readonly="state not in ['draft', 'po_issued']"/>
+							<field name="supplier_credit_applied" invisible="1"/>
+							<field name="supplier_credit_wizard_skipped" invisible="1"/>
+							<field name="has_supplier_credit_available" invisible="1"/>
 							<field name="warehouse_id" invisible="state not in ['clearing', 'closed']" readonly="1"/>
 							<field name="lot_number" invisible="state not in ['clearing', 'closed']" readonly="state != 'clearing'"/>
 							<field name="logistic_id" invisible="state not in ['clearing', 'closed']" readonly="1"/>

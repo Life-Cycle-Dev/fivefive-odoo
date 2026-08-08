@@ -97,6 +97,34 @@ class PurchaseOrder(models.Model):
         tracking=True,
     )
     reason_cancel = fields.Text(string="Reason for Cancel")
+    supplier_credit_wizard_skipped = fields.Boolean(string="Supplier Credit Wizard Skipped", default=False)
+    supplier_credit_applied = fields.Boolean(
+        string="Supplier Credit Applied",
+        compute="_compute_supplier_credit_applied",
+        store=True,
+    )
+    has_supplier_credit_available = fields.Boolean(
+        string="Has Supplier Credit Available",
+        compute="_compute_has_supplier_credit_available",
+    )
+
+    @api.depends("payment_ids.supplier_credit_id")
+    def _compute_supplier_credit_applied(self):
+        for record in self:
+            record.supplier_credit_applied = bool(record.payment_ids.filtered("supplier_credit_id"))
+
+    @api.depends(
+        "supplier_id",
+        "state",
+        "supplier_credit_wizard_skipped",
+        "supplier_credit_applied",
+        "total_amount_usd",
+        "amount_recorded_usd",
+    )
+    def _compute_has_supplier_credit_available(self):
+        Credit = self.env["five.five.supplier.credit"]
+        for record in self:
+            record.has_supplier_credit_available = bool(record._get_supplier_credit_wizard_action())
 
     @api.model
     def _prepare_supplier_snapshot_values_for_supplier(self, supplier):
@@ -136,6 +164,8 @@ class PurchaseOrder(models.Model):
         return super().create(vals_list)
 
     def write(self, vals):
+        if "supplier_id" in vals:
+            vals["supplier_credit_wizard_skipped"] = False
         res = super().write(vals)
         if "supplier_id" in vals:
             for rec in self:
@@ -143,8 +173,83 @@ class PurchaseOrder(models.Model):
                     rec.write(rec._prepare_supplier_snapshot_values())
         return res
 
+    def action_try_open_supplier_credit_wizard(self):
+        self.ensure_one()
+        action = self._get_supplier_credit_wizard_action()
+        return action or False
+
+    def _get_supplier_credit_wizard_action(self):
+        self.ensure_one()
+        if (
+            self.state not in ("draft", "po_issued")
+            or not self.supplier_id
+            or self.supplier_credit_wizard_skipped
+            or self.supplier_credit_applied
+        ):
+            return False
+
+        available = self.env["five.five.supplier.credit"]._get_available_amount_usd(self.supplier_id)
+        if float_compare(available, 0, precision_digits=2) <= 0:
+            return False
+
+        remaining_po = self.total_amount_usd - self.amount_recorded_usd
+        if float_compare(remaining_po, 0, precision_digits=2) <= 0:
+            return False
+
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Apply Supplier Credit"),
+            "res_model": "five.five.supplier.credit.apply.wizard",
+            "view_mode": "form",
+            "views": [(False, "form")],
+            "target": "new",
+            "context": {
+                "default_purchase_order_id": self.id,
+            },
+        }
+
+    def action_open_supplier_credit_wizard(self):
+        self.ensure_one()
+        action = self.action_try_open_supplier_credit_wizard()
+        if not action:
+            raise UserError(_("No supplier credit is available to apply on this PO."))
+        return action
+
+    def _apply_supplier_credits(self, amount_usd):
+        self.ensure_one()
+        Payment = self.env["five.five.purchase.order.payment"]
+        Credit = self.env["five.five.supplier.credit"]
+        credits = Credit._get_available_for_supplier(self.supplier_id)
+        remaining_to_apply = amount_usd
+
+        for credit in credits:
+            if float_compare(remaining_to_apply, 0, precision_digits=2) <= 0:
+                break
+            apply_usd = min(credit.remaining_usd, remaining_to_apply)
+            apply_usd, apply_thb = credit._consume(apply_usd)
+            payment = Payment.create(
+                {
+                    "purchase_order_id": self.id,
+                    "amount_usd": apply_usd,
+                    "amount_thb": apply_thb,
+                    "pay_at": fields.Date.context_today(self),
+                    "payment_status": "paid",
+                    "note": f"หักจาก {credit.source_purchase_order_id.number}",
+                    "supplier_credit_id": credit.id,
+                }
+            )
+            payment._recompute_purchase_order_payment_summary(self)
+            remaining_to_apply -= apply_usd
+
+        if float_compare(remaining_to_apply, 0, precision_digits=2) > 0:
+            raise UserError(_("Could not apply the requested supplier credit amount."))
+
+        self.supplier_credit_wizard_skipped = True
+        return True
+
     @api.onchange("supplier_id")
     def _onchange_supplier_id(self):
+        self.supplier_credit_wizard_skipped = False
         if self.supplier_id:
             self.update(self._prepare_supplier_snapshot_values_for_supplier(self.supplier_id))
         else:
@@ -210,6 +315,10 @@ class PurchaseOrder(models.Model):
 
                 record.number = number
 
+        if len(self) == 1:
+            wizard_action = self.action_try_open_supplier_credit_wizard()
+            if wizard_action:
+                return wizard_action
         return True
 
     def action_cancel(self):

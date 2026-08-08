@@ -23,7 +23,7 @@ class Inventory(models.Model):
         tracking=True,
     )
     lot_number = fields.Char(string="Lot Number", tracking=True)
-    quantity = fields.Float(string="Quantity", tracking=True)
+    quantity = fields.Float(string="Quantity", tracking=True, aggregator="sum")
     quality_note = fields.Char(string="Quality Note", tracking=True)
     purchase_order_id = fields.Many2one(
         "five.five.purchase.order",

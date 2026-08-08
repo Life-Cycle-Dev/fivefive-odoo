@@ -8,6 +8,7 @@
                 <field name="name"/>
                 <field name="country_id"/>
                 <field name="tax_id"/>
+                <field name="credit_balance_usd" string="Credit (USD)"/>
                 <field name="phone"/>
                 <field name="active"/>
             </list>

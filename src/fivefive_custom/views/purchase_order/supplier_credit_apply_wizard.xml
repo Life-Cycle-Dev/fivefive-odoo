@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_five_five_supplier_credit_apply_wizard_form" model="ir.ui.view">
+        <field name="name">five.five.supplier.credit.apply.wizard.form</field>
+        <field name="model">five.five.supplier.credit.apply.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Apply Supplier Credit">
+                <group>
+                    <field name="purchase_order_id" readonly="1"/>
+                    <field name="supplier_id" readonly="1"/>
+                    <field name="available_credit_usd" readonly="1"/>
+                    <field name="remaining_po_usd" readonly="1"/>
+                    <field name="apply_amount_usd"/>
+                </group>
+                <group>
+                    <field name="credit_summary" nolabel="1" readonly="1" colspan="2"/>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object" string="Apply Credit" class="btn-primary"/>
+                    <button name="action_skip" type="object" string="Skip" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

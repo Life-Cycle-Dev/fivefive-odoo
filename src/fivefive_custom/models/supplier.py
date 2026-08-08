@@ -32,6 +32,31 @@ class Supplier(models.Model):
 
     active = fields.Boolean(string="Active", default=True, tracking=True)
 
+    credit_ids = fields.One2many(
+        "five.five.supplier.credit",
+        "supplier_id",
+        string="Credits",
+    )
+    credit_balance_usd = fields.Float(
+        string="Available Credit (USD)",
+        compute="_compute_credit_balance",
+        digits=(16, 2),
+    )
+    credit_balance_thb = fields.Float(
+        string="Available Credit (THB)",
+        compute="_compute_credit_balance",
+        digits=(16, 2),
+    )
+
+    @api.depends("credit_ids.remaining_usd", "credit_ids.remaining_thb", "credit_ids.active")
+    def _compute_credit_balance(self):
+        for supplier in self:
+            active_credits = supplier.credit_ids.filtered(
+                lambda credit: credit.active and credit.remaining_usd > 0
+            )
+            supplier.credit_balance_usd = sum(active_credits.mapped("remaining_usd"))
+            supplier.credit_balance_thb = sum(active_credits.mapped("remaining_thb"))
+
     @api.constrains("tax_id")
     def _check_tax_id_unique(self):
         for record in self:

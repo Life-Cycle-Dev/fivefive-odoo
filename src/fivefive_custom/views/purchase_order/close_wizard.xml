@@ -29,6 +29,11 @@
                 <group>
                     <field name="total_cost_thb_display" nolabel="1" readonly="1" colspan="2"/>
                     <field name="total_cost_thb" invisible="1"/>
+                    <field name="max_supplier_credit_usd" invisible="1"/>
+                </group>
+                <group string="Supplier Credit">
+                    <field name="supplier_credit_amount_usd" placeholder="Optional credit for next PO..."/>
+                    <field name="supplier_credit_amount_thb" readonly="1"/>
                 </group>
                 <footer>
                     <button name="action_confirm" type="object" string="Close PO" class="btn-primary"/>

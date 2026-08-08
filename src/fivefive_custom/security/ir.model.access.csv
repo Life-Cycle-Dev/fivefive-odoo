@@ -29,6 +29,8 @@ access_five_five_purchase_order_payment_cancel_wizard_user,access.five.five.purc
 access_five_five_purchase_order_clearing_wizard_user,access.five.five.purchase.order.clearing.wizard.user,model_five_five_purchase_order_clearing_wizard,,1,1,1,1
 access_five_five_purchase_order_close_wizard_user,access.five.five.purchase.order.close.wizard.user,model_five_five_purchase_order_close_wizard,,1,1,1,1
 access_five_five_purchase_order_close_wizard_line_user,access.five.five.purchase.order.close.wizard.line.user,model_five_five_purchase_order_close_wizard_line,,1,1,1,1
+access_five_five_supplier_credit_user,access.five.five.supplier.credit.user,model_five_five_supplier_credit,,1,1,1,1
+access_five_five_supplier_credit_apply_wizard_user,access.five.five.supplier.credit.apply.wizard.user,model_five_five_supplier_credit_apply_wizard,,1,1,1,1
 access_five_five_product_convert_user,access.five.five.product.convert.user,model_five_five_product_convert,,1,1,1,1
 access_five_five_product_cost_user,access.five.five.product.cost.user,model_five_five_product_cost,,1,1,1,1
 access_five_five_commercial_invoice_line_convert_wizard_user,access.five.five.commercial.invoice.line.convert.wizard.user,model_five_five_commercial_invoice_line_convert_wizard,,1,1,1,1

@@ -40,27 +40,37 @@ class PurchaseOrderDocumentCompleted(models.Model):
         tracking=True,
     )
 
+    def _ff_is_thailand_country(self):
+        thailand = self.env.ref("base.th", raise_if_not_found=False)
+        return bool(thailand and self.country_id == thailand)
+
     def action_post(self):
         for record in self:
             error_message = ""
             if record.state != "po_issued":
                 raise UserError("เฉพาะ PO ที่อยู่ใน status PO Issued เท่านั้น ที่สามารถ Post ได้ ไม่สามารถดำเนินการต่อได้")
 
-            if record.shipment_container_number == "" or not record.shipment_container_number:
-                error_message += "- กรุณาใส่ Container NO. ก่อน Post PO\n"
+            if record._ff_is_thailand_country():
+                if "ci" not in record.document_ids.mapped("type"):
+                    error_message += "- กรุณาแนบเอกสาร CI ก่อนทำการ Post PO ใบนี้\n"
+            else:
+                if record.shipment_container_number == "" or not record.shipment_container_number:
+                    error_message += "- กรุณาใส่ Container NO. ก่อน Post PO\n"
 
-            if record.bl_number == "" or not record.bl_number:
-                error_message += "- กรุณาใส่ BL NO. ก่อน Post PO\n"
+                if record.bl_number == "" or not record.bl_number:
+                    error_message += "- กรุณาใส่ BL NO. ก่อน Post PO\n"
 
-            if record.arrived_at == "" or not record.arrived_at:
-                error_message += "- กรุณาใส่ Arrived at (eta) ก่อน Post PO\n"
+                if record.arrived_at == "" or not record.arrived_at:
+                    error_message += "- กรุณาใส่ Arrived at (eta) ก่อน Post PO\n"
 
-            required_types = ["ci", "pl", "bl", "co", "hc"]
-            attached_types = record.document_ids.mapped("type")
-            missing_types = [required_type for required_type in required_types if required_type not in attached_types]
+                required_types = ["ci", "pl", "bl", "co", "hc"]
+                attached_types = record.document_ids.mapped("type")
+                missing_types = [
+                    required_type for required_type in required_types if required_type not in attached_types
+                ]
 
-            if missing_types:
-                error_message += f"- กรุณาแนบเอกสาร {', '.join([required_type.upper() for required_type in missing_types])} ก่อนทำการ Post PO ใบนี้\n"
+                if missing_types:
+                    error_message += f"- กรุณาแนบเอกสาร {', '.join([required_type.upper() for required_type in missing_types])} ก่อนทำการ Post PO ใบนี้\n"
 
             if error_message:
                 raise UserError("ไม่สามารถ Post PO ได้เนื่องจาก:\n" + error_message)
