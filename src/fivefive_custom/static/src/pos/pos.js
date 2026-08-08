@@ -1382,18 +1382,80 @@
 
         const linesHtml = (req.lines || [])
             .map(
-                (line) => `
+                (line) => {
+                    const qtyParts = [`ขอ ${formatQty(line.requested_qty)}`];
+                    if (line.allocated_qty > 0) {
+                        qtyParts.push(`จัด ${formatQty(line.allocated_qty)}`);
+                    }
+                    if (line.received_qty > 0 || req.state === "received" || req.state === "done") {
+                        qtyParts.push(`รับ ${formatQty(line.received_qty)}`);
+                    }
+                    if (line.deducted_qty > 0 || req.state === "done") {
+                        qtyParts.push(`ตัด ${formatQty(line.deducted_qty)}`);
+                    }
+                    const varianceNote =
+                        line.qty_variance_reason
+                            ? `<div class="pos-detail-line-note">เหตุผล: ${line.qty_variance_reason}</div>`
+                            : "";
+                    return `
                 <div class="pos-detail-line">
                     <div class="pos-detail-line-head">
                         <div class="pos-detail-line-name">${line.product_name}</div>
-                        <div class="pos-detail-line-qty">ขอ ${formatQty(line.requested_qty)}</div>
+                        <div class="pos-detail-line-qty">${qtyParts.join(" · ")}</div>
                     </div>
                     <div class="pos-detail-line-allocations">
                         ${renderRequisitionAllocationHtml(line.allocations)}
                     </div>
-                </div>`
+                    ${varianceNote}
+                </div>`;
+                }
             )
             .join("");
+
+        const receiveFormHtml = req.can_mark_received
+            ? `
+                <div class="pos-detail-section">
+                    <div class="pos-detail-section-title">ยืนยันจำนวนที่รับ</div>
+                    <div class="pos-receive-lines">
+                        ${(req.lines || [])
+                            .map(
+                                (line) => `
+                            <div class="pos-receive-line" data-receive-row-id="${line.id}">
+                                <div class="pos-receive-line-info">
+                                    <div class="pos-receive-line-name">${line.product_name}</div>
+                                    <div class="pos-receive-line-meta">ขอ ${formatQty(line.requested_qty)} · จัด ${formatQty(line.allocated_qty)}</div>
+                                </div>
+                                <div class="pos-receive-line-fields">
+                                    <label class="pos-receive-qty-label">
+                                        <span>รับ</span>
+                                        <input
+                                            type="number"
+                                            class="pos-input pos-receive-qty-input"
+                                            data-receive-line-id="${line.id}"
+                                            data-allocated-qty="${line.allocated_qty || 0}"
+                                            value="${formatQty(line.allocated_qty || 0)}"
+                                            min="0"
+                                            step="0.01"
+                                            inputmode="decimal"
+                                        />
+                                    </label>
+                                    <label class="pos-receive-reason-label" data-receive-reason-wrap="${line.id}" hidden>
+                                        <span>เหตุผล</span>
+                                        <input
+                                            type="text"
+                                            class="pos-input pos-receive-reason-input"
+                                            data-receive-reason-id="${line.id}"
+                                            placeholder="จำนวนที่รับไม่ตรงกับที่จัดให้"
+                                        />
+                                    </label>
+                                </div>
+                            </div>`
+                            )
+                            .join("")}
+                    </div>
+                    <button type="button" id="requisition-mark-received-btn" class="pos-primary-btn pos-btn-block" style="margin-top:12px;">ยืนยันรับสินค้า</button>
+                </div>`
+            : "";
 
         const warehouseBlock = req.warehouse_names?.length
             ? req.warehouse_names.map((name) => `<span class="pos-detail-wh-tag">${name}</span>`).join("")
@@ -1421,21 +1483,49 @@
                     <div class="pos-detail-section-title">รายการสินค้า / คลังที่เบิก</div>
                     ${linesHtml || '<div class="pos-empty">ไม่มีรายการ</div>'}
                 </div>
-                ${
-                    req.can_mark_received
-                        ? `<button type="button" id="requisition-mark-received-btn" class="pos-primary-btn pos-btn-block" style="margin-top:12px;">รับสินค้าแล้ว</button>`
-                        : ""
-                }
+                ${receiveFormHtml}
             </div>`;
 
         const receivedBtn = document.getElementById("requisition-mark-received-btn");
         if (receivedBtn) {
+            const syncReceiveReasonVisibility = (lineId) => {
+                const qtyInput = document.querySelector(`[data-receive-line-id="${lineId}"]`);
+                const reasonWrap = document.querySelector(`[data-receive-reason-wrap="${lineId}"]`);
+                if (!qtyInput || !reasonWrap) return;
+                const allocatedQty = Number(qtyInput.dataset.allocatedQty || 0);
+                const receivedQty = Number(qtyInput.value || 0);
+                const needsReason = Math.abs(receivedQty - allocatedQty) > 0.001;
+                reasonWrap.hidden = !needsReason;
+            };
+
+            document.querySelectorAll(".pos-receive-qty-input").forEach((input) => {
+                input.addEventListener("input", () => syncReceiveReasonVisibility(input.dataset.receiveLineId));
+            });
+
             receivedBtn.addEventListener("click", async () => {
                 try {
                     showError("requisition-detail-error", "");
+                    const lines = (req.lines || []).map((line) => {
+                        const qtyInput = document.querySelector(`[data-receive-line-id="${line.id}"]`);
+                        const reasonInput = document.querySelector(`[data-receive-reason-id="${line.id}"]`);
+                        const receivedQty = Number(qtyInput?.value || 0);
+                        const allocatedQty = Number(qtyInput?.dataset.allocatedQty || line.allocated_qty || 0);
+                        const reason = (reasonInput?.value || "").trim();
+                        if (Math.abs(receivedQty - allocatedQty) > 0.001 && !reason) {
+                            throw new Error(
+                                `กรุณาระบุเหตุผลสำหรับ ${line.product_name} เพราะจำนวนที่รับไม่ตรงกับที่จัดให้`
+                            );
+                        }
+                        return {
+                            line_id: line.id,
+                            received_qty: receivedQty,
+                            qty_variance_reason: reason || false,
+                        };
+                    });
                     await rpc("/pos/api/requisition/received", {
                         token: state.token,
                         requisition_id: req.id,
+                        lines,
                     });
                     await openRequisitionDetail(req.id);
                 } catch (error) {

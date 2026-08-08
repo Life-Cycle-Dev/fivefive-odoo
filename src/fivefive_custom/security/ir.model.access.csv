@@ -49,4 +49,8 @@ access_five_five_store_requisition_user,access.five.five.store.requisition.user,
 access_five_five_store_requisition_line_user,access.five.five.store.requisition.line.user,model_five_five_store_requisition_line,,1,1,1,1
 access_five_five_store_requisition_allocate_wizard_user,access.five.five.store.requisition.allocate.wizard.user,model_five_five_store_requisition_allocate_wizard,,1,1,1,1
 access_five_five_store_requisition_allocate_wizard_line_user,access.five.five.store.requisition.allocate.wizard.line.user,model_five_five_store_requisition_allocate_wizard_line,,1,1,1,1
+access_five_five_store_requisition_receive_wizard_user,access.five.five.store.requisition.receive.wizard.user,model_five_five_store_requisition_receive_wizard,,1,1,1,1
+access_five_five_store_requisition_receive_wizard_line_user,access.five.five.store.requisition.receive.wizard.line.user,model_five_five_store_requisition_receive_wizard_line,,1,1,1,1
+access_five_five_store_requisition_complete_wizard_user,access.five.five.store.requisition.complete.wizard.user,model_five_five_store_requisition_complete_wizard,,1,1,1,1
+access_five_five_store_requisition_complete_wizard_line_user,access.five.five.store.requisition.complete.wizard.line.user,model_five_five_store_requisition_complete_wizard_line,,1,1,1,1
 access_five_five_inventory_movement_user,access.five.five.inventory.movement.user,model_five_five_inventory_movement,,1,1,1,1

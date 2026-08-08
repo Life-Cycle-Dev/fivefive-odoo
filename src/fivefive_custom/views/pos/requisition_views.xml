@@ -28,8 +28,8 @@
             <form string="Stock Requisition">
                 <header>
                     <button name="action_open_allocate_wizard" type="object" string="Allocate Stock" class="btn-primary" invisible="state != 'submitted'"/>
-                    <button name="action_mark_done" type="object" string="Complete &amp; Deduct Stock" class="btn-primary" invisible="state not in ['prepared', 'received']"/>
-                    <button name="action_mark_received" type="object" string="Mark Received" class="btn-secondary" invisible="state != 'prepared'"/>
+                    <button name="action_open_complete_wizard" type="object" string="Complete &amp; Deduct Stock" class="btn-primary" invisible="state != 'received'"/>
+                    <button name="action_open_receive_wizard" type="object" string="Mark Received" class="btn-secondary" invisible="state != 'prepared'"/>
                     <button name="action_cancel" type="object" string="Cancel" class="btn-secondary" invisible="state in ['done', 'cancelled']"/>
                     <field name="state" widget="statusbar" statusbar_visible="submitted,prepared,received,done"/>
                 </header>
@@ -60,6 +60,9 @@
                                     <field name="product_variant_id"/>
                                     <field name="requested_qty"/>
                                     <field name="allocated_qty"/>
+                                    <field name="received_qty"/>
+                                    <field name="deducted_qty"/>
+                                    <field name="qty_variance_reason"/>
                                 </list>
                             </field>
                         </page>
@@ -114,6 +117,59 @@
                 </group>
                 <footer>
                     <button name="action_confirm" type="object" string="Create Movements" class="btn-primary"/>
+                    <button special="cancel" string="Cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_five_five_store_requisition_receive_wizard_form" model="ir.ui.view">
+        <field name="name">five.five.store.requisition.receive.wizard.form</field>
+        <field name="model">five.five.store.requisition.receive.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Confirm Received Quantities">
+                <group>
+                    <field name="requisition_id" readonly="1"/>
+                </group>
+                <field name="line_ids" nolabel="1">
+                    <list editable="bottom" create="0" delete="0">
+                        <field name="requisition_line_id" column_invisible="1"/>
+                        <field name="product_variant_id" readonly="1"/>
+                        <field name="requested_qty" readonly="1"/>
+                        <field name="allocated_qty" readonly="1"/>
+                        <field name="received_qty"/>
+                        <field name="qty_variance_reason" placeholder="Required if received qty differs from allocated qty"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_confirm" type="object" string="Confirm Received" class="btn-primary"/>
+                    <button special="cancel" string="Cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_five_five_store_requisition_complete_wizard_form" model="ir.ui.view">
+        <field name="name">five.five.store.requisition.complete.wizard.form</field>
+        <field name="model">five.five.store.requisition.complete.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Complete &amp; Deduct Stock">
+                <group>
+                    <field name="requisition_id" readonly="1"/>
+                </group>
+                <field name="line_ids" nolabel="1">
+                    <list editable="bottom" create="0" delete="0">
+                        <field name="requisition_line_id" column_invisible="1"/>
+                        <field name="product_variant_id" readonly="1"/>
+                        <field name="requested_qty" readonly="1"/>
+                        <field name="received_qty" readonly="1"/>
+                        <field name="allocated_qty" readonly="1"/>
+                        <field name="deduct_qty"/>
+                        <field name="qty_variance_reason" readonly="1"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_confirm" type="object" string="Complete &amp; Deduct" class="btn-primary"/>
                     <button special="cancel" string="Cancel" class="btn-secondary"/>
                 </footer>
             </form>

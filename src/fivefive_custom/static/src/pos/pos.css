@@ -1627,6 +1627,79 @@ body.pos-drawer-open {
     gap: 6px;
 }
 
+.pos-detail-line-note {
+    margin-top: 6px;
+    font-size: 0.84rem;
+    color: #b45309;
+}
+
+.pos-receive-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pos-receive-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.pos-receive-line-fields {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    min-width: 140px;
+}
+
+.pos-receive-reason-label {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    width: 100%;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--pos-muted);
+}
+
+.pos-receive-reason-input {
+    width: 100%;
+    min-width: 160px;
+}
+
+.pos-receive-line-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.pos-receive-line-meta {
+    margin-top: 4px;
+    font-size: 0.84rem;
+    color: var(--pos-muted);
+}
+
+.pos-receive-qty-label {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--pos-muted);
+}
+
+.pos-receive-qty-input {
+    width: 88px;
+    text-align: right;
+}
+
 .pos-detail-allocation {
     display: flex;
     flex-wrap: wrap;

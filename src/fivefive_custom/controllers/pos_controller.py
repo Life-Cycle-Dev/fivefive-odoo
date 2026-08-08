@@ -485,9 +485,13 @@ class StorePosController(http.Controller):
             and movement.state != "cancelled"
         )
         return {
+            "id": line.id,
             "product_name": line.product_variant_id.display_name,
             "requested_qty": line.requested_qty,
             "allocated_qty": line.allocated_qty,
+            "received_qty": line.received_qty,
+            "deducted_qty": line.deducted_qty,
+            "qty_variance_reason": line.qty_variance_reason or "",
             "allocations": [
                 {
                     "warehouse_name": movement.warehouse_id.name or "",
@@ -629,14 +633,27 @@ class StorePosController(http.Controller):
             return self._json_response(ok=False, error=str(exc))
 
     @http.route("/pos/api/requisition/received", type="json", auth="public", csrf=False, methods=["POST"])
-    def pos_requisition_received(self, token, requisition_id):
+    def pos_requisition_received(self, token, requisition_id, lines=None):
         try:
             user = self._get_pos_user(token)
             self._require_tab(user, "requisition_history")
             requisition = request.env["five.five.store.requisition"].sudo().browse(int(requisition_id)).exists()
             if not requisition or requisition.pos_user_id.id != user.id:
                 raise UserError("Requisition not found.")
-            requisition.action_mark_received()
-            return self._json_response(ok=True, data={"state": requisition.state})
+            if not lines:
+                raise UserError("Please enter received quantity for each item.")
+            line_vals = [
+                {
+                    "line_id": int(item["line_id"]),
+                    "received_qty": float(item.get("received_qty") or 0.0),
+                    "qty_variance_reason": (item.get("qty_variance_reason") or "").strip() or False,
+                }
+                for item in lines
+            ]
+            requisition.action_mark_received(line_vals)
+            return self._json_response(
+                ok=True,
+                data={"requisition": self._serialize_requisition(requisition, include_lines=True)},
+            )
         except UserError as exc:
             return self._json_response(ok=False, error=str(exc))
