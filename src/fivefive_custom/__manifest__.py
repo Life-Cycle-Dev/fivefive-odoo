@@ -1,6 +1,6 @@
 {
     "name": "FiveFive Custom Module",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "summary": "User for FiveFive company",
     "author": "FiveFive Developer",
     "depends": ["base", "mail", "web"],
