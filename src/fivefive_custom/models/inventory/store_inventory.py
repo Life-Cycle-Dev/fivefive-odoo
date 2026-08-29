@@ -1,5 +1,6 @@
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+from odoo.tools.float_utils import float_compare, float_is_zero
 
 
 class StoreInventory(models.Model):
@@ -29,6 +30,10 @@ class StoreInventory(models.Model):
         digits=(16, 2),
     )
     lot_number = fields.Char(string="Lot Number", required=True, tracking=True)
+    brand_id = fields.Many2one("five.five.product.brand", string="Brand", tracking=True)
+    description_id = fields.Many2one("five.five.product.description", string="Description", tracking=True)
+    weight_per_qty = fields.Float(string="Weight per Qty", tracking=True)
+    total_weight = fields.Float(string="Total Weight", tracking=True)
     quantity = fields.Float(string="Quantity", tracking=True)
     quality_note = fields.Char(string="Quality Note", tracking=True)
     purchase_order_id = fields.Many2one(
@@ -59,6 +64,46 @@ class StoreInventory(models.Model):
             "Lot number must be unique per store.",
         ),
     ]
+
+    def _weight_per_qty(self):
+        self.ensure_one()
+        return self.weight_per_qty or 0.0
+
+    def _weight_for_qty(self, qty):
+        self.ensure_one()
+        wpq = self._weight_per_qty()
+        if not float_is_zero(wpq, precision_digits=6):
+            return qty * wpq
+        if self.quantity and self.total_weight:
+            return self.total_weight * (qty / self.quantity)
+        return 0.0
+
+    def _qty_for_weight(self, weight):
+        self.ensure_one()
+        wpq = self._weight_per_qty()
+        if float_is_zero(wpq, precision_digits=6):
+            raise UserError(
+                _("Weight per qty is required for %(product)s (Lot %(lot)s).")
+                % {
+                    "product": self.product_variant_id.display_name,
+                    "lot": self.lot_number or "-",
+                }
+            )
+        return weight / wpq
+
+    def _apply_stock_update(self, quantity, total_cost_thb, total_weight=None):
+        self.ensure_one()
+        ProductCost = self.env["five.five.product.cost"]
+        vals = {
+            "quantity": quantity,
+            "total_cost_thb": total_cost_thb,
+            "cost_summary": ProductCost.format_frozen_store_cost_summary(total_cost_thb),
+        }
+        if total_weight is not None:
+            vals["total_weight"] = total_weight
+        elif self.weight_per_qty:
+            vals["total_weight"] = quantity * self.weight_per_qty
+        self.write(vals)
 
 
 class Store(models.Model):

@@ -37,6 +37,31 @@ class StoreRequisitionCompleteWizard(models.TransientModel):
 
     def action_confirm(self):
         self.ensure_one()
+        for wizard_line in self.line_ids:
+            if not wizard_line.requisition_line_id:
+                raise UserError(_("Missing requisition line reference. Please close and reopen the wizard."))
+            deduct_qty = int(round(wizard_line.deduct_qty))
+            if deduct_qty < 0:
+                raise UserError(_("Deduct quantity cannot be negative for %s.") % wizard_line.product_variant_id.display_name)
+            if deduct_qty > int(round(wizard_line.received_qty)):
+                raise UserError(
+                    _("Deduct quantity (%(deduct)s) cannot exceed received quantity (%(received)s) for %(product)s.")
+                    % {
+                        "deduct": deduct_qty,
+                        "received": int(round(wizard_line.received_qty)),
+                        "product": wizard_line.product_variant_id.display_name,
+                    }
+                )
+            if deduct_qty > int(round(wizard_line.allocated_qty)):
+                raise UserError(
+                    _("Deduct quantity (%(deduct)s) cannot exceed allocated quantity (%(allocated)s) for %(product)s.")
+                    % {
+                        "deduct": deduct_qty,
+                        "allocated": int(round(wizard_line.allocated_qty)),
+                        "product": wizard_line.product_variant_id.display_name,
+                    }
+                )
+
         line_vals = [
             {
                 "line_id": wizard_line.requisition_line_id.id,

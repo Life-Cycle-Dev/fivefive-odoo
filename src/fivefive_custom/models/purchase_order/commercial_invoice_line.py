@@ -33,9 +33,34 @@ class CommercialInvoiceLine(models.Model):
         string="Grade",
         required=True,
     )
-    unit_price_usd = fields.Float(string="Unit Price (USD)", required=True)
+    unit_price_usd = fields.Float(string="Unit Price per Weight", required=True)
     quantity = fields.Float(string="Quantity", required=True)
-    total_price_usd = fields.Float(string="Total Price (USD)", compute="_compute_total_price", store=True)
+    weight_per_qty = fields.Float(string="Weight per Qty", required=True, default=0.0)
+    total_weight = fields.Float(
+        string="Total Weight",
+        compute="_compute_total_weight",
+        store=True,
+    )
+    total_price_usd = fields.Float(string="Total Price", compute="_compute_total_price", store=True)
+    converted_total_weight = fields.Float(
+        string="Received Weight",
+        compute="_compute_convert_diff",
+        store=True,
+    )
+    weight_diff = fields.Float(
+        string="Weight Diff (Received - CI)",
+        compute="_compute_convert_diff",
+        store=True,
+    )
+    price_diff_usd = fields.Float(
+        string="Price Diff",
+        compute="_compute_convert_diff",
+        store=True,
+    )
+    is_thailand_po = fields.Boolean(
+        related="purchase_order_id.is_thailand_po",
+        string="Thailand PO",
+    )
 
     po_state = fields.Selection(
         related="purchase_order_id.state",
@@ -50,10 +75,27 @@ class CommercialInvoiceLine(models.Model):
         copy=False,
     )
 
-    @api.depends("unit_price_usd", "quantity")
+    @api.depends("quantity", "weight_per_qty")
+    def _compute_total_weight(self):
+        for line in self:
+            line.total_weight = (line.quantity or 0.0) * (line.weight_per_qty or 0.0)
+
+    @api.depends("unit_price_usd", "total_weight")
     def _compute_total_price(self):
         for line in self:
-            line.total_price_usd = line.quantity * line.unit_price_usd
+            line.total_price_usd = (line.total_weight or 0.0) * (line.unit_price_usd or 0.0)
+
+    @api.depends(
+        "total_weight",
+        "unit_price_usd",
+        "product_convert_ids.total_weight",
+    )
+    def _compute_convert_diff(self):
+        for line in self:
+            converted_weight = sum(line.product_convert_ids.mapped("total_weight"))
+            line.converted_total_weight = converted_weight
+            line.weight_diff = converted_weight - (line.total_weight or 0.0)
+            line.price_diff_usd = line.weight_diff * (line.unit_price_usd or 0.0)
 
     @api.model
     def _ff_po_states_allow_line_mutation(self, purchase_orders):

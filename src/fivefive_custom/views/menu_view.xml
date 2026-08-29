@@ -85,6 +85,22 @@
         sequence="5"
     />
 
+    <menuitem
+        id="menu_five_five_product_brand_model"
+        name="Product Brands"
+        parent="menu_five_five_product_model"
+        action="action_five_five_product_brand_model"
+        sequence="6"
+    />
+
+    <menuitem
+        id="menu_five_five_product_description_model"
+        name="Product Descriptions"
+        parent="menu_five_five_product_model"
+        action="action_five_five_product_description_model"
+        sequence="7"
+    />
+
     <!-- Inventory -->
     <menuitem
         id="menu_five_five_invemtory_sub_menu"

@@ -106,6 +106,7 @@ class InventoryMovement(models.Model):
         transfer_cost = self.transfer_cost_thb
         freeze_date = fields.Date.context_today(self)
         lot_number = inventory.lot_number.strip()
+        transfer_weight = inventory._weight_for_qty(self.quantity)
         ProductCost = self.env["five.five.product.cost"]
         StoreInventory = self.env["five.five.store.inventory"]
         existing = StoreInventory.search(
@@ -118,14 +119,12 @@ class InventoryMovement(models.Model):
 
         if existing:
             new_total_cost = existing.total_cost_thb + transfer_cost
-            existing.write(
-                {
-                    "quantity": existing.quantity + self.quantity,
-                    "total_cost_thb": new_total_cost,
-                    "cost_summary": ProductCost.format_frozen_store_cost_summary(new_total_cost),
-                    "cost_as_of_date": freeze_date,
-                }
+            existing._apply_stock_update(
+                existing.quantity + self.quantity,
+                new_total_cost,
+                (existing.total_weight or 0.0) + transfer_weight,
             )
+            existing.write({"cost_as_of_date": freeze_date})
         else:
             StoreInventory.create(
                 {
@@ -134,6 +133,10 @@ class InventoryMovement(models.Model):
                     "lot_number": lot_number,
                     "quantity": self.quantity,
                     "quality_note": inventory.quality_note,
+                    "brand_id": inventory.brand_id.id if inventory.brand_id else False,
+                    "description_id": inventory.description_id.id if inventory.description_id else False,
+                    "weight_per_qty": inventory.weight_per_qty,
+                    "total_weight": transfer_weight,
                     "purchase_order_id": inventory.purchase_order_id.id,
                     "source_inventory_id": inventory.id,
                     "total_cost_thb": transfer_cost,

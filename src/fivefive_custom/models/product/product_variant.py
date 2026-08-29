@@ -116,14 +116,14 @@ class ProductVariant(models.Model):
     @api.depends("size_id.name", "product_id.name", "grade_id.name")
     def _compute_name(self):
         for rec in self:
-            parts = []
-            if rec.size_id:
-                parts.append(str(rec.size_id.name).strip())
-            if rec.product_id:
-                parts.append((rec.product_id.name or "").strip())
-            if rec.grade_id:
-                parts.append((rec.grade_id.name or "").strip())
-            rec.name = "".join(p for p in parts if p)
+            size = (rec.size_id.name or "").strip() if rec.size_id else ""
+            brand = (rec.product_id.name or "").strip() if rec.product_id else ""
+            grade = (rec.grade_id.name or "").strip() if rec.grade_id else ""
+            if size and brand and grade:
+                rec.name = f"{size} {brand} - {grade}"
+            else:
+                parts = [p for p in (size, brand, grade) if p]
+                rec.name = " ".join(parts) if parts else ""
 
     @api.depends("product_id.name")
     def _compute_product_name(self):

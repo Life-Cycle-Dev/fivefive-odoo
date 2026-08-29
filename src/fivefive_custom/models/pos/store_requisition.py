@@ -116,16 +116,31 @@ class StoreRequisition(models.Model):
             raise UserError(_("Only received requisitions can be completed and deducted."))
         if not self.movement_ids:
             raise UserError(_("No inventory movements found for this requisition."))
+        wiz = self.env["five.five.store.requisition.complete.wizard"].create(
+            {
+                "requisition_id": self.id,
+                "line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "requisition_line_id": line.id,
+                            "deduct_qty": line.received_qty,
+                        },
+                    )
+                    for line in self.line_ids
+                ],
+            }
+        )
         return {
             "type": "ir.actions.act_window",
             "name": _("Complete & Deduct Stock"),
             "res_model": "five.five.store.requisition.complete.wizard",
+            "res_id": wiz.id,
             "view_mode": "form",
             "views": [(False, "form")],
             "target": "new",
-            "context": {
-                "default_requisition_id": self.id,
-            },
+            "context": {},
         }
 
     def action_open_receive_wizard(self):
@@ -291,6 +306,17 @@ class StoreRequisitionLine(models.Model):
         for movement in movements:
             inventory = movement.warehouse_inventory_id
             new_qty = movement.quantity * ratio
+            if float_compare(new_qty, inventory.quantity, precision_digits=6) > 0:
+                raise UserError(
+                    _("Deduct quantity exceeds available warehouse stock for %(product)s (Lot %(lot)s). "
+                      "Available: %(available)s, Required: %(required)s.")
+                    % {
+                        "product": self.product_variant_id.display_name,
+                        "lot": inventory.lot_number or "-",
+                        "available": inventory.quantity,
+                        "required": new_qty,
+                    }
+                )
             if float_compare(new_qty, 0, precision_digits=6) <= 0:
                 movement.write({"state": "cancelled"})
                 continue

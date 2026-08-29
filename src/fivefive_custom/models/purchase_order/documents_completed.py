@@ -167,3 +167,21 @@ class PurchaseOrderDocumentCompleted(models.Model):
                 "default_purchase_order_id": self.id,
             },
         }
+
+    def action_open_add_standalone_convert_wizard(self):
+        self.ensure_one()
+        if self.state != "clearing":
+            raise UserError("สามารถเพิ่ม Converted Product ได้เฉพาะเมื่อ PO อยู่ใน status Clearing เท่านั้น")
+        if self.state == "closed":
+            raise UserError("ไม่สามารถเพิ่ม Converted Product ได้เมื่อ PO ถูก Close แล้ว")
+
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Add Converted Product",
+            "res_model": "five.five.purchase.order.add.convert.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_purchase_order_id": self.id,
+            },
+        }

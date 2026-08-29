@@ -1,7 +1,8 @@
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
-_ALLOWED_PO_STATES_FOR_DOCUMENTS = ("draft", "po_issued")
+_ALLOWED_PO_STATES_FOR_DOCUMENTS = ("draft", "po_issued", "documents_completed", "clearing", "closed")
+_ALLOWED_PO_STATES_FOR_DOCUMENT_DELETE = ("draft", "po_issued", "documents_completed", "clearing")
 
 
 class PurchaseOrderDocument(models.Model):
@@ -42,11 +43,24 @@ class PurchaseOrderDocument(models.Model):
             return
 
         invalid = purchase_orders.filtered(
-            lambda p: p and p.state not in _ALLOWED_PO_STATES_FOR_DOCUMENTS
+            lambda p: p and p.state == "cancelled"
         )
         if invalid:
             raise UserError(
-                "แก้ไข/เพิ่ม/ลบเอกสารแนบได้เฉพาะเมื่อ PO อยู่ใน Draft หรือ PO Issued เท่านั้น"
+                "ไม่สามารถแก้ไขเอกสารแนบได้เมื่อ PO ถูก Cancel แล้ว"
+            )
+
+    @api.model
+    def _ff_po_states_allow_document_delete(self, purchase_orders):
+        if self.env.context.get("skip_po_document_state_check"):
+            return
+
+        invalid = purchase_orders.filtered(
+            lambda p: p and p.state not in _ALLOWED_PO_STATES_FOR_DOCUMENT_DELETE
+        )
+        if invalid:
+            raise UserError(
+                "ลบเอกสารแนบได้เฉพาะก่อน PO ถูก Close เท่านั้น"
             )
 
     @api.model
@@ -142,7 +156,7 @@ class PurchaseOrderDocument(models.Model):
 
     def unlink(self):
         orders = self.mapped("purchase_order_id")
-        self._ff_po_states_allow_document_mutation(orders)
+        self._ff_po_states_allow_document_delete(orders)
         res = super().unlink()
         self._ff_sync_purchase_order_ci_number(orders)
         self._ff_sync_purchase_order_bl_number(orders)

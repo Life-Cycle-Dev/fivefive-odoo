@@ -336,6 +336,10 @@ class WarehouseTransferWizardLine(models.TransientModel):
             "product_variant_id": inventory.product_variant_id.id,
             "quantity": self.quantity,
             "quality_note": inventory.quality_note,
+            "brand_id": inventory.brand_id.id if inventory.brand_id else False,
+            "description_id": inventory.description_id.id if inventory.description_id else False,
+            "weight_per_qty": inventory.weight_per_qty,
+            "total_weight": inventory._weight_for_qty(self.quantity),
             "purchase_order_id": inventory.purchase_order_id.id,
             "source_inventory_id": inventory.id,
             "total_cost_thb": transfer_cost,
@@ -344,14 +348,12 @@ class WarehouseTransferWizardLine(models.TransientModel):
 
         if existing:
             new_total_cost = existing.total_cost_thb + transfer_cost
-            existing.write(
-                {
-                    "quantity": existing.quantity + self.quantity,
-                    "total_cost_thb": new_total_cost,
-                    "cost_summary": ProductCost.format_frozen_store_cost_summary(new_total_cost),
-                    "cost_as_of_date": freeze_date,
-                }
+            existing._apply_stock_update(
+                existing.quantity + self.quantity,
+                new_total_cost,
+                (existing.total_weight or 0.0) + store_vals["total_weight"],
             )
+            existing.write({"cost_as_of_date": freeze_date})
         else:
             StoreInventory.create(
                 {

@@ -7,7 +7,6 @@
 			<form duplicate="false" delete="false" class="ff_five_five_purchase_order">
 					<header>
 						<button name="action_po_issue" string="Issue" type="object" class="btn-primary" invisible="state != 'draft'"/>
-						<button name="action_open_supplier_credit_wizard" string="Apply Supplier Credit" type="object" class="btn-secondary" invisible="not has_supplier_credit_available"/>
 						<button name="action_cancel" string="Cancel" type="object" class="btn-danger" invisible="state != 'draft'"/>
 						<button name="action_post" string="Post" type="object" class="btn-primary" invisible="state != 'po_issued'"/>
 						<button name="action_clearing" string="Clearing" type="object" class="btn-primary" invisible="state not in ['documents_completed'] or not is_payment_recorded_complete"/>
@@ -16,6 +15,7 @@
 						<button name="action_cancel_clearing" string="Cancel Clearing" type="object" class="btn-secondary" invisible="state not in ['clearing']"/>
 						<button name="action_reset_to_draft" string="Reset to draft" type="object" class="btn-secondary" invisible="state not in ['documents_completed', 'po_issued']"/>
 						<field name="state" widget="statusbar" statusbar_visible="draft,po_issued,documents_completed,clearing,closed,cancelled"/>
+						<button name="action_open_supplier_credit_wizard" string="Apply Supplier Credit" type="object" class="btn-secondary" invisible="state not in ('draft', 'po_issued')"/>
 					</header>
 				<sheet>
 					<div class="oe_title">
@@ -30,7 +30,6 @@
 							<field name="country_id" readonly="state not in ['draft', 'po_issued']"/>
 							<field name="supplier_credit_applied" invisible="1"/>
 							<field name="supplier_credit_wizard_skipped" invisible="1"/>
-							<field name="has_supplier_credit_available" invisible="1"/>
 							<field name="warehouse_id" invisible="state not in ['clearing', 'closed']" readonly="1"/>
 							<field name="lot_number" invisible="state not in ['clearing', 'closed']" readonly="state != 'clearing'"/>
 							<field name="logistic_id" invisible="state not in ['clearing', 'closed']" readonly="1"/>
@@ -63,21 +62,29 @@
 						<page string="Commercial Invoice Lines">
 							<field name="commercial_invoice_line_ids" readonly="state not in ['draft', 'po_issued']">
 								<list editable="bottom" class="ff_confirm_list_delete">
-									<field name="name" width="200px"/>
-									<field name="unit_id" width="100px"/>
-									<field name="size_id" width="100px"/>
-									<field name="grade_id" width="100px"/>
-									<field name="unit_price_usd"/>
+									<field name="po_state" column_invisible="1"/>
+									<button name="action_convert_to_product" string="Convert" type="object" class="btn-primary me-1" invisible="is_convert_to_product or po_state not in ['clearing'] or po_state == 'closed'"/>
+									<button name="action_unconvert_products" string="Unconvert" type="object" class="btn-danger" confirm="Unconvert จะลบ Converted Products และ Costs ทั้งหมดของบรรทัดนี้ คุณแน่ใจหรือไม่?" invisible="not is_convert_to_product or po_state == 'closed'"/>
+									<field name="name"/>
+									<field name="unit_id"/>
+									<field name="size_id"/>
+									<field name="grade_id"/>
+									<field name="unit_price_usd" string="Unit Price/Weight"/>
 									<field name="quantity"/>
-									<field name="total_price_usd" readonly="1"/>
-									<button name="action_unconvert_products" string="Unconvert" type="object" width="30px" class="btn-danger" confirm="Unconvert จะลบ Converted Products และ Costs ทั้งหมดของบรรทัดนี้ คุณแน่ใจหรือไม่?" invisible="not is_convert_to_product or po_state == 'closed'"/>
-									<button name="action_convert_to_product" string="Convert" type="object" width="30px" class="btn-primary me-1" invisible="is_convert_to_product or po_state not in ['clearing'] or po_state == 'closed'"/>
+									<field name="weight_per_qty" string="Weight per Qty"/>
+									<field name="total_weight" readonly="1"/>
+									<field name="total_price_usd" string="Total Price" readonly="1"/>
+									<field name="converted_total_weight" readonly="1" column_invisible="parent.state not in ('clearing', 'closed')"/>
+									<field name="weight_diff" readonly="1" column_invisible="parent.state not in ('clearing', 'closed')"
+										decoration-danger="weight_diff != 0"/>
+									<field name="price_diff_usd" readonly="1" string="Price Diff" column_invisible="parent.state not in ('clearing', 'closed')"
+										decoration-danger="weight_diff != 0"/>
 								</list>
 							</field>
 						</page>
 						<page string="Documents">
-							<field name="document_ids" readonly="state not in ['draft', 'po_issued']">
-								<list editable="bottom" class="ff_confirm_list_delete">
+							<field name="document_ids" readonly="state == 'cancelled'">
+								<list editable="bottom" class="ff_confirm_list_delete" delete="state != 'closed'">
 									<field name="number"/>
 									<field name="attachment_name" string="Name"/>
 									<field name="type"/>
@@ -127,14 +134,26 @@
 								</field>
 							</page>
 							<page string="Converted Products">
+								<button name="action_open_add_standalone_convert_wizard" string="Add Product (No CI Line)" type="object" class="btn-secondary mb-2" invisible="state != 'clearing'"/>
 								<field name="converted_product_ids" readonly="state == 'closed'">
-									<list create="0" edit="0" delete="0">
+									<list create="0" edit="0" delete="parent.state == 'clearing'" class="ff_list_wide_headers">
 										<field name="po_state" column_invisible="1"/>
-										<field name="commercial_invoice_line_id"/>
-										<field name="product_variant_id"/>
-										<field name="country_id"/>
-										<field name="quantity"/>
+										<field name="commercial_invoice_line_id" optional="show"/>
+										<field name="convert_date" string="Date" width="110px"/>
+										<field name="lot_number" string="Lot No." width="130px"/>
+										<field name="item_number" string="item" width="80px"/>
+										<field name="product_variant_id" string="product" width="240px"/>
+										<field name="description_id" string="Description" width="260px"/>
+										<field name="brand_id" string="Brand" width="180px"/>
+										<field name="container_number" string="Sub Lot" width="110px"/>
+										<field name="size_name" string="Size" width="100px"/>
+										<field name="size_id" column_invisible="1"/>
+										<field name="quantity" string="QTY" width="90px"/>
+										<field name="total_weight" string="Weight (Kg.)" width="120px"/>
+										<field name="country_id" optional="hide"/>
+										<field name="weight_per_qty" optional="hide"/>
 										<field name="quality_note"/>
+										<field name="quality_image" widget="image"/>
 										<field name="cost_summary" readonly="1"/>
 										<button name="action_open_form" type="object" string="Edit Costs" class="btn-secondary" invisible="parent.state == 'closed'"/>
 									</list>
@@ -148,13 +167,19 @@
 						</group>
 						<group class="ms-auto ff_po_totals">
 							<field name="is_payment_recorded_complete" invisible="1"/>
-							<field name="total_amount_usd" readonly="1" class="text-end"/>
-							<field name="amount_recorded_usd" readonly="1" class="text-end"/>
-							<field name="amount_recorded_thb" readonly="1" class="text-end"/>
-							<field name="amount_paid_usd" readonly="1" class="text-end"/>
-							<field name="amount_paid_thb" readonly="1" class="text-end"/>
-							<field name="balance_amount_usd" readonly="1" class="text-end"/>
-							<field name="exchange_rate_thb_per_usd" readonly="1" class="text-end"/>
+							<field name="is_thailand_po" invisible="1"/>
+							<field name="currency_label" invisible="1"/>
+							<field name="total_amount_usd" readonly="1" class="text-end" string="Total Amount (USD)" invisible="is_thailand_po"/>
+							<field name="total_amount_usd" readonly="1" class="text-end" string="Total Amount (THB)" invisible="not is_thailand_po"/>
+							<field name="amount_recorded_usd" readonly="1" class="text-end" string="Amount Recorded (USD)" invisible="is_thailand_po"/>
+							<field name="amount_recorded_usd" readonly="1" class="text-end" string="Amount Recorded (THB)" invisible="not is_thailand_po"/>
+							<field name="amount_recorded_thb" readonly="1" class="text-end" invisible="is_thailand_po"/>
+							<field name="amount_paid_usd" readonly="1" class="text-end" string="Amount Paid (USD)" invisible="is_thailand_po"/>
+							<field name="amount_paid_usd" readonly="1" class="text-end" string="Amount Paid (THB)" invisible="not is_thailand_po"/>
+							<field name="amount_paid_thb" readonly="1" class="text-end" invisible="is_thailand_po"/>
+							<field name="balance_amount_usd" readonly="1" class="text-end" string="Balance (USD)" invisible="is_thailand_po"/>
+							<field name="balance_amount_usd" readonly="1" class="text-end" string="Balance (THB)" invisible="not is_thailand_po"/>
+							<field name="exchange_rate_thb_per_usd" readonly="1" class="text-end" invisible="is_thailand_po"/>
 						</group>
 					</group>
 				</sheet>

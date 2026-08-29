@@ -64,6 +64,15 @@ class PurchaseOrder(models.Model):
         store=False,
         digits=(16, 6),
     )
+    is_thailand_po = fields.Boolean(
+        string="Thailand PO",
+        compute="_compute_is_thailand_po",
+        store=True,
+    )
+    currency_label = fields.Char(
+        string="Currency Label",
+        compute="_compute_currency_label",
+    )
 
     supplier_name = fields.Char(string="Supplier Name")
     supplier_tax_id = fields.Char(string="Supplier Tax ID")
@@ -178,24 +187,8 @@ class PurchaseOrder(models.Model):
         action = self._get_supplier_credit_wizard_action()
         return action or False
 
-    def _get_supplier_credit_wizard_action(self):
+    def _build_supplier_credit_wizard_action(self):
         self.ensure_one()
-        if (
-            self.state not in ("draft", "po_issued")
-            or not self.supplier_id
-            or self.supplier_credit_wizard_skipped
-            or self.supplier_credit_applied
-        ):
-            return False
-
-        available = self.env["five.five.supplier.credit"]._get_available_amount_usd(self.supplier_id)
-        if float_compare(available, 0, precision_digits=2) <= 0:
-            return False
-
-        remaining_po = self.total_amount_usd - self.amount_recorded_usd
-        if float_compare(remaining_po, 0, precision_digits=2) <= 0:
-            return False
-
         return {
             "type": "ir.actions.act_window",
             "name": _("Apply Supplier Credit"),
@@ -208,43 +201,75 @@ class PurchaseOrder(models.Model):
             },
         }
 
+    def _get_supplier_credit_wizard_action(self):
+        self.ensure_one()
+        if (
+            self.state not in ("draft", "po_issued")
+            or not self.supplier_id
+            or self.supplier_credit_wizard_skipped
+            or self.supplier_credit_applied
+        ):
+            return False
+
+        available = self.env["five.five.supplier.credit"]._get_available_amount(
+            self.supplier_id,
+            use_thb=self.is_thailand_po,
+        )
+        if float_compare(available, 0, precision_digits=2) <= 0:
+            return False
+
+        remaining_po = self.total_amount_usd - self.amount_recorded_usd
+        if float_compare(remaining_po, 0, precision_digits=2) <= 0:
+            return False
+
+        return self._build_supplier_credit_wizard_action()
+
     def action_open_supplier_credit_wizard(self):
         self.ensure_one()
-        action = self.action_try_open_supplier_credit_wizard()
-        if not action:
-            raise UserError(_("No supplier credit is available to apply on this PO."))
-        return action
+        if self.state not in ("draft", "po_issued"):
+            raise UserError(_("Supplier credit can only be applied on draft or issued POs."))
+        if not self.supplier_id:
+            raise UserError(_("Please select a supplier first."))
+        return self._build_supplier_credit_wizard_action()
 
-    def _apply_supplier_credits(self, amount_usd):
+    def _apply_supplier_credits(self, amount):
         self.ensure_one()
         Payment = self.env["five.five.purchase.order.payment"]
         Credit = self.env["five.five.supplier.credit"]
-        credits = Credit._get_available_for_supplier(self.supplier_id)
-        remaining_to_apply = amount_usd
+        use_thb = self.is_thailand_po
+        credits = Credit._get_available_for_supplier(self.supplier_id, use_thb=use_thb)
+        remaining_to_apply = amount
 
         for credit in credits:
             if float_compare(remaining_to_apply, 0, precision_digits=2) <= 0:
                 break
-            apply_usd = min(credit.remaining_usd, remaining_to_apply)
-            apply_usd, apply_thb = credit._consume(apply_usd)
+            if use_thb:
+                apply_thb = min(credit.remaining_thb, remaining_to_apply)
+                apply_usd, apply_thb = credit._consume_thb(apply_thb)
+                payment_amount_usd = apply_thb
+                payment_amount_thb = apply_thb
+            else:
+                apply_usd = min(credit.remaining_usd, remaining_to_apply)
+                apply_usd, apply_thb = credit._consume(apply_usd)
+                payment_amount_usd = apply_usd
+                payment_amount_thb = apply_thb
             payment = Payment.create(
                 {
                     "purchase_order_id": self.id,
-                    "amount_usd": apply_usd,
-                    "amount_thb": apply_thb,
+                    "amount_usd": payment_amount_usd,
+                    "amount_thb": payment_amount_thb,
                     "pay_at": fields.Date.context_today(self),
                     "payment_status": "paid",
-                    "note": f"หักจาก {credit.source_purchase_order_id.number}",
+                    "note": _("Deducted from %s") % credit._get_source_label(),
                     "supplier_credit_id": credit.id,
                 }
             )
             payment._recompute_purchase_order_payment_summary(self)
-            remaining_to_apply -= apply_usd
+            remaining_to_apply -= apply_thb if use_thb else apply_usd
 
         if float_compare(remaining_to_apply, 0, precision_digits=2) > 0:
             raise UserError(_("Could not apply the requested supplier credit amount."))
 
-        self.supplier_credit_wizard_skipped = True
         return True
 
     @api.onchange("supplier_id")
@@ -282,6 +307,17 @@ class PurchaseOrder(models.Model):
                 == 0
                 and float_compare(record.total_amount_usd, 0, precision_digits=2) > 0
             )
+
+    @api.depends("country_id")
+    def _compute_is_thailand_po(self):
+        thailand = self.env.ref("base.th", raise_if_not_found=False)
+        for record in self:
+            record.is_thailand_po = bool(thailand and record.country_id == thailand)
+
+    @api.depends("is_thailand_po")
+    def _compute_currency_label(self):
+        for record in self:
+            record.currency_label = "THB" if record.is_thailand_po else "USD"
 
     @api.depends("amount_recorded_thb", "amount_recorded_usd")
     def _compute_exchange_rate_thb_per_usd(self):

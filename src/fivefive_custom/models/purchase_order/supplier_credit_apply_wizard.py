@@ -1,6 +1,6 @@
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
-from odoo.tools.float_utils import float_compare, float_is_zero
+from odoo.tools.float_utils import float_compare
 
 
 class SupplierCreditApplyWizard(models.TransientModel):
@@ -16,6 +16,10 @@ class SupplierCreditApplyWizard(models.TransientModel):
     supplier_id = fields.Many2one(
         "five.five.supplier",
         related="purchase_order_id.supplier_id",
+        readonly=True,
+    )
+    is_thailand_po = fields.Boolean(
+        related="purchase_order_id.is_thailand_po",
         readonly=True,
     )
     available_credit_usd = fields.Float(
@@ -46,26 +50,34 @@ class SupplierCreditApplyWizard(models.TransientModel):
 
         po = self.env["five.five.purchase.order"].browse(po_id)
         res["purchase_order_id"] = po.id
-        credits = self.env["five.five.supplier.credit"]._get_available_for_supplier(po.supplier_id)
-        available = sum(credits.mapped("remaining_usd"))
+        use_thb = po.is_thailand_po
+        credits = self.env["five.five.supplier.credit"]._get_available_for_supplier(
+            po.supplier_id,
+            use_thb=use_thb,
+        )
+        amount_field = "remaining_thb" if use_thb else "remaining_usd"
+        available = sum(credits.mapped(amount_field))
         remaining_po = max(po.total_amount_usd - po.amount_recorded_usd, 0.0)
         res["available_credit_usd"] = available
         res["remaining_po_usd"] = remaining_po
         res["apply_amount_usd"] = min(available, remaining_po) if remaining_po else available
-        res["credit_summary"] = self._format_credit_summary(credits)
+        res["credit_summary"] = self._format_credit_summary(credits, use_thb=use_thb)
         return res
 
     @api.model
-    def _format_credit_summary(self, credits):
+    def _format_credit_summary(self, credits, use_thb=False):
         if not credits:
             return _("No supplier credit available.")
+        currency = "THB" if use_thb else "USD"
+        amount_field = "remaining_thb" if use_thb else "remaining_usd"
         lines = []
         for credit in credits:
             lines.append(
-                _("- %(amount)s USD from %(po)s")
+                _("- %(amount)s %(currency)s from %(source)s")
                 % {
-                    "amount": f"{credit.remaining_usd:,.2f}",
-                    "po": credit.source_purchase_order_id.number,
+                    "amount": f"{getattr(credit, amount_field):,.2f}",
+                    "currency": currency,
+                    "source": credit._get_source_label(),
                 }
             )
         return "\n".join(lines)
@@ -77,8 +89,6 @@ class SupplierCreditApplyWizard(models.TransientModel):
             raise UserError(_("Purchase Order not found."))
         if po.state not in ("draft", "po_issued"):
             raise UserError(_("Supplier credit can only be applied on draft or issued POs."))
-        if po.payment_ids.filtered("supplier_credit_id"):
-            raise UserError(_("Supplier credit has already been applied to this PO."))
 
         apply_amount = self.apply_amount_usd or 0.0
         if float_compare(apply_amount, 0, precision_digits=2) <= 0:

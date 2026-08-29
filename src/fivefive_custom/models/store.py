@@ -124,3 +124,16 @@ class Store(models.Model):
             "url": "/pos",
             "target": "new",
         }
+
+    def action_open_convert_product_wizard(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Convert Product",
+            "res_model": "five.five.store.inventory.convert.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_store_id": self.id,
+            },
+        }

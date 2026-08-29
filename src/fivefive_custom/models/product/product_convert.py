@@ -22,10 +22,8 @@ class ProductConvert(models.Model):
     purchase_order_id = fields.Many2one(
         "five.five.purchase.order",
         string="Purchase Order",
-        related="commercial_invoice_line_id.purchase_order_id",
-        store=True,
+        ondelete="cascade",
         index=True,
-        readonly=True,
     )
 
     po_state = fields.Selection(
@@ -48,6 +46,17 @@ class ProductConvert(models.Model):
         required=True,
         ondelete="cascade",
     )
+    size_id = fields.Many2one(
+        "five.five.product.size",
+        related="product_variant_id.size_id",
+        string="Size",
+        readonly=True,
+    )
+    size_name = fields.Char(
+        string="Size",
+        related="size_id.name",
+        readonly=True,
+    )
 
     quantity = fields.Float(
         string="Quantity",
@@ -58,6 +67,23 @@ class ProductConvert(models.Model):
     quality_note = fields.Char(
         string="Quality Note",
         required=True,
+    )
+    quality_image = fields.Image(
+        string="Quality Image",
+        max_width=1920,
+        max_height=1920,
+    )
+    item_number = fields.Char(string="Item Number")
+    container_number = fields.Char(string="Container No.")
+    lot_number = fields.Char(string="Lot Number")
+    convert_date = fields.Date(string="Date", default=fields.Date.context_today)
+    brand_id = fields.Many2one("five.five.product.brand", string="Brand")
+    description_id = fields.Many2one("five.five.product.description", string="Description")
+    weight_per_qty = fields.Float(string="Weight per Qty")
+    total_weight = fields.Float(
+        string="Total Weight",
+        compute="_compute_total_weight",
+        store=True,
     )
 
     product_cost_ids = fields.One2many(
@@ -71,6 +97,11 @@ class ProductConvert(models.Model):
         compute="_compute_cost_summary",
         store=False,
     )
+
+    @api.depends("quantity", "weight_per_qty")
+    def _compute_total_weight(self):
+        for rec in self:
+            rec.total_weight = (rec.quantity or 0.0) * (rec.weight_per_qty or 0.0)
 
     @api.depends(
         "product_cost_ids.cost",
@@ -108,13 +139,19 @@ class ProductConvert(models.Model):
                 line._ff_recompute_auto_fixed_costs_for_converts()
         return res
 
-    @api.constrains("commercial_invoice_line_id", "is_manual_receipt")
+    @api.constrains("commercial_invoice_line_id", "is_manual_receipt", "purchase_order_id")
     def _check_manual_receipt_source(self):
         for rec in self:
-            if rec.is_manual_receipt and rec.commercial_invoice_line_id:
-                raise ValidationError(_("Manual warehouse receipt cannot be linked to a commercial invoice line."))
-            if not rec.is_manual_receipt and not rec.commercial_invoice_line_id:
-                raise ValidationError(_("Converted product must be linked to a commercial invoice line."))
+            if rec.is_manual_receipt and (rec.commercial_invoice_line_id or rec.purchase_order_id):
+                raise ValidationError(_("Manual warehouse receipt cannot be linked to a PO or commercial invoice line."))
+            if not rec.is_manual_receipt and not rec.commercial_invoice_line_id and not rec.purchase_order_id:
+                raise ValidationError(_("Converted product must be linked to a commercial invoice line or purchase order."))
+
+    def _ff_prepare_purchase_order_id(self, vals):
+        if vals.get("commercial_invoice_line_id") and not vals.get("purchase_order_id"):
+            cil = self.env["five.five.commercial.invoice.line"].browse(vals["commercial_invoice_line_id"])
+            if cil.purchase_order_id:
+                vals["purchase_order_id"] = cil.purchase_order_id.id
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -134,6 +171,15 @@ class ProductConvert(models.Model):
                     raise UserError(
                         _("Cannot modify converted products after the purchase order is closed.")
                     )
+            po_ids = [vals["purchase_order_id"] for vals in vals_list if vals.get("purchase_order_id")]
+            if po_ids:
+                closed = self.env["five.five.purchase.order"].browse(po_ids).filtered(lambda po: po.state == "closed")
+                if closed:
+                    raise UserError(
+                        _("Cannot modify converted products after the purchase order is closed.")
+                    )
+        for vals in vals_list:
+            self._ff_prepare_purchase_order_id(vals)
         records = super().create(vals_list)
         ci_lines = records.filtered(lambda rec: not rec.is_manual_receipt).mapped("commercial_invoice_line_id")
         if ci_lines:
@@ -148,7 +194,7 @@ class ProductConvert(models.Model):
         res = super().write(vals)
         ci_lines_after = ci_records.mapped("commercial_invoice_line_id")
         ci_lines = ci_lines_before | ci_lines_after
-        if ci_lines and any(k in vals for k in ("quantity", "commercial_invoice_line_id")):
+        if ci_lines and any(k in vals for k in ("quantity", "weight_per_qty", "commercial_invoice_line_id")):
             ci_lines._ff_recompute_auto_fixed_costs_for_converts()
         if "quantity" in vals:
             inventories = self.env["five.five.inventory"].search([("product_convert_id", "in", self.ids)])

@@ -23,6 +23,8 @@ access_five_five_warehouse_inventory_receipt_wizard_line_user,access.five.five.w
 access_five_five_warehouse_inventory_receipt_wizard_cost_line_user,access.five.five.warehouse.inventory.receipt.wizard.cost.line.user,model_five_five_warehouse_inventory_receipt_wizard_cost_line,,1,1,1,1
 access_five_five_warehouse_user,access.five.five.warehouse.user,model_five_five_warehouse,,1,1,1,1
 access_five_five_product_size_user,access.five.five.product.size.user,model_five_five_product_size,,1,1,1,1
+access_five_five_product_brand_user,access.five.five.product.brand.user,model_five_five_product_brand,,1,1,1,1
+access_five_five_product_description_user,access.five.five.product.description.user,model_five_five_product_description,,1,1,1,1
 access_five_five_purchase_order_payment_user,access.five.five.purchase.order.payment.user,model_five_five_purchase_order_payment,,1,1,1,1
 access_five_five_purchase_order_payment_wizard_user,access.five.five.purchase.order.payment.wizard.user,model_five_five_purchase_order_payment_wizard,,1,1,1,1
 access_five_five_purchase_order_payment_cancel_wizard_user,access.five.five.purchase.order.payment.cancel.wizard.user,model_five_five_purchase_order_payment_cancel_wizard,,1,1,1,1
@@ -30,6 +32,11 @@ access_five_five_purchase_order_clearing_wizard_user,access.five.five.purchase.o
 access_five_five_purchase_order_close_wizard_user,access.five.five.purchase.order.close.wizard.user,model_five_five_purchase_order_close_wizard,,1,1,1,1
 access_five_five_purchase_order_close_wizard_line_user,access.five.five.purchase.order.close.wizard.line.user,model_five_five_purchase_order_close_wizard_line,,1,1,1,1
 access_five_five_supplier_credit_user,access.five.five.supplier.credit.user,model_five_five_supplier_credit,,1,1,1,1
+access_five_five_purchase_order_document_upload_wizard_user,access.five.five.purchase.order.document.upload.wizard.user,model_five_five_purchase_order_document_upload_wizard,,1,1,1,1
+access_five_five_supplier_credit_manual_wizard_user,access.five.five.supplier.credit.manual.wizard.user,model_five_five_supplier_credit_manual_wizard,,1,1,1,1
+access_five_five_store_inventory_convert_wizard_user,access.five.five.store.inventory.convert.wizard.user,model_five_five_store_inventory_convert_wizard,,1,1,1,1
+access_five_five_store_inventory_convert_wizard_line_user,access.five.five.store.inventory.convert.wizard.line.user,model_five_five_store_inventory_convert_wizard_line,,1,1,1,1
+access_five_five_store_inventory_convert_wizard_cost_line_user,access.five.five.store.inventory.convert.wizard.cost.line.user,model_five_five_store_inventory_convert_wizard_cost_line,,1,1,1,1
 access_five_five_supplier_credit_apply_wizard_user,access.five.five.supplier.credit.apply.wizard.user,model_five_five_supplier_credit_apply_wizard,,1,1,1,1
 access_five_five_product_convert_user,access.five.five.product.convert.user,model_five_five_product_convert,,1,1,1,1
 access_five_five_product_cost_user,access.five.five.product.cost.user,model_five_five_product_cost,,1,1,1,1
@@ -38,6 +45,7 @@ access_five_five_commercial_invoice_line_convert_wizard_line_user,access.five.fi
 access_five_five_product_convert_cost_wizard_user,access.five.five.product.convert.cost.wizard.user,model_five_five_product_convert_cost_wizard,,1,1,1,1
 access_five_five_product_convert_cost_wizard_line_user,access.five.five.product.convert.cost.wizard.line.user,model_five_five_product_convert_cost_wizard_line,,1,1,1,1
 access_five_five_commercial_invoice_line_convert_add_line_wizard_user,access.five.five.commercial.invoice.line.convert.add.line.wizard.user,model_five_five_commercial_invoice_line_convert_add_line_wizard,,1,1,1,1
+access_five_five_purchase_order_add_convert_wizard_user,access.five.five.purchase.order.add.convert.wizard.user,model_five_five_purchase_order_add_convert_wizard,,1,1,1,1
 access_five_five_store_pos_user_user,access.five.five.store.pos.user.user,model_five_five_store_pos_user,,1,1,1,1
 access_five_five_store_pos_user_credential_wizard_user,access.five.five.store.pos.user.credential.wizard.user,model_five_five_store_pos_user_credential_wizard,,1,1,1,1
 access_five_five_store_pos_user_change_password_wizard_user,access.five.five.store.pos.user.change.password.wizard.user,model_five_five_store_pos_user_change_password_wizard,,1,1,1,1

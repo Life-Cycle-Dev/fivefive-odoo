@@ -12,6 +12,8 @@ from . import purchase_order_clearing_wizard
 from . import purchase_order_close_wizard
 from . import supplier_credit
 from . import supplier_credit_apply_wizard
+from . import supplier_credit_manual_wizard
 from . import commercial_invoice_line_convert_wizard
 from . import commercial_invoice_line_convert_add_line_wizard
+from . import purchase_order_add_convert_wizard
 from . import product_convert_cost_wizard

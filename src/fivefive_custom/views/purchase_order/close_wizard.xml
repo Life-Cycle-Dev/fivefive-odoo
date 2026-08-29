@@ -9,7 +9,6 @@
                     <group>
                         <field name="purchase_order_id" readonly="1"/>
                         <field name="warehouse_id" readonly="1"/>
-                        <field name="lot_number" placeholder="Enter lot number for all products..."/>
                     </group>
                     <group>
                         <field name="as_of_date" readonly="1"/>
@@ -20,6 +19,9 @@
                         <list create="0" edit="0" delete="0">
                             <field name="product_variant_id"/>
                             <field name="quantity"/>
+                            <field name="lot_number"/>
+                            <field name="item_number"/>
+                            <field name="container_number"/>
                             <field name="quality_note"/>
                             <field name="cost_summary"/>
                             <field name="total_cost_thb"/>

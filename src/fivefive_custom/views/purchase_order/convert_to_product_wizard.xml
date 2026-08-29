@@ -17,12 +17,29 @@
 						<field name="commercial_invoice_quantity" readonly="1"/>
 					</group>
 				</group>
+				<group string="Weight Summary">
+					<field name="commercial_invoice_total_weight" readonly="1"/>
+					<field name="converted_total_weight" readonly="1"/>
+					<field name="weight_diff" readonly="1" decoration-danger="weight_diff != 0"/>
+					<field name="price_diff_usd" readonly="1" string="Price Diff" decoration-danger="weight_diff != 0"/>
+				</group>
 				<group string="Products to convert">
 					<field name="convert_line_ids">
-						<list editable="bottom">
-							<field name="product_variant_id"/>
-							<field name="quantity"/>
-							<field name="quality_note"/>
+						<list editable="bottom" class="ff_list_wide_headers">
+							<field name="convert_date" string="Date" width="110px"/>
+							<field name="product_variant_id" string="product" width="240px"/>
+							<field name="lot_number" string="Lot No." width="130px"/>
+							<field name="item_number" string="item" width="80px"/>
+							<field name="description_id" string="Description" width="260px"/>
+							<field name="brand_id" string="Brand" width="180px"/>
+							<field name="container_number" string="Sub Lot" width="110px"/>
+							<field name="size_name" string="Size" width="100px"/>
+							<field name="size_id" column_invisible="1"/>
+							<field name="quantity" string="QTY" width="90px"/>
+							<field name="weight_per_qty" string="Weight/Qty" width="110px"/>
+							<field name="total_weight" string="Weight (Kg.)" width="120px" readonly="1"/>
+							<field name="quality_note" string="Quality Note" width="140px"/>
+							<field name="quality_image" widget="image" string="Quality Image"/>
 						</list>
 					</field>
 				</group>
@@ -34,4 +51,3 @@
 		</field>
 	</record>
 </odoo>
-

@@ -6,3 +6,4 @@ from . import store_inventory_adjustment
 from . import store_inventory_adjust_wizard
 from . import warehouse_transfer_wizard
 from . import warehouse_inventory_receipt_wizard
+from . import store_inventory_convert_wizard

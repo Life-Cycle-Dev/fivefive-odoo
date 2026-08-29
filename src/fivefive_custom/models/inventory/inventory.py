@@ -23,8 +23,37 @@ class Inventory(models.Model):
         tracking=True,
     )
     lot_number = fields.Char(string="Lot Number", tracking=True)
+    item_number = fields.Char(string="Item Number", tracking=True)
+    container_number = fields.Char(string="Container No.", tracking=True)
+    brand_id = fields.Many2one("five.five.product.brand", string="Brand", tracking=True)
+    description_id = fields.Many2one("five.five.product.description", string="Description", tracking=True)
+    product_code = fields.Char(
+        string="Code",
+        related="product_variant_id.sku",
+        readonly=True,
+    )
+    size_id = fields.Many2one(
+        "five.five.product.size",
+        string="Size",
+        related="product_variant_id.size_id",
+        readonly=True,
+    )
+    size_name = fields.Char(
+        string="Size",
+        related="size_id.name",
+        readonly=True,
+    )
+    display_date = fields.Date(
+        string="Date",
+        compute="_compute_display_date",
+        store=True,
+        readonly=True,
+    )
+    weight_per_qty = fields.Float(string="Weight per Qty", tracking=True)
+    total_weight = fields.Float(string="Total Weight", tracking=True)
     quantity = fields.Float(string="Quantity", tracking=True, aggregator="sum")
     quality_note = fields.Char(string="Quality Note", tracking=True)
+    quality_image = fields.Image(string="Quality Image", max_width=1920, max_height=1920)
     purchase_order_id = fields.Many2one(
         "five.five.purchase.order",
         string="Purchase Order",
@@ -54,6 +83,18 @@ class Inventory(models.Model):
         help="วันที่ใช้คำนวณต้นทุนรวม (อัปเดตอัตโนมัติทุกวัน)",
         tracking=True,
     )
+    po_closed_date = fields.Date(
+        string="PO Closed Date",
+        readonly=True,
+        tracking=True,
+    )
+
+    @api.depends("product_convert_id.convert_date", "po_closed_date")
+    def _compute_display_date(self):
+        for inventory in self:
+            inventory.display_date = (
+                inventory.product_convert_id.convert_date or inventory.po_closed_date
+            )
 
     @api.depends("total_cost_thb", "quantity")
     def _compute_unit_cost_thb(self):
@@ -113,6 +154,15 @@ class Inventory(models.Model):
             **cost_vals,
             "cost_as_of_date": as_of_date,
         }
+
+    def _weight_for_qty(self, qty):
+        self.ensure_one()
+        wpq = self.weight_per_qty or 0.0
+        if not float_is_zero(wpq, precision_digits=6):
+            return qty * wpq
+        if self.quantity and self.total_weight:
+            return self.total_weight * (qty / self.quantity)
+        return 0.0
 
     def _consume_quantity(self, consumed_qty):
         """Reduce on-hand quantity after a transfer or allocation."""

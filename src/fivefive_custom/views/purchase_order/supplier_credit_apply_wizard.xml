@@ -8,9 +8,13 @@
                 <group>
                     <field name="purchase_order_id" readonly="1"/>
                     <field name="supplier_id" readonly="1"/>
-                    <field name="available_credit_usd" readonly="1"/>
-                    <field name="remaining_po_usd" readonly="1"/>
-                    <field name="apply_amount_usd"/>
+                    <field name="is_thailand_po" invisible="1"/>
+                    <field name="available_credit_usd" readonly="1" string="Available Credit (THB)" invisible="not is_thailand_po"/>
+                    <field name="available_credit_usd" readonly="1" string="Available Credit (USD)" invisible="is_thailand_po"/>
+                    <field name="remaining_po_usd" readonly="1" string="Remaining PO Amount (THB)" invisible="not is_thailand_po"/>
+                    <field name="remaining_po_usd" readonly="1" string="Remaining PO Amount (USD)" invisible="is_thailand_po"/>
+                    <field name="apply_amount_usd" string="Apply Amount (THB)" invisible="not is_thailand_po"/>
+                    <field name="apply_amount_usd" string="Apply Amount (USD)" invisible="is_thailand_po"/>
                 </group>
                 <group>
                     <field name="credit_summary" nolabel="1" readonly="1" colspan="2"/>

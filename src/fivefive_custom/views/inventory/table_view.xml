@@ -8,9 +8,14 @@
                 <searchpanel>
                     <field name="product_variant_id" string="Product Variant" select="multi" enable_counters="1"/>
                 </searchpanel>
-                <field name="product_variant_id" string="Product Variant"/>
+                <field name="lot_number" string="Lot No."/>
+                <field name="item_number" string="ITEM"/>
+                <field name="product_variant_id" string="Product"/>
+                <field name="description_id" string="Description"/>
+                <field name="brand_id" string="Brand"/>
+                <field name="container_number" string="Sub Lot"/>
+                <field name="size_id" string="Size"/>
                 <field name="warehouse_id" string="Warehouse"/>
-                <field name="lot_number" string="Lot Number"/>
                 <field name="quality_note" string="Quality Note"/>
                 <separator/>
                 <filter string="Product Variant" name="group_by_product_variant" context="{'group_by': 'product_variant_id'}"/>
@@ -23,13 +28,18 @@
         <field name="name">five.five.inventory.list</field>
         <field name="model">five.five.inventory</field>
         <field name="arch" type="xml">
-            <list default_order="product_variant_id,warehouse_id,lot_number,id desc" class="ff_five_five_inventory_list" create="false" edit="false" delete="false">
-                <field name="product_variant_id" string="Product Variant" width="200px"/>
-                <field name="warehouse_id" string="Warehouse" width="160px"/>
-                <field name="lot_number" string="Lot Number" width="140px"/>
-                <field name="quantity" string="Quantity" width="100px" sum="Total Quantity"/>
-                <field name="quality_note" string="Quality Note" width="140px"/>
-                <field name="unit_cost_thb" string="Unit Cost (THB)" width="160px"/>
+            <list default_order="display_date desc, lot_number, item_number, id desc" class="ff_five_five_inventory_list ff_list_wide_headers" create="false" edit="false" delete="false">
+                <field name="display_date" string="Date" width="110px"/>
+                <field name="product_variant_id" string="Product" width="240px"/>
+                <field name="lot_number" string="Lot No." width="130px"/>
+                <field name="item_number" string="ITEM" width="70px"/>
+                <field name="description_id" string="Description" width="260px"/>
+                <field name="brand_id" string="Brand" width="180px"/>
+                <field name="container_number" string="Sub Lot" width="110px"/>
+                <field name="size_name" string="Size" width="100px"/>
+                <field name="size_id" column_invisible="1"/>
+                <field name="quantity" string="QTY" width="90px" sum="Total QTY"/>
+                <field name="total_weight" string="Weight(Kg.)" width="120px"/>
             </list>
         </field>
     </record>

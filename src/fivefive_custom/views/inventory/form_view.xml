@@ -32,8 +32,16 @@
                         <group string="Stock">
                             <field name="warehouse_id" readonly="1"/>
                             <field name="lot_number" readonly="1"/>
+                            <field name="item_number" readonly="1"/>
+                            <field name="container_number" readonly="1"/>
+                            <field name="brand_id" readonly="1"/>
+                            <field name="description_id" readonly="1"/>
+                            <field name="weight_per_qty" readonly="1"/>
+                            <field name="total_weight" readonly="1"/>
                             <field name="quantity" readonly="1"/>
                             <field name="quality_note" readonly="1"/>
+                            <field name="quality_image" widget="image" readonly="1"/>
+                            <field name="po_closed_date" readonly="1"/>
                         </group>
                         <group string="Cost">
                             <field name="cost_as_of_date" readonly="1"/>

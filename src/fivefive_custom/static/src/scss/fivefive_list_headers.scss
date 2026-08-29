@@ -1,0 +1,85 @@
+// Widen list column headers so full labels are visible (no ellipsis / hover tooltip).
+.o_list_view .o_list_table {
+    table-layout: auto !important;
+    width: 100% !important;
+
+    colgroup col {
+        width: auto !important;
+    }
+
+    thead th:not(.o_list_controller) {
+        width: auto !important;
+        min-width: max-content !important;
+        max-width: none !important;
+        white-space: nowrap !important;
+        line-height: 1.25;
+        vertical-align: bottom;
+        height: auto;
+        overflow: visible !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+
+        .o_column_title,
+        .text-truncate,
+        span,
+        div {
+            white-space: nowrap !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            max-width: none !important;
+            width: auto !important;
+        }
+    }
+
+    tbody td {
+        white-space: nowrap;
+    }
+}
+
+.modal .o_list_view .o_list_table,
+.o_dialog .o_list_view .o_list_table {
+    table-layout: auto !important;
+
+    colgroup col {
+        width: auto !important;
+    }
+
+    thead th:not(.o_list_controller) {
+        width: auto !important;
+        min-width: max-content !important;
+        max-width: none !important;
+        white-space: nowrap !important;
+    }
+}
+
+.o_list_view.ff_list_wide_headers .o_list_table {
+    thead th:not(.o_list_controller) {
+        min-width: 5.5rem !important;
+    }
+
+    tbody td.o_data_cell {
+        overflow: visible;
+        text-overflow: clip;
+
+        &[data-name="product_variant_id"] {
+            min-width: 15rem;
+        }
+
+        &[data-name="description_id"] {
+            min-width: 16rem;
+        }
+
+        &[data-name="brand_id"] {
+            min-width: 11rem;
+        }
+
+        &[data-name="convert_date"],
+        &[data-name="display_date"] {
+            min-width: 6.5rem;
+        }
+
+        &[data-name="lot_number"] {
+            min-width: 7.5rem;
+        }
+    }
+}

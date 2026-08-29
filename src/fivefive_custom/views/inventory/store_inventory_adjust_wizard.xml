@@ -13,11 +13,15 @@
                     <field name="line_ids" nolabel="1">
                         <list editable="bottom" create="0" delete="0">
                             <field name="store_inventory_id" column_invisible="1"/>
+                            <field name="has_adjustment_value" column_invisible="1"/>
                             <field name="product_variant_id" readonly="1"/>
                             <field name="lot_number" readonly="1"/>
                             <field name="quantity_on_hand" readonly="1"/>
+                            <field name="weight_on_hand" readonly="1"/>
+                            <field name="adjust_by"/>
                             <field name="adjustment_type"/>
-                            <field name="quantity"/>
+                            <field name="quantity" invisible="adjust_by != 'qty'"/>
+                            <field name="weight" invisible="adjust_by != 'weight'"/>
                         </list>
                     </field>
                 </group>
@@ -38,10 +42,14 @@
                 <field name="store_id"/>
                 <field name="product_variant_id"/>
                 <field name="lot_number"/>
+                <field name="adjust_by"/>
                 <field name="adjustment_type"/>
                 <field name="quantity_before"/>
                 <field name="quantity_change"/>
                 <field name="quantity_after"/>
+                <field name="weight_before"/>
+                <field name="weight_change"/>
+                <field name="weight_after"/>
                 <field name="reason"/>
                 <field name="user_id"/>
             </list>
@@ -63,12 +71,16 @@
                             <field name="product_variant_id" readonly="1"/>
                             <field name="lot_number" readonly="1"/>
                             <field name="adjustment_type" readonly="1"/>
+                            <field name="adjust_by" readonly="1"/>
                             <field name="reason" readonly="1"/>
                         </group>
                         <group>
                             <field name="quantity_before" readonly="1"/>
                             <field name="quantity_change" readonly="1"/>
                             <field name="quantity_after" readonly="1"/>
+                            <field name="weight_before" readonly="1"/>
+                            <field name="weight_change" readonly="1"/>
+                            <field name="weight_after" readonly="1"/>
                             <field name="cost_before" readonly="1"/>
                             <field name="cost_after" readonly="1"/>
                             <field name="user_id" readonly="1"/>

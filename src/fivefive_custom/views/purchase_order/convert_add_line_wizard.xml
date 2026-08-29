@@ -20,9 +20,19 @@
 				</group>
 
 				<group string="Convert Line">
-					<field name="product_variant_id"/>
-					<field name="quantity"/>
+					<field name="convert_date" string="Date"/>
+					<field name="lot_number" string="Lot No."/>
+					<field name="item_number" string="item"/>
+					<field name="product_variant_id" string="product"/>
+					<field name="description_id" string="Description"/>
+					<field name="brand_id" string="Brand"/>
+					<field name="container_number" string="Sub Lot"/>
+					<field name="size_name" string="Size" readonly="1"/>
+					<field name="size_id" invisible="1"/>
+					<field name="quantity" string="QTY"/>
+					<field name="weight_per_qty" string="Weight/Qty"/>
 					<field name="quality_note"/>
+					<field name="quality_image" widget="image"/>
 				</group>
 				<footer>
 					<button name="action_apply" type="object" string="Save" class="btn-primary"/>
@@ -32,4 +42,3 @@
 		</field>
 	</record>
 </odoo>
-

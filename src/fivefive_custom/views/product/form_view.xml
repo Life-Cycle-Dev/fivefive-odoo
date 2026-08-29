@@ -161,6 +161,48 @@
         </field>
     </record>
 
+    <record id="view_five_five_product_brand_model_form" model="ir.ui.view">
+        <field name="name">five.five.product.brand.form</field>
+        <field name="model">five.five.product.brand</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <group>
+                        <field name="name"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+                <chatter>
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids" options="{'post_refresh': 'recipients'}"/>
+                </chatter>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_five_five_product_description_model_form" model="ir.ui.view">
+        <field name="name">five.five.product.description.form</field>
+        <field name="model">five.five.product.description</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <group>
+                        <field name="name"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+                <chatter>
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids" options="{'post_refresh': 'recipients'}"/>
+                </chatter>
+            </form>
+        </field>
+    </record>
+
     <record id="action_five_five_product_model" model="ir.actions.act_window">
         <field name="name">Product</field>
         <field name="res_model">five.five.product.product</field>
@@ -188,6 +230,18 @@
     <record id="action_five_five_product_size_model" model="ir.actions.act_window">
         <field name="name">Product Size</field>
         <field name="res_model">five.five.product.size</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_five_five_product_brand_model" model="ir.actions.act_window">
+        <field name="name">Product Brand</field>
+        <field name="res_model">five.five.product.brand</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_five_five_product_description_model" model="ir.actions.act_window">
+        <field name="name">Product Description</field>
+        <field name="res_model">five.five.product.description</field>
         <field name="view_mode">list,form</field>
     </record>
 </odoo>

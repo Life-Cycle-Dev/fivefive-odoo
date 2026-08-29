@@ -250,6 +250,8 @@ class StorePosOrder(models.Model):
                         break
                     old_qty = lot.quantity
                     take_qty = min(old_qty, remaining)
+                    old_weight = lot.total_weight or lot._weight_for_qty(old_qty)
+                    take_weight = old_weight * (take_qty / old_qty) if old_qty else 0.0
                     cost_taken = lot.total_cost_thb * (take_qty / old_qty) if old_qty else 0.0
                     deduction_vals.append(
                         (
@@ -268,6 +270,7 @@ class StorePosOrder(models.Model):
                     if float_compare(old_qty, 0, precision_digits=6) > 0:
                         lot.total_cost_thb = lot.total_cost_thb * ((old_qty - take_qty) / old_qty)
                     lot.quantity = old_qty - take_qty
+                    lot.total_weight = max(old_weight - take_weight, 0.0)
                     remaining -= take_qty
                     if float_is_zero(lot.quantity, precision_digits=6):
                         lot.unlink()
@@ -301,14 +304,15 @@ class StorePosOrder(models.Model):
         if existing:
             new_qty = existing.quantity + deduction.quantity
             new_cost = existing.total_cost_thb + deduction.cost_thb
-            existing.write(
-                {
-                    "quantity": new_qty,
-                    "total_cost_thb": new_cost,
-                    "cost_summary": ProductCost.format_frozen_store_cost_summary(new_cost),
-                }
+            added_weight = existing._weight_for_qty(deduction.quantity)
+            existing._apply_stock_update(
+                new_qty,
+                new_cost,
+                (existing.total_weight or 0.0) + added_weight,
             )
             return
+        source = deduction.source_inventory_id
+        weight_per_qty = source.weight_per_qty if source else 0.0
         StoreInventory.create(
             {
                 "store_id": order.store_id.id,
@@ -318,6 +322,8 @@ class StorePosOrder(models.Model):
                 "quality_note": deduction.quality_note,
                 "purchase_order_id": deduction.purchase_order_id.id,
                 "source_inventory_id": deduction.source_inventory_id.id,
+                "weight_per_qty": weight_per_qty,
+                "total_weight": deduction.quantity * weight_per_qty if weight_per_qty else 0.0,
                 "total_cost_thb": deduction.cost_thb,
                 "cost_summary": ProductCost.format_frozen_store_cost_summary(deduction.cost_thb),
                 "cost_as_of_date": fields.Date.context_today(self),

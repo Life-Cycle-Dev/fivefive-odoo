@@ -1,5 +1,7 @@
 from . import product_unit
 from . import product_grade
+from . import product_brand
+from . import product_description
 from . import product_variant
 from . import product_product
 from . import product_size

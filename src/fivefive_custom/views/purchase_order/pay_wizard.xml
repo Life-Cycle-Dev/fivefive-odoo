@@ -7,8 +7,11 @@
 			<form string="ทำเรื่องการจ่ายเงิน PO">
 				<group>
 					<field name="purchase_order_id" readonly="1"/>
-					<field name="amount_usd"/>
-					<field name="amount_thb"/>
+					<field name="is_thailand_po" invisible="1"/>
+					<field name="amount_usd" string="Amount (THB)" invisible="not is_thailand_po"/>
+					<field name="amount_usd" string="Amount (USD)" invisible="is_thailand_po"/>
+					<field name="exchange_rate" invisible="is_thailand_po"/>
+					<field name="amount_thb" readonly="1" invisible="is_thailand_po"/>
 					<field name="pay_at"/>
 					<field name="payment_status"/>
 					<field name="note"/>

@@ -59,4 +59,26 @@
             </list>
         </field>
     </record>
+
+    <record id="view_five_five_product_brand_model_list" model="ir.ui.view">
+        <field name="name">five.five.product.brand.list</field>
+        <field name="model">five.five.product.brand</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_five_five_product_description_model_list" model="ir.ui.view">
+        <field name="name">five.five.product.description.list</field>
+        <field name="model">five.five.product.description</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
 </odoo>

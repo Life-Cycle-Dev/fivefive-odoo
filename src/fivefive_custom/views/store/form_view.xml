@@ -13,6 +13,12 @@
                         class="btn-primary"
                     />
                     <button
+                        name="action_open_convert_product_wizard"
+                        type="object"
+                        string="Convert Product"
+                        class="btn-secondary"
+                    />
+                    <button
                         name="action_open_inventory_adjust_wizard"
                         type="object"
                         string="Adjust Inventory"
@@ -70,6 +76,8 @@
                                 <field name="sell_price_thb" string="Sell Price (THB)" width="120px"/>
                                 <field name="lot_number" string="Lot Number" width="150px" readonly="1"/>
                                 <field name="quantity" string="Quantity" width="90px" readonly="1"/>
+                                <field name="weight_per_qty" string="Weight/Qty" width="100px" readonly="1"/>
+                                <field name="total_weight" string="Weight (Kg.)" width="110px" readonly="1"/>
                                 <field name="quality_note" string="Quality Note" width="120px" readonly="1"/>
                                 <field name="cost_summary" string="Cost Summary" width="280px" readonly="1"/>
                                 <field name="total_cost_thb" string="Total Cost (THB)" width="150px" readonly="1"/>

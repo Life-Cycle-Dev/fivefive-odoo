@@ -57,6 +57,19 @@ class Supplier(models.Model):
             supplier.credit_balance_usd = sum(active_credits.mapped("remaining_usd"))
             supplier.credit_balance_thb = sum(active_credits.mapped("remaining_thb"))
 
+    def action_open_manual_credit_wizard(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Add Manual Credit"),
+            "res_model": "five.five.supplier.credit.manual.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_supplier_id": self.id,
+            },
+        }
+
     @api.constrains("tax_id")
     def _check_tax_id_unique(self):
         for record in self:

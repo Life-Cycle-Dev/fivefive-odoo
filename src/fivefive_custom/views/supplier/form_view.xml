@@ -41,21 +41,10 @@
                             <field name="credit_balance_usd" readonly="1"/>
                             <field name="credit_balance_thb" readonly="1"/>
                         </group>
+                        <button name="action_open_manual_credit_wizard" type="object" string="Add Manual Credit" class="btn-secondary"/>
                     </group>
 
                     <notebook>
-                        <page string="Credits">
-                            <field name="credit_ids" readonly="1">
-                                <list create="0" edit="0" delete="0">
-                                    <field name="source_purchase_order_id" string="Source PO"/>
-                                    <field name="amount_usd" string="Original (USD)"/>
-                                    <field name="amount_thb" string="Original (THB)"/>
-                                    <field name="remaining_usd" string="Remaining (USD)"/>
-                                    <field name="remaining_thb" string="Remaining (THB)"/>
-                                    <field name="active" widget="boolean"/>
-                                </list>
-                            </field>
-                        </page>
                         <page string="Bank Information">
                             <group>
                                 <group>
@@ -66,8 +55,25 @@
                                     <field name="account_bank_name"/>
                                     <field name="account_bank_swift_code"/>
                                 </group>
-                                <field name="account_bank_address" colspan="2"/>
+                                <group>
+                                    <field name="account_bank_address" colspan="2"/>
+                                </group>
                             </group>
+                        </page>
+                        <page string="Credits">
+                            <field name="credit_ids">
+                                <list create="0" edit="0" delete="0">
+                                    <field name="source_display" string="Source"/>
+                                    <field name="source_purchase_order_id" string="Source PO" column_invisible="1"/>
+                                    <field name="is_manual"/>
+                                    <field name="note"/>
+                                    <field name="amount_usd" string="Original (USD)"/>
+                                    <field name="amount_thb" string="Original (THB)"/>
+                                    <field name="remaining_usd" string="Remaining (USD)"/>
+                                    <field name="remaining_thb" string="Remaining (THB)"/>
+                                    <field name="active" widget="boolean"/>
+                                </list>
+                            </field>
                         </page>
                         <page string="Audit Log">
                             <group>

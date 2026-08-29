@@ -27,6 +27,15 @@ class StoreInventoryAdjustment(models.Model):
         index=True,
     )
     lot_number = fields.Char(string="Lot Number", required=True)
+    adjust_by = fields.Selection(
+        [
+            ("qty", "Quantity"),
+            ("weight", "Weight (Kg.)"),
+        ],
+        string="Adjust By",
+        required=True,
+        default="qty",
+    )
     adjustment_type = fields.Selection(
         [
             ("increase", "Increase"),
@@ -38,6 +47,9 @@ class StoreInventoryAdjustment(models.Model):
     quantity_before = fields.Float(string="Qty Before", digits=(16, 6))
     quantity_change = fields.Float(string="Qty Change", digits=(16, 6))
     quantity_after = fields.Float(string="Qty After", digits=(16, 6))
+    weight_before = fields.Float(string="Weight Before (Kg.)", digits=(16, 6))
+    weight_change = fields.Float(string="Weight Change (Kg.)", digits=(16, 6))
+    weight_after = fields.Float(string="Weight After (Kg.)", digits=(16, 6))
     cost_before = fields.Float(string="Cost Before (THB)", digits=(16, 2))
     cost_after = fields.Float(string="Cost After (THB)", digits=(16, 2))
     reason = fields.Text(string="Reason", required=True)

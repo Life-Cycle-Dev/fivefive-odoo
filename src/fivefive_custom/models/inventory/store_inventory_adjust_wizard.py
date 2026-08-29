@@ -41,9 +41,9 @@ class StoreInventoryAdjustWizard(models.TransientModel):
         if not reason:
             raise UserError(_("Please provide a reason for this adjustment."))
 
-        lines = self.line_ids.filtered(lambda line: float_compare(line.quantity, 0, precision_digits=6) > 0)
+        lines = self.line_ids.filtered("has_adjustment_value")
         if not lines:
-            raise UserError(_("Please enter an adjustment quantity for at least one product line."))
+            raise UserError(_("Please enter an adjustment quantity or weight for at least one product line."))
 
         adjustments = self.env["five.five.store.inventory.adjustment"]
         for line in lines:
@@ -84,6 +84,21 @@ class StoreInventoryAdjustWizardLine(models.TransientModel):
         readonly=True,
         digits=(16, 6),
     )
+    weight_on_hand = fields.Float(
+        related="store_inventory_id.total_weight",
+        string="Weight On Hand (Kg.)",
+        readonly=True,
+        digits=(16, 6),
+    )
+    adjust_by = fields.Selection(
+        [
+            ("qty", "Quantity"),
+            ("weight", "Weight (Kg.)"),
+        ],
+        string="Adjust By",
+        required=True,
+        default="qty",
+    )
     adjustment_type = fields.Selection(
         [
             ("increase", "Increase"),
@@ -94,6 +109,35 @@ class StoreInventoryAdjustWizardLine(models.TransientModel):
         default="increase",
     )
     quantity = fields.Float(string="Adjust Qty", digits=(16, 6), default=0.0)
+    weight = fields.Float(string="Adjust Weight (Kg.)", digits=(16, 6), default=0.0)
+    has_adjustment_value = fields.Boolean(compute="_compute_has_adjustment_value")
+
+    @api.depends("adjust_by", "quantity", "weight")
+    def _compute_has_adjustment_value(self):
+        for line in self:
+            if line.adjust_by == "weight":
+                line.has_adjustment_value = float_compare(line.weight, 0, precision_digits=6) > 0
+            else:
+                line.has_adjustment_value = float_compare(line.quantity, 0, precision_digits=6) > 0
+
+    def _resolve_adjustment_amounts(self, inventory):
+        self.ensure_one()
+        old_qty = inventory.quantity or 0.0
+        old_weight = inventory.total_weight or inventory._weight_for_qty(old_qty)
+        old_cost = inventory.total_cost_thb or 0.0
+
+        if self.adjust_by == "weight":
+            adjust_weight = self.weight or 0.0
+            if float_compare(adjust_weight, 0, precision_digits=6) <= 0:
+                raise UserError(_("Adjustment weight must be greater than zero."))
+            adjust_qty = inventory._qty_for_weight(adjust_weight)
+        else:
+            adjust_qty = self.quantity or 0.0
+            if float_compare(adjust_qty, 0, precision_digits=6) <= 0:
+                raise UserError(_("Adjustment quantity must be greater than zero."))
+            adjust_weight = inventory._weight_for_qty(adjust_qty)
+
+        return old_qty, old_weight, old_cost, adjust_qty, adjust_weight
 
     def _apply_adjustment(self, reason):
         self.ensure_one()
@@ -101,13 +145,9 @@ class StoreInventoryAdjustWizardLine(models.TransientModel):
         if inventory.store_id != self.wizard_id.store_id:
             raise UserError(_("Store inventory line does not belong to this store."))
 
-        adjust_qty = self.quantity or 0.0
-        if float_compare(adjust_qty, 0, precision_digits=6) <= 0:
-            raise UserError(_("Adjustment quantity must be greater than zero."))
-
-        old_qty = inventory.quantity or 0.0
-        old_cost = inventory.total_cost_thb or 0.0
-        ProductCost = self.env["five.five.product.cost"]
+        old_qty, old_weight, old_cost, adjust_qty, adjust_weight = self._resolve_adjustment_amounts(
+            inventory
+        )
         Adjustment = self.env["five.five.store.inventory.adjustment"]
 
         if self.adjustment_type == "decrease":
@@ -121,17 +161,31 @@ class StoreInventoryAdjustWizardLine(models.TransientModel):
                         "available": formatLang(self.env, old_qty, digits=2),
                     }
                 )
+            if float_compare(adjust_weight, old_weight, precision_digits=6) > 0:
+                raise UserError(
+                    _("Cannot decrease %(weight)s kg for %(product)s (Lot %(lot)s). Only %(available)s kg available.")
+                    % {
+                        "weight": formatLang(self.env, adjust_weight, digits=2),
+                        "product": inventory.product_variant_id.display_name,
+                        "lot": inventory.lot_number or "-",
+                        "available": formatLang(self.env, old_weight, digits=2),
+                    }
+                )
             remove_cost = old_cost * (adjust_qty / old_qty) if old_qty else 0.0
             new_qty = old_qty - adjust_qty
+            new_weight = old_weight - adjust_weight
             new_cost = old_cost - remove_cost
             qty_change = -adjust_qty
+            weight_change = -adjust_weight
             adjustment_type = "decrease"
         else:
             unit_cost = old_cost / old_qty if old_qty else 0.0
             add_cost = unit_cost * adjust_qty
             new_qty = old_qty + adjust_qty
+            new_weight = old_weight + adjust_weight
             new_cost = old_cost + add_cost
             qty_change = adjust_qty
+            weight_change = adjust_weight
             adjustment_type = "increase"
 
         adjustment = Adjustment.create(
@@ -141,9 +195,13 @@ class StoreInventoryAdjustWizardLine(models.TransientModel):
                 "product_variant_id": inventory.product_variant_id.id,
                 "lot_number": inventory.lot_number,
                 "adjustment_type": adjustment_type,
+                "adjust_by": self.adjust_by,
                 "quantity_before": old_qty,
                 "quantity_change": qty_change,
                 "quantity_after": new_qty,
+                "weight_before": old_weight,
+                "weight_change": weight_change,
+                "weight_after": new_weight,
                 "cost_before": old_cost,
                 "cost_after": new_cost,
                 "reason": reason,
@@ -153,11 +211,5 @@ class StoreInventoryAdjustWizardLine(models.TransientModel):
         if float_is_zero(new_qty, precision_digits=6):
             inventory.unlink()
         else:
-            inventory.write(
-                {
-                    "quantity": new_qty,
-                    "total_cost_thb": new_cost,
-                    "cost_summary": ProductCost.format_frozen_store_cost_summary(new_cost),
-                }
-            )
+            inventory._apply_stock_update(new_qty, new_cost, new_weight)
         return adjustment
