@@ -5,10 +5,11 @@
         <field name="model">five.five.store.inventory.convert.wizard</field>
         <field name="arch" type="xml">
             <form string="Convert Product">
+                <field name="from_line" invisible="1"/>
                 <group>
                     <field name="store_id" readonly="1"/>
                 </group>
-                <group string="Convert store stock to another product variant">
+                <group string="Reclassify store stock to the correct product variant">
                     <field name="line_ids" nolabel="1">
                         <list editable="bottom">
                             <field
@@ -17,12 +18,12 @@
                                 domain="[('store_id', '=', parent.store_id), ('quantity', '&gt;', 0)]"
                                 options="{'no_create': True}"
                             />
+                            <field name="source_lot_number" string="Lot No." readonly="1"/>
                             <field name="source_product_variant_id" string="From Product" readonly="1"/>
                             <field name="quantity_on_hand" readonly="1"/>
                             <field name="weight_on_hand" readonly="1" optional="hide"/>
                             <field name="target_product_variant_id" string="To Product"/>
                             <field name="convert_qty" string="Convert Qty"/>
-                            <field name="target_lot_number" string="Target Lot No."/>
                         </list>
                     </field>
                 </group>
@@ -39,25 +40,18 @@
         <field name="model">five.five.store.inventory.convert.wizard</field>
         <field name="arch" type="xml">
             <form string="Convert Product">
-                <group>
-                    <field name="store_id" invisible="1"/>
-                </group>
+                <field name="from_line" invisible="1"/>
+                <field name="store_id" invisible="1"/>
                 <group string="From">
-                    <field name="line_ids" nolabel="1" colspan="2">
-                        <form>
-                            <group>
-                                <field name="store_inventory_id" readonly="1" force_save="1"/>
-                                <field name="source_product_variant_id" readonly="1"/>
-                                <field name="quantity_on_hand" readonly="1"/>
-                                <field name="weight_on_hand" readonly="1"/>
-                            </group>
-                            <group string="Convert To">
-                                <field name="target_product_variant_id" string="To Product"/>
-                                <field name="convert_qty" string="Convert Qty"/>
-                                <field name="target_lot_number" string="Target Lot No."/>
-                            </group>
-                        </form>
-                    </field>
+                    <field name="store_inventory_id" readonly="1" force_save="1"/>
+                    <field name="source_lot_number" readonly="1"/>
+                    <field name="source_product_variant_id" readonly="1"/>
+                    <field name="quantity_on_hand" readonly="1"/>
+                    <field name="weight_on_hand" readonly="1"/>
+                </group>
+                <group string="Convert To">
+                    <field name="target_product_variant_id" string="To Product"/>
+                    <field name="convert_qty" string="Convert Qty"/>
                 </group>
                 <footer>
                     <button name="action_confirm" type="object" string="Convert" class="btn-primary"/>

@@ -105,6 +105,87 @@ class StoreInventory(models.Model):
             vals["total_weight"] = quantity * self.weight_per_qty
         self.write(vals)
 
+    def _convert_to_variant(self, target_variant, convert_qty):
+        """Reclassify store stock to another variant (same physical lot when converting all qty)."""
+        self.ensure_one()
+        if not target_variant:
+            raise UserError(_("Please select the target product variant."))
+        if target_variant == self.product_variant_id:
+            raise UserError(
+                _("Target product must be different from source product (%(product)s).")
+                % {"product": self.product_variant_id.display_name}
+            )
+        if float_compare(convert_qty, 0, precision_digits=6) <= 0:
+            raise UserError(_("Convert quantity must be greater than zero."))
+        if float_compare(convert_qty, self.quantity or 0.0, precision_digits=6) > 0:
+            raise UserError(
+                _(
+                    "Convert quantity (%(convert)s) exceeds available quantity (%(available)s) "
+                    "for %(product)s (Lot %(lot)s)."
+                )
+                % {
+                    "convert": convert_qty,
+                    "available": self.quantity,
+                    "product": self.product_variant_id.display_name,
+                    "lot": self.lot_number or "-",
+                }
+            )
+
+        old_qty = self.quantity or 0.0
+        old_weight = self.total_weight or self._weight_for_qty(old_qty)
+        old_cost = self.total_cost_thb or 0.0
+        is_full = float_is_zero(old_qty - convert_qty, precision_digits=6)
+
+        if is_full:
+            self.write({"product_variant_id": target_variant.id})
+            return self
+
+        transfer_cost = old_cost * (convert_qty / old_qty) if old_qty else 0.0
+        transfer_weight = self._weight_for_qty(convert_qty)
+        self._apply_stock_update(
+            old_qty - convert_qty,
+            old_cost - transfer_cost,
+            old_weight - transfer_weight,
+        )
+
+        StoreInventory = self.env["five.five.store.inventory"]
+        existing_target = StoreInventory.search(
+            [
+                ("store_id", "=", self.store_id.id),
+                ("product_variant_id", "=", target_variant.id),
+            ],
+            order="id",
+            limit=1,
+        )
+        if existing_target:
+            existing_target._apply_stock_update(
+                existing_target.quantity + convert_qty,
+                existing_target.total_cost_thb + transfer_cost,
+                (existing_target.total_weight or 0.0) + transfer_weight,
+            )
+            return existing_target
+
+        return StoreInventory.create(
+            {
+                "store_id": self.store_id.id,
+                "product_variant_id": target_variant.id,
+                "lot_number": self._suggest_convert_target_lot(),
+                "quantity": convert_qty,
+                "quality_note": self.quality_note,
+                "brand_id": self.brand_id.id if self.brand_id else False,
+                "description_id": self.description_id.id if self.description_id else False,
+                "weight_per_qty": self.weight_per_qty,
+                "total_weight": transfer_weight,
+                "purchase_order_id": self.purchase_order_id.id,
+                "source_inventory_id": self.source_inventory_id.id,
+                "total_cost_thb": transfer_cost,
+                "cost_summary": self.env["five.five.product.cost"].format_frozen_store_cost_summary(
+                    transfer_cost
+                ),
+                "cost_as_of_date": self.cost_as_of_date,
+            }
+        )
+
     def _suggest_convert_target_lot(self):
         self.ensure_one()
         base = f"{(self.lot_number or 'LOT').strip()}-CV"
