@@ -33,4 +33,37 @@
             </form>
         </field>
     </record>
+
+    <record id="view_five_five_store_inventory_convert_wizard_single_form" model="ir.ui.view">
+        <field name="name">five.five.store.inventory.convert.wizard.single.form</field>
+        <field name="model">five.five.store.inventory.convert.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Convert Product">
+                <group>
+                    <field name="store_id" invisible="1"/>
+                </group>
+                <group string="From">
+                    <field name="line_ids" nolabel="1" colspan="2">
+                        <form>
+                            <group>
+                                <field name="store_inventory_id" readonly="1" force_save="1"/>
+                                <field name="source_product_variant_id" readonly="1"/>
+                                <field name="quantity_on_hand" readonly="1"/>
+                                <field name="weight_on_hand" readonly="1"/>
+                            </group>
+                            <group string="Convert To">
+                                <field name="target_product_variant_id" string="To Product"/>
+                                <field name="convert_qty" string="Convert Qty"/>
+                                <field name="target_lot_number" string="Target Lot No."/>
+                            </group>
+                        </form>
+                    </field>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object" string="Convert" class="btn-primary"/>
+                    <button special="cancel" string="Cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
 </odoo>

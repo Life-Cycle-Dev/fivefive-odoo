@@ -19,6 +19,31 @@ class StoreInventoryConvertWizard(models.TransientModel):
         string="Conversions",
     )
 
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        store_inventory_id = self.env.context.get("default_store_inventory_id")
+        if not store_inventory_id or "line_ids" not in fields_list or res.get("line_ids"):
+            return res
+
+        inventory = self.env["five.five.store.inventory"].browse(store_inventory_id).exists()
+        if not inventory:
+            return res
+
+        res["store_id"] = inventory.store_id.id
+        res["line_ids"] = [
+            (
+                0,
+                0,
+                {
+                    "store_inventory_id": inventory.id,
+                    "convert_qty": inventory.quantity,
+                    "target_lot_number": inventory._suggest_convert_target_lot(),
+                },
+            )
+        ]
+        return res
+
     def action_confirm(self):
         self.ensure_one()
         if not self.line_ids:

@@ -105,6 +105,44 @@ class StoreInventory(models.Model):
             vals["total_weight"] = quantity * self.weight_per_qty
         self.write(vals)
 
+    def _suggest_convert_target_lot(self):
+        self.ensure_one()
+        base = f"{(self.lot_number or 'LOT').strip()}-CV"
+        StoreInventory = self.env["five.five.store.inventory"]
+        candidate = base
+        seq = 1
+        while StoreInventory.search_count(
+            [("store_id", "=", self.store_id.id), ("lot_number", "=", candidate)]
+        ):
+            seq += 1
+            candidate = f"{base}{seq}"
+        return candidate
+
+    def action_open_convert_wizard(self):
+        self.ensure_one()
+        if float_compare(self.quantity or 0.0, 0, precision_digits=6) <= 0:
+            raise UserError(_("No quantity available to convert."))
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Convert Product"),
+            "res_model": "five.five.store.inventory.convert.wizard",
+            "view_mode": "form",
+            "views": [
+                (
+                    self.env.ref(
+                        "fivefive_custom.view_five_five_store_inventory_convert_wizard_single_form"
+                    ).id,
+                    "form",
+                )
+            ],
+            "target": "new",
+            "context": {
+                "default_store_id": self.store_id.id,
+                "default_store_inventory_id": self.id,
+                "convert_from_line": True,
+            },
+        }
+
 
 class Store(models.Model):
     _inherit = "five.five.store"
