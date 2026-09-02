@@ -112,6 +112,8 @@ class CommercialInvoiceLineConvertAddLineWizard(models.TransientModel):
             raise UserError("Quantity ต้องมากกว่า 0")
         if not (self.quality_note or "").strip():
             raise UserError("กรุณากรอก Quality Note")
+        if not (self.container_number or "").strip():
+            raise UserError("กรุณากรอก Container No.")
 
         vals = {
             "wizard_id": self.wizard_id.id,

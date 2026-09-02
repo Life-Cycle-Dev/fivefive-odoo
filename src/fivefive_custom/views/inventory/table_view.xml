@@ -13,7 +13,8 @@
                 <field name="product_variant_id" string="Product"/>
                 <field name="description_id" string="Description"/>
                 <field name="brand_id" string="Brand"/>
-                <field name="container_number" string="Sub Lot"/>
+                <field name="country_id" string="Country"/>
+                <field name="container_number" string="Container No."/>
                 <field name="size_id" string="Size"/>
                 <field name="warehouse_id" string="Warehouse"/>
                 <field name="quality_note" string="Quality Note"/>
@@ -35,7 +36,8 @@
                 <field name="item_number" string="ITEM" width="70px"/>
                 <field name="description_id" string="Description" width="260px"/>
                 <field name="brand_id" string="Brand" width="180px"/>
-                <field name="container_number" string="Sub Lot" width="110px"/>
+                <field name="country_id" string="Country" width="120px"/>
+                <field name="container_number" string="Container No." width="110px"/>
                 <field name="size_name" string="Size" width="100px"/>
                 <field name="size_id" column_invisible="1"/>
                 <field name="quantity" string="QTY" width="90px" sum="Total QTY"/>

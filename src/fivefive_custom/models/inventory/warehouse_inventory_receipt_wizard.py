@@ -1,5 +1,5 @@
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import UserError
 from odoo.tools.float_utils import float_compare, float_is_zero
 from odoo.tools.misc import formatLang
 
@@ -72,18 +72,6 @@ class WarehouseInventoryReceiptWizard(models.TransientModel):
             lot_number = (line.lot_number or "").strip()
             if not lot_number:
                 raise UserError(_("Lot number is required for %(product)s.") % {"product": line.product_variant_id.display_name})
-
-            duplicate = Inventory.search_count(
-                [
-                    ("warehouse_id", "=", self.warehouse_id.id),
-                    ("lot_number", "=", lot_number),
-                ]
-            )
-            if duplicate:
-                raise ValidationError(
-                    _("Lot number %(lot)s already exists in warehouse %(warehouse)s.")
-                    % {"lot": lot_number, "warehouse": self.warehouse_id.display_name}
-                )
 
             convert = ProductConvert.create(
                 {

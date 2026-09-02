@@ -8,6 +8,7 @@
 				<field name="commercial_invoice_line_id"/>
 				<field name="product_variant_id"/>
 				<field name="country_id"/>
+				<field name="container_number" string="Container No."/>
 				<field name="quantity"/>
 				<field name="quality_note"/>
 				<field name="cost_summary" readonly="1"/>
@@ -26,6 +27,9 @@
 						<field name="commercial_invoice_line_id" readonly="1" invisible="not commercial_invoice_line_id"/>
 						<field name="product_variant_id" readonly="po_state == 'closed'"/>
 						<field name="country_id" readonly="1"/>
+						<field name="lot_number" readonly="po_state == 'closed'"/>
+						<field name="item_number" readonly="po_state == 'closed'"/>
+						<field name="container_number" string="Container No." readonly="po_state == 'closed'"/>
 						<field name="quantity" readonly="po_state == 'closed'"/>
 						<field name="quality_note" readonly="po_state == 'closed'"/>
 						<field name="cost_summary" readonly="1"/>

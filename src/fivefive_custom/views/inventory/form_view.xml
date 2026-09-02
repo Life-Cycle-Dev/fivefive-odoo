@@ -33,6 +33,7 @@
                             <field name="warehouse_id" readonly="1"/>
                             <field name="lot_number" readonly="1"/>
                             <field name="item_number" readonly="1"/>
+                            <field name="country_id" readonly="1"/>
                             <field name="container_number" readonly="1"/>
                             <field name="brand_id" readonly="1"/>
                             <field name="description_id" readonly="1"/>

@@ -29,10 +29,10 @@
 							<field name="convert_date" string="Date" width="110px"/>
 							<field name="product_variant_id" string="product" width="240px"/>
 							<field name="lot_number" string="Lot No." width="130px"/>
+							<field name="container_number" string="Container No." width="130px" required="1"/>
 							<field name="item_number" string="item" width="80px"/>
 							<field name="description_id" string="Description" width="260px"/>
 							<field name="brand_id" string="Brand" width="180px"/>
-							<field name="container_number" string="Sub Lot" width="110px"/>
 							<field name="size_name" string="Size" width="100px"/>
 							<field name="size_id" column_invisible="1"/>
 							<field name="quantity" string="QTY" width="90px"/>

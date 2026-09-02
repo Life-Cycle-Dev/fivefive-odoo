@@ -133,25 +133,6 @@ class PurchaseOrderCloseWizard(models.TransientModel):
                     % {"product": convert.product_variant_id.display_name}
                 )
 
-            duplicate = Inventory.search_count(
-                [
-                    ("warehouse_id", "=", po.warehouse_id.id),
-                    ("lot_number", "=", convert_lot),
-                    ("product_variant_id", "=", convert.product_variant_id.id),
-                ]
-            )
-            if duplicate:
-                raise UserError(
-                    _(
-                        "Lot number %(lot)s for product %(product)s already exists in warehouse %(warehouse)s."
-                    )
-                    % {
-                        "lot": convert_lot,
-                        "product": convert.product_variant_id.display_name,
-                        "warehouse": po.warehouse_id.display_name,
-                    }
-                )
-
             cil = convert.commercial_invoice_line_id
             totals = ProductCost.compute_convert_cost_totals(convert, as_of_date=self.as_of_date)
             inventory_vals.append(

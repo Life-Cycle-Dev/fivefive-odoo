@@ -57,14 +57,6 @@ class StoreInventory(models.Model):
         help="วันที่ freeze ต้นทุนเป็น Fixed เมื่อย้ายเข้า Store",
     )
 
-    _sql_constraints = [
-        (
-            "five_five_store_inventory_store_lot_uniq",
-            "unique(store_id, lot_number)",
-            "Lot number must be unique per store.",
-        ),
-    ]
-
     def _weight_per_qty(self):
         self.ensure_one()
         return self.weight_per_qty or 0.0
@@ -149,22 +141,6 @@ class StoreInventory(models.Model):
         )
 
         StoreInventory = self.env["five.five.store.inventory"]
-        existing_target = StoreInventory.search(
-            [
-                ("store_id", "=", self.store_id.id),
-                ("product_variant_id", "=", target_variant.id),
-            ],
-            order="id",
-            limit=1,
-        )
-        if existing_target:
-            existing_target._apply_stock_update(
-                existing_target.quantity + convert_qty,
-                existing_target.total_cost_thb + transfer_cost,
-                (existing_target.total_weight or 0.0) + transfer_weight,
-            )
-            return existing_target
-
         return StoreInventory.create(
             {
                 "store_id": self.store_id.id,

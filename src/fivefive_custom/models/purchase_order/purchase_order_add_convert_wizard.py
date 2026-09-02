@@ -64,6 +64,8 @@ class PurchaseOrderAddConvertWizard(models.TransientModel):
             raise UserError(_("Quantity must be greater than zero."))
         if not (self.quality_note or "").strip():
             raise UserError(_("Quality Note is required."))
+        if not (self.container_number or "").strip():
+            raise UserError(_("Container No. is required."))
 
         self.env["five.five.product.convert"].create(
             {
@@ -74,7 +76,7 @@ class PurchaseOrderAddConvertWizard(models.TransientModel):
                 "quality_note": self.quality_note.strip(),
                 "quality_image": self.quality_image,
                 "item_number": self.item_number,
-                "container_number": self.container_number or po.shipment_container_number,
+                "container_number": self.container_number.strip(),
                 "lot_number": self.lot_number,
                 "convert_date": self.convert_date,
                 "brand_id": self.brand_id.id if self.brand_id else False,

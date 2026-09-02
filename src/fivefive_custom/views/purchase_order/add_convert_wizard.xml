@@ -13,7 +13,7 @@
                     <field name="item_number" string="item"/>
                     <field name="description_id" string="Description"/>
                     <field name="brand_id" string="Brand"/>
-                    <field name="container_number" string="Sub Lot"/>
+                    <field name="container_number" string="Container No." required="1"/>
                     <field name="size_name" string="Size" readonly="1"/>
                     <field name="size_id" invisible="1"/>
                     <field name="quantity" string="QTY" required="1"/>

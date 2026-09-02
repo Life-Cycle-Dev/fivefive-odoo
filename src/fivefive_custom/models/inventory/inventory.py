@@ -62,6 +62,13 @@ class Inventory(models.Model):
         readonly=True,
         tracking=True,
     )
+    country_id = fields.Many2one(
+        "res.country",
+        string="Country",
+        related="purchase_order_id.country_id",
+        store=True,
+        readonly=True,
+    )
     product_convert_id = fields.Many2one(
         "five.five.product.convert",
         string="Converted Product",

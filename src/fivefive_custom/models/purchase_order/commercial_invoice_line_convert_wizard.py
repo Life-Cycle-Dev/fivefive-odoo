@@ -148,11 +148,12 @@ class CommercialInvoiceLineConvertWizard(models.TransientModel):
                 raise UserError("Quantity ต้องมากกว่า 0")
             if not (line.quality_note or "").strip():
                 raise UserError("กรุณากรอก Quality Note ให้ครบทุกบรรทัด")
+            if not (line.container_number or "").strip():
+                raise UserError("กรุณากรอก Container No. ให้ครบทุกบรรทัด")
 
         convert_vals_list = []
         cil = self.commercial_invoice_line_id
         po = cil.purchase_order_id
-        default_container = po.shipment_container_number if po else False
         for line in self.convert_line_ids:
             convert_vals_list.append(
                 {
@@ -163,7 +164,7 @@ class CommercialInvoiceLineConvertWizard(models.TransientModel):
                     "quality_note": line.quality_note.strip(),
                     "quality_image": line.quality_image,
                     "item_number": line.item_number,
-                    "container_number": line.container_number or default_container,
+                    "container_number": line.container_number.strip(),
                     "lot_number": line.lot_number,
                     "convert_date": line.convert_date,
                     "brand_id": line.brand_id.id if line.brand_id else False,
@@ -254,6 +255,20 @@ class CommercialInvoiceLineConvertWizardLine(models.TransientModel):
 
     cost_payload = fields.Text(string="Costs (JSON)", default="[]")
     cost_summary = fields.Char(string="Cost Summary", compute="_compute_cost_summary")
+
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        if "container_number" in fields_list and not res.get("container_number"):
+            wizard_id = res.get("wizard_id")
+            if wizard_id:
+                wizard = self.env["five.five.commercial.invoice.line.convert.wizard"].browse(
+                    wizard_id
+                )
+                po = wizard.commercial_invoice_line_id.purchase_order_id
+                if po and po.shipment_container_number:
+                    res["container_number"] = po.shipment_container_number
+        return res
 
     @api.depends("quantity", "weight_per_qty")
     def _compute_total_weight(self):
